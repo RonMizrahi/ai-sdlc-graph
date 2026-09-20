@@ -2,8 +2,14 @@
 
 The software lifecycle as a **guarded graph your coding agent can actually execute** — typed nodes,
 total exit guards, bounded retry loops, durable run state, and a ledger of every gate that could not
-run. Plus the viewer that shows a run as it happens, and the method for turning any *other* process
-into a graph of its own.
+run.
+
+**It ships working.** `sdlc-graph` is my own lifecycle, and installing it drives a feature from idea
+to merged today, with nothing to configure. **It is also meant to be replaced.** The gates in it are
+my definition of done, not yours — which is why none of it is compiled. The graph is three Markdown
+files, so changing what your lifecycle demands is editing a row in a table. And when the process you
+want is not a software lifecycle at all, the third plugin builds *that* graph — standalone, and
+built the same way. → **[Make it yours](#make-it-yours)**
 
 https://github.com/user-attachments/assets/c717c1dc-214d-4b6b-8ad5-55dd5107baf1
 
@@ -30,6 +36,7 @@ What you are watching is `sdlc-graph` driving a real feature end to end, rendere
   - [Watching a run live](#watching-a-run-live)
 - [When something goes wrong](#when-something-goes-wrong)
 - [What's inside](#whats-inside)
+- [Make it yours](#make-it-yours)
 - [Optional tools, and what happens without them](#optional-tools-and-what-happens-without-them)
 - [How this is tested](#how-this-is-tested)
 - [Philosophy](#philosophy)
@@ -207,7 +214,38 @@ Two optional companions, each with its own README — neither is needed to run t
 | | | |
 |---|---|---|
 | **`sdlc-graph-viewer`** | The run viewer — the page in the video above. | → [README](plugins/sdlc-graph-viewer/README.md) |
-| **`sdlc-graph-engineering-install`** | The method that builds a guarded graph for a process that has none. Domain-agnostic. | → [README](plugins/sdlc-graph-engineering-install/README.md) |
+| **`sdlc-graph-engineering-install`** | The method that builds a guarded graph for a process that has none — the third row of [Make it yours](#make-it-yours). Domain-agnostic. | → [README](plugins/sdlc-graph-engineering-install/README.md) |
+
+## Make it yours
+
+The twenty nodes in `sdlc-graph` are the lifecycle **I** run. Somewhere in yours there is a gate I do
+not have, a standard I have never read, a stop your team needs and mine does not, or a step that
+makes no sense outside your company. That is expected. It is also the reason none of this is code.
+
+**Nothing here compiles.** The whole model is three Markdown files — `graph/nodes.md` (what each node
+must do), `graph/edges.md` (the transition table and its bounds), `graph/state.md` (the run-state
+schema). No SDK, no framework, no build step, no runtime to install: the coding agent you already
+have *is* the runtime. If you have built on a graph framework before, the difference is where the
+graph lives — there it is code you compile and a process you run; here it is a table the agent reads.
+A graph written in a language is changed by people who write that language. A graph written in a
+table is changed by whoever owns the process, and reviewed in a pull request like anything else.
+
+Three ways to make it yours, cheapest first:
+
+| | What you change | What it costs |
+|---|---|---|
+| **Your tools** | Every gate dispatches **by name** to whatever reviewer, coding-standards skill and CLAUDE.md improver your project has, and copies none of them. Install yours and the node picks it up; install nothing and the absence is ledgered. | Nothing — it is already how the gates work. |
+| **Your nodes** | Fork the plugin and edit the tables: retitle a gate, add the node your team needs, tighten a guard, change a bound, declare a new stop. The nine eval suites fork with it, and they check the spec files against **each other** — so a guard changed in one place and not the others goes red and names the string. | An afternoon, and it stays yours across updates. |
+| **Your process** | Not a lifecycle at all — an incident runbook, a release train, a data pipeline, a document review. `sdlc-graph-engineering-install` starts from the process you already have, in whatever form it exists, and produces the guarded graph for it: your nodes, your guards, your stops, plus the orchestrator that walks it and the auditor that checks it. | Nine steps, and it assumes nothing about software. |
+
+**What carries over is never the nodes.** It is the structure underneath them: guards that are
+*total*, so exactly one matches and zero halts the run rather than letting an agent improvise its way
+forward; a declared bound on every cycle, counted per item and never reset; one typed state file per
+run, written before the next node starts, so an interruption resumes instead of restarting; and a
+ledger that records the step which could not run instead of quietly passing it.
+
+That is the infrastructure, and it is the part worth having. The twenty nodes are only my story told
+on top of it — written down this way precisely so that yours can be told on top of it too.
 
 ## Optional tools, and what happens without them
 
