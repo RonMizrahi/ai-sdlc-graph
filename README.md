@@ -47,8 +47,8 @@ What you are watching is `sdlc-graph` driving a real feature end to end, rendere
 
 ## How it works
 
-You say `/sdlc-graph start "<feature>"`. Nothing auto-triggers it — running an entire lifecycle is not
-something to enter on a description match.
+You say `/sdlc-graph` and describe what you want. Nothing auto-triggers it — running an entire
+lifecycle is not something to enter on a description match.
 
 From there the run is a **state machine, not a prompt**. Twenty nodes, forty transitions, and every
 transition guarded: guards are evaluated in table order and **exactly one must match**. Zero matching
@@ -96,10 +96,30 @@ imports nothing but `node:*`.
 Then, in the project you want driven:
 
 ```
-/sdlc-graph start "add rate limiting to the public API"
-/sdlc-graph resume          # or just: "where were we?"
-/sdlc-graph status
+/sdlc-graph <context>
 ```
+
+**That is the whole interface.** There is no sub-command grammar, because nothing parses one —
+`<context>` is free text, read the way you would brief a colleague who is about to start.
+
+**More context is better, and it is the cheapest thing you can give it.** A sentence works. A page
+works better: everything you leave out becomes something `SPEC` has to stop and ask you about, and
+everything you assume becomes something it has to guess. The ticket, the constraints, the acceptance
+criteria, the files you already know are involved, what must not be touched — all of it is useful,
+none of it needs a format.
+
+```
+/sdlc-graph build an ice cream store web app
+
+/sdlc-graph review this task https://linear.app/team/issue/ENG-4412 and build it
+
+/sdlc-graph <your entire prompt, pasted whole — ticket, constraints, acceptance
+             criteria, the files involved, what not to touch>
+```
+
+**Run that once and you are done issuing commands.** From there the graph drives itself: it stops at
+the six places it declares and nowhere else, and an interrupted run is picked up by saying so —
+*"where were we?"* — not by a different command.
 
 ## The basic workflow
 

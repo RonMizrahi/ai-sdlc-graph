@@ -103,7 +103,8 @@ plugins/sdlc-graph/
 
 ### A run, end to end
 
-1. **You invoke it** — `sdlc-graph:sdlc-graph start "<feature>"`. Nothing auto-triggers it.
+1. **You invoke it** — `/sdlc-graph <context>`, free text, as much of it as you have. Nothing
+   auto-triggers it, and there is no second command to learn.
 2. **`SKILL.md` loads**, and immediately loads the three model files.
 3. **`INTAKE`** *(inline)* — detects stack, `has_ui`, branch, host; creates the state file.
 4. **`SPEC` → stops for you.** Design dialogue, then waits for approval.
