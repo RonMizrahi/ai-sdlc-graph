@@ -2445,6 +2445,26 @@ def _(spec):
                    "failure to act")
     if not re.search(r"gates? nothing|never (?:a )?gates?\b|blocks? nothing", skill, re.I):
         bad.append("the skill no longer says it gates nothing")
+    # QUIET, AND SESSION-ONLY. It is paid for on every run, so it may not leave anything behind to
+    # clean up: text in the conversation, no file, no run-directory entry, no report. The tool grant
+    # is the enforcement — `Write` or `Edit` here would make "writes nothing" a promise rather than
+    # a property — and the one-line-when-clean rule is what keeps "every run" from meaning "a table
+    # nobody reads, every run".
+    tools = re.search(r"^allowed-tools:\s*(.+)$", head, re.M)
+    if not tools:
+        bad.append("the skill declares no `allowed-tools`, so nothing bounds what a checklist "
+                   "invoked on every run can reach")
+    elif re.search(r"\b(Write|Edit|MultiEdit|NotebookEdit)\b", tools.group(1)):
+        bad.append(f"the skill's `allowed-tools` grants {tools.group(1).strip()} — a checklist that "
+                   "runs on every run and can write is one edit away from leaving a report behind "
+                   "in every repository it runs in")
+    if not re.search(r"writes no file|written only in the session|no file, touches no run",
+                     skill, re.I):
+        bad.append("the skill no longer says it writes nothing — it is invoked on every run, and "
+                   "an artefact per run is the cost nobody agreed to pay")
+    if not re.search(r"one line and stop|whole output is one line", skill, re.I):
+        bad.append("the skill no longer says that a clean checklist is ONE LINE — on the runs where "
+                   "there is nothing to act on, the table is noise charged to every run")
 
     if "/sdlc-graph:onboarding" not in spec["skill"]:
         bad.append("SKILL.md never names `/sdlc-graph:onboarding`, so the run start that is "

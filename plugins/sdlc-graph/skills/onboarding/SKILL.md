@@ -52,16 +52,22 @@ retroactively pass a gate that ran without it.
    whenever they like, including after the run. **The check is automatic; acting on it is not.**
    Never install, download, enable, or modify configuration on the reader's behalf, and never offer
    to: an unasked-for install is a change to somebody's machine that they did not choose.
-3. **Cheap enough to pay on every run.** One shell call, no network, no per-tool probing, output in
+3. **Quiet, and written only in the session.** The checklist is text in the conversation — it
+   writes no file, touches no run directory, creates no report and changes no configuration. That is
+   why `allowed-tools` is `Bash, Read` and carries nothing that can write: a checklist that leaves
+   artefacts behind is a checklist someone has to clean up, and this one is paid for on every run.
+   **When every row is invocable, say so in one line and stop** — the full list is for when there is
+   something to act on, or when a human asked for it.
+4. **Cheap enough to pay on every run.** One shell call, no network, no per-tool probing, output in
    the tens of lines. If this ever costs more than that, it has stopped being affordable at the place
    it is invoked from.
-4. **`${CLAUDE_PLUGIN_ROOT}/docs/DEPENDENCIES.md` is the roster. This file keeps no copy of it.**
+5. **`${CLAUDE_PLUGIN_ROOT}/docs/DEPENDENCIES.md` is the roster. This file keeps no copy of it.**
    Read it and walk **every** row. A second list here could disagree with the one a human reads, and
    the one a human reads would still be right — so there is only one.
-5. **Test invocability, not the filesystem.** A file on disk is not a tool you can call.
-6. **Never invent a marketplace name.** The roster carries the install lines and the rule for an
+6. **Test invocability, not the filesystem.** A file on disk is not a tool you can call.
+7. **Never invent a marketplace name.** The roster carries the install lines and the rule for an
    uncertain source; follow what it says rather than guessing a plausible one.
-7. **Never present an optional tool as a requirement**, and never name a plugin this bundle does not
+8. **Never present an optional tool as a requirement**, and never name a plugin this bundle does not
    ship as something the graph depends on. It depends on `git`.
 
 ## Step 1 — read the roster
@@ -92,8 +98,13 @@ A CLI row (`gh`, `glab`) is settled by whether the command resolves, not by the 
 
 ## Step 3 — print the checklist
 
-**Open with what this is, in one line**, because a reader who has not asked for it deserves to know
-why it appeared and what it just did:
+**If every row is invocable, the whole output is one line** — at run start nobody needs a table to
+be told there is nothing to do:
+
+> Tooling check — all N optional tools invocable. Nothing installed or changed.
+
+**Otherwise**, open with what this is, because a reader who did not ask for it deserves to know why
+it appeared and what it just did:
 
 > Tooling check for this run — read-only. Nothing was installed, downloaded or changed.
 

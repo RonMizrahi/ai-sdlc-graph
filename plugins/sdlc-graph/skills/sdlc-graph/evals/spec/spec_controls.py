@@ -34,6 +34,20 @@ ROOT = paths.PLUGIN
 # Everything below is relative to ROOT. `SK` is the skill inside it.
 SK = f"skills/{paths.SKILL.name}"
 
+def subs(path, *pairs):
+    """One plant, several substitutions in the same file. A rule stated twice — once as a rule and
+    once in the output contract it governs — needs both broken, or the control passes on the copy
+    it left behind and reports a check that cannot fail as a check that can."""
+    def f(root):
+        p = root / path
+        t = p.read_text()
+        for old, new in pairs:
+            assert old in t, f"control text not found in {path}: {old[:50]}"
+            t = t.replace(old, new, 1)
+        p.write_text(t)
+    return f
+
+
 def sub(path, old, new, count=1):
     def f(root):
         p = root / path
@@ -775,6 +789,18 @@ CONTROLS += [
      "`disable-model-invocation: true` is copied over from the graph's own frontmatter — the "
      "checklist then reads as wired at INTAKE and can be invoked by nobody",
      sub(OB, "disable-model-invocation: false", "disable-model-invocation: true")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "`Write` is added to the checklist's tool grant — the skill still says it writes nothing, and "
+     "now nothing but that sentence stops a thing invoked on every run from leaving a report "
+     "behind in every repository it runs in",
+     sub(OB, "allowed-tools: Bash, Read", "allowed-tools: Bash, Read, Write")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the one-line-when-clean rule goes, so a run with nothing to act on still pays for the full "
+     "table — the noise that gets a run-start checklist switched off",
+     subs(OB, ("**When every row is invocable, say so in one line and stop**",
+               "**Print the full list every time**"),
+              ("**If every row is invocable, the whole output is one line**",
+               "**Print every row, always**"))),
     ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
      "`user-invocable` goes false — a human can no longer reach it outside a run",
      sub(OB, "user-invocable: true", "user-invocable: false")),
