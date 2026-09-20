@@ -11,10 +11,16 @@ to merged with nothing to configure. That is how most people should use it.
 team's definition of done differs from mine, changing it is editing a row in a table rather than
 forking a framework. Entirely optional. → **[Make it yours](#make-it-yours)**
 
+![The sdlc-graph run viewer following a live run: a sidebar listing runs and the milestones, graph, trace, ledger, QA and run-facts views; and the graph itself in three bands — SETUP (INTAKE, SPEC, PLAN, STRATEGY, HANDOFF), the milestone loop (BRANCH, IMPLEMENT, TEST, GATE_A, E2E, ms-final-review) with CONSOLIDATE and BLOCKED beside it, and the shared tail (CLOSE_OUT, PR, PR_FINAL_REVIEW, CI, QA, VERDICT, MERGE, DONE), with DEBUG re-entrant from six callers below. Nodes are coloured as now, next-step candidate, visited, or off-path for this run](docs/assets/run-viewer-graph.png)
+
+*A run in progress, seen through **`sdlc-graph-viewer`** — the bundle's observability half, and
+optional. It draws every node a run can reach and colours them for **this** run: where it is now,
+what it may do next, where it has been, and what is off-path entirely. Click a node for its guards.
+The graph runs identically without it; you read the state file instead.*
+
 https://github.com/user-attachments/assets/c717c1dc-214d-4b6b-8ad5-55dd5107baf1
 
-What you are watching is `sdlc-graph` driving a real feature end to end, rendered by
-`sdlc-graph-viewer`. Both ship here.
+The same thing in motion — `sdlc-graph` driving a real feature end to end, start to merge.
 
 *Two minutes, no audio — the fast cut. If it moves too quickly, there is a
 **[five-minute walkthrough on YouTube](https://www.youtube.com/watch?v=qrY74MvaVoU&t=1s)**, which is
