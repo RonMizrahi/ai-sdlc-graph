@@ -1,0 +1,45 @@
+{
+  "run_id": "pre-plan-06-08-2026",
+  "plan_path": null,
+  "spec_path": null,
+  "node": "SPEC",
+  "status": "RUNNING",
+  "context": {
+    "stack": "unknown",
+    "has_ui": null,
+    "main_branch": "main",
+    "unborn_main": true,
+    "host": "none",
+    "standards_handshake": null,
+    "branching": null,
+    "auto_open_mr": null,
+    "run_mode": null,
+    "qa_env": null
+  },
+  "milestones": [],
+  "integration": {
+    "branch": null,
+    "merged": []
+  },
+  "schema_version": 5,
+  "attempts": {},
+  "qa": {
+    "verdict": null,
+    "qa_plan_path": null,
+    "bugs": []
+  },
+  "skipped_gates": [],
+  "history": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "guard": "spec_path == null",
+      "milestone": null,
+      "observation": "Greenfield repo, no spec supplied — the design dialogue starts here. has_ui is still null, which is correct at this point and would be a defect by GATE_A."
+    }
+  ],
+  "cursor": null,
+  "in_flight": [],
+  "debug_return_to": null,
+  "stopped": null
+}

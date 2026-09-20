@@ -1,0 +1,898 @@
+{
+  "name": "loops, skipped gates and a QA reopen — the paths a happy run never reaches",
+  "why": "A happy-path walk proves only that the spine connects. This fixture drives the parts that actually broke in real runs: a red suite into DEBUG and back, a Gate A dispatch that died counted separately from a findings re-run, three ledgered skips that must never read as passes, edge 18 vs 18c, and a QA BLOCK that reopens with an is_fix milestone.",
+  "expect": {
+    "final_status": "DONE",
+    "reaches": [
+      "DEBUG",
+      "E2E",
+      "CLOSE_OUT",
+      "QA",
+      "VERDICT",
+      "MERGE",
+      "DONE"
+    ],
+    "stops": [
+      "SPEC:approval-after",
+      "PLAN:approval-after",
+      "STRATEGY:choice-after",
+      "MERGE:await-external"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-selftest-31-07-2026",
+    "plan_path": "docs/plans/graph-selftest-31-07-2026-plan.md",
+    "spec_path": "docs/specs/graph-selftest-31-07-2026-design.md",
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "both",
+      "has_ui": true,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "none",
+      "standards_handshake": {
+        "approved_at": "STRATEGY",
+        "note": "simulated"
+      },
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "continuous",
+      "qa_env": null
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "simulated milestone one",
+        "branch": null,
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked step 1a",
+          "mocked step 1b"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": true
+      },
+      {
+        "id": 2,
+        "name": "simulated milestone two",
+        "branch": null,
+        "worktree": null,
+        "deps": [
+          1
+        ],
+        "steps": [
+          "mocked step 2a"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": true
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": 1,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "edge": "1",
+      "milestone": null,
+      "observation": "No spec supplied. INTAKE declares no stop of its own — the SPEC approval belongs to the step LEAVING that node, which is where the graph asks it."
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "edge": "3",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved (auto-answered for the self-test)"
+        }
+      ],
+      "observation": "STOP 1 of 4. Spec body mocked; the stop itself is what is being tested."
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "edge": "5",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved (auto-answered)"
+        }
+      ],
+      "observation": "STOP 2 of 4. Two milestones, deps 1<-2, is_fix and touches_ui both seeded on each."
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "edge": "6",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "choice-after",
+          "answer": "A / continuous / auto_open_mr true / handshake approved"
+        }
+      ],
+      "observation": "STOP 3 of 4. deps validated acyclic; cursor set to 1. auto_open_mr true, so PR's confirm-before will correctly NOT fire later.",
+      "set": {
+        "in_flight": [
+          1
+        ],
+        "milestones.0.branch": "selftest/run"
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED commit. Written in the SAME step as the commit per the new commit-and-record rule — this is the transition the real run forgot."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "a1b2c3d"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED commit. Written in the SAME step as the commit per the new commit-and-record rule — this is the transition the real run forgot."
+    },
+    {
+      "from": "TEST",
+      "to": "DEBUG",
+      "edge": "19·TEST",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SCRIPTED FAILURE 1: suite red, to exercise edge 10 and the TEST bound. debug.return_to set BEFORE leaving — the real run never wrote this field."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SCRIPTED FAILURE 1: suite red, to exercise edge 10 and the TEST bound. debug.return_to set BEFORE leaving — the real run never wrote this field.",
+      "set": {
+        "attempts.TEST:1": 1,
+        "debug_return_to": "TEST"
+      }
+    },
+    {
+      "from": "DEBUG",
+      "to": "TEST",
+      "edge": "20·TEST",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "DEBUG",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED fix. return_to honoured and cleared."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "SIMULATED fix. return_to honoured and cleared.",
+      "set": {
+        "debug_return_to": null
+      }
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED green on attempt 2 of 3. Counter left at 1, not rewound."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SIMULATED green on attempt 2 of 3. Counter left at 1, not rewound.",
+      "set": {
+        "attempts.GATE_A-dispatch:1": 1
+      }
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_A",
+      "edge": "11",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SCRIPTED FAILURE 2: first dispatch DIED (0 agents, 0 edits) then a re-run found a real bug. The dead dispatch is counted in GATE_A-dispatch:1, the…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "observation": "SCRIPTED FAILURE 2: first dispatch DIED (0 agents, 0 edits) then a re-run found a real bug. The dead dispatch is counted in GATE_A-dispatch:1, the findings re-run in GATE_A:1 — the split this graph version introduces. Under the old single key these would have shared a budget.",
+      "set": {
+        "attempts.GATE_A:1": 1
+      }
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 7,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 2,
+            "headline": "SIMULATED clean second pass. has_ui is a real boolean, so edge 12d does not fire and 13 is reachable."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_a1b2"
+      },
+      "observation": "SIMULATED clean second pass. has_ui is a real boolean, so edge 12d does not fire and 13 is reachable.",
+      "set": {
+        "attempts.GATE_A:1": 2
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 8,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SKIPPED GATE: the app cannot be brought up locally while has_ui is true — the one condition that is still a ledgerable E2E absence. touches_ui is…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "ledgered",
+      "observation": "SKIPPED GATE: the app cannot be brought up locally while has_ui is true — the one condition that is still a ledgerable E2E absence. touches_ui is also true, so this milestone owed component specs and could not get them; the ledger entry is what makes that a recorded fact rather than a silence. NOT counted as passed; the run proceeds, which is the ledger working as designed.",
+      "skipped_gates": [
+        {
+          "node": "E2E",
+          "reason": "SIMULATED: the app will not come up locally while has_ui == true — the API container exits on boot. The node exists and could not run, which is distinct from a has_ui == false structural absence, and distinct again from a tool the run could simply install.",
+          "at_milestone": 1
+        }
+      ]
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "edge": "15",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 9,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Edge 18: a milestone remains, so back into the loop rather than to CLOSE_OUT. Cursor advances to 2."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18: a milestone remains, so back into the loop rather than to CLOSE_OUT. Cursor advances to 2.",
+      "set": {
+        "in_flight": [
+          1
+        ],
+        "attempts.GATE_B:1": 1,
+        "cursor": 2
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED no-op under strategy A — milestone 2 reuses the run branch."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "SIMULATED no-op under strategy A — milestone 2 reuses the run branch.",
+      "set": {
+        "milestones.1.branch": "selftest/run"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED. Transition written with the commit, not batched with the next one."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "b2c3d4e"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED. Transition written with the commit, not batched with the next one."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED green first time. Fresh counter — milestone 1's spent TEST budget does not carry over."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SIMULATED green first time. Fresh counter — milestone 1's spent TEST budget does not carry over."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED clean, no re-run needed."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_b2c3"
+      },
+      "observation": "SIMULATED clean, no re-run needed.",
+      "set": {
+        "attempts.GATE_A:2": 1
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SKIPPED GATE again, second entry. Two ledger entries for the same node across milestones is correct — each milestone's gate is its own."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "ledgered",
+      "observation": "SKIPPED GATE again, second entry. Two ledger entries for the same node across milestones is correct — each milestone's gate is its own.",
+      "skipped_gates": [
+        {
+          "node": "E2E",
+          "reason": "SIMULATED: the app still will not come up locally.",
+          "at_milestone": 2
+        }
+      ]
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Edge 18c: last milestone under strategy A, so the shared tail begins."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18c: last milestone under strategy A, so the shared tail begins.",
+      "set": {
+        "in_flight": [],
+        "attempts.GATE_B:2": 1
+      }
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "edge": "21",
+      "milestone": 2,
+      "observation": "SIMULATED plan update and qa_env completion. Unconditional exit — no DONE shortcut even though nothing runnable was produced.",
+      "set": {
+        "context.qa_env": {
+          "run_instructions": "simulated",
+          "api_base_url": "http://localhost:3001",
+          "web_base_url": "http://localhost:5173",
+          "api_docs": "/api-json",
+          "identities": [
+            "selftest-a",
+            "selftest-b"
+          ],
+          "seed": "simulated"
+        }
+      }
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "edge": "22",
+      "milestone": 2,
+      "observation": "SKIPPED GATE: host is none, so there is no PR to open. Passed through and ledgered rather than blocking — the host:none path the real run also hit.",
+      "skipped_gates": [
+        {
+          "node": "PR",
+          "reason": "SIMULATED: context.host == none, no remote and therefore no PR to open.",
+          "at_milestone": 2
+        }
+      ]
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "edge": "30",
+      "milestone": 2,
+      "observation": "SKIPPED GATE: host is none, so there is no PR to review either. code-review:code-review is ledgered and the node passes straight through — one exit, and it never blocks."
+    },
+    {
+      "from": "CI",
+      "to": "QA",
+      "edge": "23",
+      "milestone": 2,
+      "observation": "SKIPPED GATE: no remote means no CI to watch. Took 22a rather than 22b because the app IS runnable, so QA must not be skipped.",
+      "skipped_gates": [
+        {
+          "node": "CI",
+          "reason": "SIMULATED: context.host == none, GitHub Actions out of scope.",
+          "at_milestone": 2
+        }
+      ]
+    },
+    {
+      "from": "QA",
+      "to": "VERDICT",
+      "edge": "25",
+      "milestone": 2,
+      "observation": "SCRIPTED FAILURE 3: QA returns BLOCK with an S1, to exercise the reopen path.",
+      "set": {
+        "qa.verdict": "BLOCK",
+        "qa.qa_plan_path": "docs/qa/graph-selftest-simulated.md",
+        "qa.bugs": [
+          {
+            "severity": "S1",
+            "summary": "SIMULATED blocking finding"
+          }
+        ]
+      }
+    },
+    {
+      "from": "VERDICT",
+      "to": "BRANCH",
+      "edge": "28",
+      "milestone": 3,
+      "observation": "Edge 32 reopen. A third milestone is appended with is_fix true, deps [], and the cursor repoints to it. attempts.QA goes to 1 of 2 — the escalation stop is NOT reached yet.",
+      "set": {
+        "in_flight": [
+          3
+        ],
+        "attempts.QA": 1,
+        "cursor": 3,
+        "milestones.2": {
+          "id": 3,
+          "name": "simulated QA fix",
+          "branch": "selftest/run",
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "mocked fix for the S1"
+          ],
+          "pr": null,
+          "is_fix": true,
+          "touches_ui": true
+        }
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "is_fix true, so NO new branch — the fix commits on the one open unmerged branch, as the reopen contract requires."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "is_fix true, so NO new branch — the fix commits on the one open unmerged branch, as the reopen contract requires."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "SIMULATED fix committed."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "c3d4e5f"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED fix committed."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "SIMULATED green, including a regression test for the S1 finding."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SIMULATED green, including a regression test for the S1 finding."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "SIMULATED clean."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_c3d4"
+      },
+      "observation": "SIMULATED clean.",
+      "set": {
+        "attempts.GATE_A:3": 1
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "SKIPPED GATE, third entry. Three UI milestones, three ledger entries, zero Playwright specs — a run that reaches DONE like this is NOT a clean run,…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "ledgered",
+      "observation": "SKIPPED GATE, third entry. Three UI milestones, three ledger entries, zero Playwright specs — a run that reaches DONE like this is NOT a clean run, and the report must lead with that.",
+      "skipped_gates": [
+        {
+          "node": "E2E",
+          "reason": "SIMULATED: the app still will not come up locally.",
+          "at_milestone": 3
+        }
+      ]
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "Edge 18c again — the fix milestone is the last, so back to the tail."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18c again — the fix milestone is the last, so back to the tail.",
+      "set": {
+        "in_flight": [],
+        "attempts.GATE_B:3": 1
+      }
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "edge": "21",
+      "milestone": 3,
+      "observation": "SIMULATED. Plan file updated with the QA verdict and all five ledger entries."
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "edge": "22",
+      "milestone": 3,
+      "observation": "SKIPPED GATE: still host none. PR idempotency is moot with no remote.",
+      "skipped_gates": [
+        {
+          "node": "PR",
+          "reason": "SIMULATED: context.host == none.",
+          "at_milestone": 3
+        }
+      ]
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "edge": "30",
+      "milestone": 3,
+      "observation": "SKIPPED GATE: host is none, so there is no PR to review either. code-review:code-review is ledgered and the node passes straight through — one exit, and it never blocks."
+    },
+    {
+      "from": "CI",
+      "to": "QA",
+      "edge": "23",
+      "milestone": 3,
+      "observation": "SKIPPED GATE: still host none.",
+      "skipped_gates": [
+        {
+          "node": "CI",
+          "reason": "SIMULATED: context.host == none.",
+          "at_milestone": 3
+        }
+      ]
+    },
+    {
+      "from": "QA",
+      "to": "VERDICT",
+      "edge": "25",
+      "milestone": 3,
+      "observation": "SIMULATED re-probe: PASS this time, S1 confirmed fixed and covered by a committed test.",
+      "set": {
+        "qa.verdict": "PASS",
+        "qa.bugs": []
+      }
+    },
+    {
+      "from": "VERDICT",
+      "to": "MERGE",
+      "edge": "26",
+      "milestone": 3,
+      "observation": "Edge 30a. attempts.QA stays at 1 — one reopen used of two, so the escalation stop was correctly never reached."
+    },
+    {
+      "from": "MERGE",
+      "to": "DONE",
+      "edge": "29",
+      "milestone": 3,
+      "stops": [
+        {
+          "type": "await-external",
+          "answer": "merged (auto-answered)"
+        }
+      ],
+      "observation": "STOP 4 of 4. The graph did not merge its own work — it waited to be told. Note which stops did NOT happen on this run: PR's confirm-before (auto_open_mr is true) and VERDICT's escalation (one reopen of two used)."
+    }
+  ]
+}

@@ -1,0 +1,844 @@
+{
+  "name": "strategy C in checkpoint mode — parallel worktrees, consolidation, and every DEBUG round-trip",
+  "why": "C is the only strategy with a second GATE_B pass, and CONSOLIDATE is the node no other walk reaches. This fixture also runs in checkpoint mode, so it asserts the run_mode stop fires after every milestone's GATE_B and NOT when GATE_B routes to DEBUG — a milestone that went red has not finished its gates. Four of the six DEBUG round-trips are driven here: GATE_A, E2E, GATE_B and CONSOLIDATE.",
+  "expect": {
+    "final_status": "DONE",
+    "reaches": [
+      "CONSOLIDATE",
+      "DEBUG",
+      "E2E",
+      "GATE_A",
+      "GATE_B",
+      "CLOSE_OUT",
+      "QA",
+      "VERDICT",
+      "MERGE",
+      "DONE"
+    ],
+    "stops": [
+      "SPEC:approval-after",
+      "PLAN:approval-after",
+      "STRATEGY:choice-after",
+      "GATE_B:checkpoint",
+      "GATE_B:checkpoint",
+      "GATE_B:checkpoint",
+      "MERGE:await-external"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-strategy-c-31-07-2026",
+    "plan_path": null,
+    "spec_path": null,
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "both",
+      "has_ui": true,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": null,
+      "branching": null,
+      "auto_open_mr": null,
+      "run_mode": null,
+      "qa_env": null
+    },
+    "milestones": [],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": null,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "edge": "1",
+      "milestone": null,
+      "observation": "No spec supplied."
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "edge": "3",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved"
+        }
+      ],
+      "observation": "SIMULATED.",
+      "set": {
+        "spec_path": "docs/specs/graph-strategy-c-31-07-2026-design.md"
+      }
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "edge": "5",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved"
+        }
+      ],
+      "observation": "Two independent milestones — deps [] on both, which is what makes them eligible to run concurrently. Milestone 1 builds UI, milestone 2 does not; the touches_ui split is what the E2E node reads.",
+      "set": {
+        "plan_path": "docs/plans/graph-strategy-c-31-07-2026-plan.md",
+        "milestones.0": {
+          "id": 1,
+          "name": "settings screen",
+          "branch": null,
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "component",
+            "unit tests"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": true
+        },
+        "milestones.1": {
+          "id": 2,
+          "name": "settings persistence",
+          "branch": null,
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "repository",
+            "integration tests"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": false
+        }
+      }
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "edge": "6",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "choice-after",
+          "answer": "C / checkpoint / auto_open_mr true / handshake approved"
+        }
+      ],
+      "observation": "checkpoint chosen, so the run gains a DECLARED stop after every milestone's GATE_B. Extra stops asked for are not extra stops invented.",
+      "set": {
+        "context.branching": "C",
+        "context.auto_open_mr": true,
+        "context.run_mode": "checkpoint",
+        "context.standards_handshake": {
+          "approved_at": "STRATEGY",
+          "note": "simulated"
+        },
+        "cursor": 1
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Under C, BRANCH also creates a worktree — separate working directories cannot collide over one index."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Under C, BRANCH also creates a worktree — separate working directories cannot collide over one index.",
+      "set": {
+        "milestones.0.branch": "PROJ-1/settings-screen",
+        "milestones.0.worktree": "../.worktrees/PROJ-1"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "a1b2c3d"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED green."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SIMULATED green."
+    },
+    {
+      "from": "GATE_A",
+      "to": "DEBUG",
+      "edge": "19·GATE_A",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SCRIPTED FAILURE: edge 12b, the reason Gate A needs a DEBUG exit at all. Steps 2 and 3 changed code that was green on entry; without this edge the…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "observation": "SCRIPTED FAILURE: edge 12b, the reason Gate A needs a DEBUG exit at all. Steps 2 and 3 changed code that was green on entry; without this edge the break the gate itself caused would match no guard.",
+      "set": {
+        "attempts.GATE_A:1": 1,
+        "debug_return_to": "GATE_A"
+      }
+    },
+    {
+      "from": "DEBUG",
+      "to": "GATE_A",
+      "edge": "20·GATE_A",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "DEBUG",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Edge 12c. DEBUG spends the CALLER's counter, never one of its own."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Edge 12c. DEBUG spends the CALLER's counter, never one of its own.",
+      "set": {
+        "debug_return_to": null
+      }
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 2,
+            "headline": "Green after the fix, no rerun-worthy finding."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_a1b2"
+      },
+      "observation": "Green after the fix, no rerun-worthy finding.",
+      "set": {
+        "attempts.GATE_A:1": 2
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "DEBUG",
+      "edge": "19·E2E",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 7,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SCRIPTED FAILURE: the component specs this milestone was obliged to write went red on the first run against the real stack — which is the entire…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "authored",
+      "observation": "SCRIPTED FAILURE: the component specs this milestone was obliged to write went red on the first run against the real stack — which is the entire argument for not mocking the API. A mocked spec would have passed.",
+      "set": {
+        "attempts.E2E:1": 1,
+        "debug_return_to": "E2E"
+      }
+    },
+    {
+      "from": "DEBUG",
+      "to": "E2E",
+      "edge": "20·E2E",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 8,
+            "event": "node_done",
+            "node": "DEBUG",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Edge 17."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Edge 17.",
+      "set": {
+        "debug_return_to": null
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 9,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Green on attempt 2 of 3. Counter left at 1, not rewound."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "authored",
+      "observation": "Green on attempt 2 of 3. Counter left at 1, not rewound."
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "edge": "15",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 10,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "CHECKPOINT STOP 1. This is where a milestone now finishes, which is why the checkpoint moved here from MERGE — under the shared tail there is one…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "stops": [
+        {
+          "type": "checkpoint",
+          "answer": "looks right — continue"
+        }
+      ],
+      "observation": "CHECKPOINT STOP 1. This is where a milestone now finishes, which is why the checkpoint moved here from MERGE — under the shared tail there is one merge per run, so a checkpoint at MERGE fired once, after every decision it could have influenced.",
+      "set": {
+        "attempts.GATE_B:1": 1,
+        "cursor": 2,
+        "in_flight": [
+          2
+        ]
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Second worktree. deps [] on both, so in a real run this milestone was building while milestone 1 was."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Second worktree. deps [] on both, so in a real run this milestone was building while milestone 1 was.",
+      "set": {
+        "milestones.1.branch": "PROJ-2/settings-persistence",
+        "milestones.1.worktree": "../.worktrees/PROJ-2"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "b2c3d4e"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "TEST",
+      "to": "DEBUG",
+      "edge": "19·TEST",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SCRIPTED FAILURE: edge 10. Fresh budget — milestone 1 never spent a TEST attempt, and would not have poisoned this one if it had."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SCRIPTED FAILURE: edge 10. Fresh budget — milestone 1 never spent a TEST attempt, and would not have poisoned this one if it had.",
+      "set": {
+        "attempts.TEST:2": 1,
+        "debug_return_to": "TEST"
+      }
+    },
+    {
+      "from": "DEBUG",
+      "to": "TEST",
+      "edge": "20·TEST",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "DEBUG",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Edge 11."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Edge 11.",
+      "set": {
+        "debug_return_to": null
+      }
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Green on attempt 2 of 3."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Green on attempt 2 of 3."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "has_ui is a RUN-level fact and is still true, so the node exists for this milestone too — even though this milestone builds no UI."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_b2c3"
+      },
+      "observation": "has_ui is a RUN-level fact and is still true, so the node exists for this milestone too — even though this milestone builds no UI.",
+      "set": {
+        "attempts.GATE_A:2": 1
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 7,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "touches_ui is FALSE, so no specs are owed and this pass is a regression re-run of the existing set — its own value, and not a skipped gate. This is…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "regression-only",
+      "observation": "touches_ui is FALSE, so no specs are owed and this pass is a regression re-run of the existing set — its own value, and not a skipped gate. This is the case the mandate must NOT fire on."
+    },
+    {
+      "from": "GATE_B",
+      "to": "DEBUG",
+      "edge": "19·GATE_B",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 8,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SCRIPTED FAILURE: edge 19. NO checkpoint stop here — a milestone that just went red has not finished its gates, and a checkpoint is a look at a…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SCRIPTED FAILURE: edge 19. NO checkpoint stop here — a milestone that just went red has not finished its gates, and a checkpoint is a look at a finished milestone.",
+      "set": {
+        "attempts.GATE_B:2": 1,
+        "debug_return_to": "GATE_B"
+      }
+    },
+    {
+      "from": "DEBUG",
+      "to": "GATE_B",
+      "edge": "20·GATE_B",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 9,
+            "event": "node_done",
+            "node": "DEBUG",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Edge 20. The caller's bound is 2, tighter than systematic-debugging's own 3 — the graph's bound wins."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Edge 20. The caller's bound is 2, tighter than systematic-debugging's own 3 — the graph's bound wins.",
+      "set": {
+        "debug_return_to": null
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "CONSOLIDATE",
+      "edge": "16",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 10,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "CHECKPOINT STOP 2, and edge 18d — integration.branch is still null, which is exactly what tells the per-milestone pass from the integration pass."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "stops": [
+        {
+          "type": "checkpoint",
+          "answer": "continue to consolidation"
+        }
+      ],
+      "set": {
+        "in_flight": []
+      },
+      "observation": "CHECKPOINT STOP 2, and edge 18d — integration.branch is still null, which is exactly what tells the per-milestone pass from the integration pass."
+    },
+    {
+      "from": "CONSOLIDATE",
+      "to": "DEBUG",
+      "edge": "19·CONSOLIDATE",
+      "milestone": 2,
+      "observation": "SCRIPTED FAILURE: edge 35. Both branches merged without a textual conflict and the integrated suite still went red — N independently-green branches are not a green whole. A textual conflict would have BLOCKED instead; the two failure modes are kept apart on purpose.",
+      "set": {
+        "attempts.CONSOLIDATE:integration": 1,
+        "debug_return_to": "CONSOLIDATE",
+        "integration.merged": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "from": "DEBUG",
+      "to": "CONSOLIDATE",
+      "edge": "20·CONSOLIDATE",
+      "milestone": 2,
+      "observation": "Edge 36.",
+      "set": {
+        "debug_return_to": null
+      }
+    },
+    {
+      "from": "CONSOLIDATE",
+      "to": "GATE_B",
+      "edge": "18",
+      "milestone": 2,
+      "observation": "Edge 34. Worktrees removed here, not later — they hold checked-out branches. Both milestones move to the CONSOLIDATED sentinel, which is a state value, not a node.",
+      "set": {
+        "integration.branch": "PROJ/integration",
+        "milestones.0.worktree": null,
+        "milestones.1.worktree": null
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 2,
+      "stops": [
+        {
+          "type": "checkpoint",
+          "answer": "integrated diff looks right"
+        }
+      ],
+      "observation": "CHECKPOINT STOP 3, and the integration GATE_B pass — the whole merged diff against main, the cross-milestone interactions no single worktree could see. Counter keyed GATE_B:integration so it cannot spend a milestone's budget.",
+      "set": {
+        "attempts.GATE_B:integration": 1
+      }
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "edge": "21",
+      "milestone": 2,
+      "observation": "Runs on integration.branch, so the plan records what the COMBINED result verified.",
+      "set": {
+        "context.qa_env": {
+          "run_instructions": "simulated",
+          "api_base_url": "http://localhost:3001",
+          "web_base_url": "http://localhost:5173",
+          "api_docs": "/api-json",
+          "identities": [
+            "qa-a",
+            "qa-b"
+          ],
+          "seed": "simulated"
+        }
+      }
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "edge": "22",
+      "milestone": 2,
+      "observation": "One PR for the whole run — the parallelism cost no extra PR churn, which is the point of consolidating locally.",
+      "set": {
+        "milestones.1.pr": 11
+      }
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "edge": "30",
+      "milestone": 2,
+      "observation": "code-review:code-review runs HERE and nowhere else: a PR finally exists for it to read and comment on. Findings become inline PR comments; this node reports and never routes."
+    },
+    {
+      "from": "CI",
+      "to": "QA",
+      "edge": "23",
+      "milestone": 2,
+      "observation": "SIMULATED green checks."
+    },
+    {
+      "from": "QA",
+      "to": "VERDICT",
+      "edge": "25",
+      "milestone": 2,
+      "observation": "SIMULATED PASS-WITH-ISSUES: two S3 findings, no S1 or S2.",
+      "set": {
+        "qa.verdict": "PASS-WITH-ISSUES",
+        "qa.qa_plan_path": "docs/qa/graph-strategy-c-simulated.md",
+        "qa.bugs": [
+          {
+            "severity": "S3",
+            "summary": "SIMULATED cosmetic"
+          },
+          {
+            "severity": "S4",
+            "summary": "SIMULATED nit"
+          }
+        ]
+      }
+    },
+    {
+      "from": "VERDICT",
+      "to": "MERGE",
+      "edge": "27",
+      "milestone": 2,
+      "observation": "Edge 31a. This does not mean clean — the S3/S4 findings become documented follow-ups, and every confirmed finding is converted into a committed test before DONE."
+    },
+    {
+      "from": "MERGE",
+      "to": "DONE",
+      "edge": "29",
+      "milestone": 2,
+      "stops": [
+        {
+          "type": "await-external",
+          "answer": "merged"
+        }
+      ],
+      "observation": "One merge for the whole run — CONSOLIDATE had already collapsed both worktrees into the single branch this node waits on."
+    }
+  ]
+}

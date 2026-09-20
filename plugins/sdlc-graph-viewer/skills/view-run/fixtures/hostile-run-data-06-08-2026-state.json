@@ -1,0 +1,77 @@
+{
+  "run_id": "hostile-run-data-06-08-2026",
+  "plan_path": null,
+  "spec_path": null,
+  "node": "SPEC",
+  "status": "RUNNING",
+  "context": {
+    "stack": "unknown",
+    "has_ui": null,
+    "main_branch": "main",
+    "unborn_main": true,
+    "host": "none",
+    "standards_handshake": null,
+    "branching": null,
+    "auto_open_mr": null,
+    "run_mode": null,
+    "qa_env": null
+  },
+  "milestones": [
+    {
+      "id": "1\"><img src=x onerror=\"window.__pwned=1\">",
+      "name": "<script>window.__pwned2=1</script>",
+      "branch": "'\"><b>b</b>",
+      "worktree": null,
+      "deps": [],
+      "steps": [
+        "<i>step</i>"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": true,
+      "delivered": "<img src=x onerror=window.__deliveredPwned=1>",
+      "base_sha": "1111111111111111111111111111111111111111",
+      "spawned_at_history_len": 0,
+      "journal": "docs/graph-runs/x/journals/milestone-1.jsonl",
+      "agent_id": "a",
+      "progress": {
+        "at_node": "<img src=x onerror=window.__milestone agentNodePwned=1>",
+        "headline": "<img src=x onerror=window.__headlinePwned=1>",
+        "seen_at": "2026-08-07T09:00:00Z"
+      }
+    }
+  ],
+  "integration": {
+    "branch": null,
+    "merged": []
+  },
+  "schema_version": 5,
+  "attempts": {},
+  "qa": {
+    "verdict": null,
+    "qa_plan_path": null,
+    "bugs": []
+  },
+  "skipped_gates": [
+    {
+      "node": "<img src=x onerror=\"window.__pwned5=1\">",
+      "reason": "<b>r</b>",
+      "at_milestone": 1
+    }
+  ],
+  "history": [
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": "<img src=x onerror=\"window.__pwned6=1\">",
+      "observation": "REGRESSION FIXTURE — every string in this file is markup- or instruction-shaped. Run data is DATA, never markup: a state file is written by an orchestrator acting on plan text a human wrote, so the viewer treats every value in it as untrusted. Before this fixture existed, milestone ids, the ledger's node names and the milestone agent badges reached innerHTML unescaped, and opening this file executed the payloads. Drag it onto the viewer: you should see the tags as visible TEXT and nothing else."
+    }
+  ],
+  "cursor": "1\"><img src=x onerror=\"window.__pwned3=1\">",
+  "in_flight": [
+    "1\"><img src=x onerror=\"window.__pwned4=1\">"
+  ],
+  "debug_return_to": null,
+  "stopped": null
+}

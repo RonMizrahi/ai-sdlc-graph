@@ -1,0 +1,387 @@
+{
+  "run_id": "parallel-spawned-10-08-2026",
+  "schema_version": 5,
+  "plan_path": "docs/plans/parallel-spawned-10-08-2026-plan.md",
+  "spec_path": "docs/specs/parallel-spawned-09-08-2026-design.md",
+  "node": "BRANCH",
+  "status": "RUNNING",
+  "stopped": null,
+  "trace": false,
+  "context": {
+    "stack": "both",
+    "has_ui": true,
+    "main_branch": "main",
+    "unborn_main": false,
+    "host": "none",
+    "standards_handshake": null,
+    "branching": "C",
+    "auto_open_mr": true,
+    "run_mode": "continuous",
+    "qa_env": null
+  },
+  "milestones": [
+    {
+      "id": 1,
+      "name": "scaffold",
+      "branch": "milestone-1/scaffold",
+      "worktree": "../.worktrees/m1",
+      "deps": [],
+      "steps": [
+        "scaffold",
+        "tests"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "delivered": "Monorepo scaffold; api+web workspaces; test scripts.",
+      "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "spawned_at_history_len": 4,
+      "main_sha_at_spawn": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "journal": "docs/graph-runs/parallel-spawned-10-08-2026/journals/milestone-1.jsonl",
+      "agent_id": "a1",
+      "gate_a_run_id": null,
+      "progress": null
+    },
+    {
+      "id": 2,
+      "name": "domain",
+      "branch": "milestone-2/domain",
+      "worktree": "../.worktrees/m2",
+      "deps": [
+        1
+      ],
+      "steps": [
+        "schemas",
+        "tests"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "delivered": "Mongoose schemas + repository + seed.",
+      "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "spawned_at_history_len": 10,
+      "main_sha_at_spawn": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "journal": "docs/graph-runs/parallel-spawned-10-08-2026/journals/milestone-2.jsonl",
+      "agent_id": "a2",
+      "gate_a_run_id": null,
+      "progress": null
+    },
+    {
+      "id": 3,
+      "name": "pricing service",
+      "branch": "milestone-3/pricing",
+      "worktree": "../.worktrees/m3",
+      "deps": [
+        2
+      ],
+      "steps": [
+        "pure pricing fn",
+        "exhaustive unit tests"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "delivered": null,
+      "base_sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "spawned_at_history_len": 16,
+      "main_sha_at_spawn": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "journal": "docs/graph-runs/parallel-spawned-10-08-2026/journals/milestone-3.jsonl",
+      "agent_id": "a3",
+      "gate_a_run_id": null,
+      "progress": {
+        "at_node": "IMPLEMENT",
+        "headline": "Pure priceLine/priceOrder written; no deps injected.",
+        "seen_at": "2026-08-10T12:30:00Z"
+      }
+    },
+    {
+      "id": 4,
+      "name": "catalog api",
+      "branch": "milestone-4/catalog-api",
+      "worktree": "../.worktrees/m4",
+      "deps": [
+        2
+      ],
+      "steps": [
+        "service+controller",
+        "integration tests"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "delivered": null,
+      "base_sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "spawned_at_history_len": 16,
+      "main_sha_at_spawn": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "journal": "docs/graph-runs/parallel-spawned-10-08-2026/journals/milestone-4.jsonl",
+      "agent_id": "a4",
+      "gate_a_run_id": null,
+      "progress": {
+        "at_node": "BRANCH",
+        "headline": "Worktree + branch created off the domain tip, clean tree.",
+        "seen_at": "2026-08-10T12:26:00Z"
+      }
+    },
+    {
+      "id": 5,
+      "name": "orders api",
+      "branch": null,
+      "worktree": null,
+      "deps": [
+        3,
+        4
+      ],
+      "steps": [
+        "order schema",
+        "integration tests"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "delivered": null,
+      "base_sha": null,
+      "spawned_at_history_len": null,
+      "main_sha_at_spawn": null,
+      "journal": null,
+      "agent_id": null,
+      "gate_a_run_id": null,
+      "progress": null
+    }
+  ],
+  "cursor": 3,
+  "in_flight": [
+    3,
+    4
+  ],
+  "integration": {
+    "branch": null,
+    "merged": []
+  },
+  "attempts": {
+    "BRANCH:1": 1,
+    "IMPLEMENT:1": 1,
+    "TEST:1": 1,
+    "GATE_A:1": 1,
+    "E2E:1": 1,
+    "GATE_B:1": 1,
+    "BRANCH:2": 1,
+    "IMPLEMENT:2": 1,
+    "TEST:2": 1,
+    "GATE_A:2": 1,
+    "E2E:2": 1,
+    "GATE_B:2": 1
+  },
+  "debug_return_to": null,
+  "qa": {
+    "verdict": null,
+    "qa_plan_path": null,
+    "bugs": []
+  },
+  "skipped_gates": [],
+  "history": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "guard": "spec_path == null",
+      "milestone": null,
+      "observation": "Greenfield: stack unknown, no remote so host=none.",
+      "evidence": null,
+      "verified": null
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "guard": "spec file on disk and user approved",
+      "milestone": null,
+      "observation": "Scope narrowed to one vertical slice.",
+      "evidence": null,
+      "verified": null
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "guard": "plan_path on disk and every milestone has its required steps and user approved",
+      "milestone": null,
+      "observation": "5 milestones, each with test + gate steps.",
+      "evidence": null,
+      "verified": null
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "guard": "branching \u2208 {A,B,C} and milestone deps acyclic and context.has_ui is a boolean",
+      "milestone": 1,
+      "observation": "C chosen; only two waves are genuinely concurrent.",
+      "evidence": null,
+      "verified": null
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "m1 BRANCH completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "m1 IMPLEMENT completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "m1 TEST completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "m1 GATE_A completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "m1 E2E completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes and a milestone remains and integration.branch == null",
+      "milestone": 1,
+      "observation": "m1 GATE_B completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "m2 BRANCH completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "m2 IMPLEMENT completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "m2 TEST completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "m2 GATE_A completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "m2 E2E completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes and a milestone remains and integration.branch == null",
+      "milestone": 2,
+      "observation": "m2 GATE_B completed.",
+      "evidence": {
+        "commits": [
+          "dddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "run_id": null
+      },
+      "verified": "re-ran the suite myself; exit 0."
+    }
+  ]
+}

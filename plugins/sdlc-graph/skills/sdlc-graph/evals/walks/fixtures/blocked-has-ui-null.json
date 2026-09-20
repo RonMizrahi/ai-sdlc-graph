@@ -1,0 +1,132 @@
+{
+  "name": "greenfield with an unresolved has_ui — STRATEGY halts before the loop can start",
+  "why": "The tri-state `has_ui` is the field that erased E2E for a whole run, silently, with no ledger entry: written as `NOT has_ui`, the GATE_A guard matched `null` as if it were `false`. It used to be caught 200 lines later by a dedicated halt edge at GATE_A (12d), tested BEFORE the two real exits, which also needed its own agent itinerary, its own nodes.md callout, its own diagram caveat and its own spec check. It is now caught where the value is settled: STRATEGY already asks the user for every other run-level setting, and edge 6 refuses to leave without a real boolean. This walk is what proves the halt survived the move — the run stops before BRANCH, so no branch, no agent and no gate is ever reached with an unroutable field. The halt names BOTH of STRATEGY's exits as tested, because a zero-match halt has a set of guards that all failed, not one.",
+  "expect": {
+    "final_status": "BLOCKED",
+    "reaches": [
+      "STRATEGY",
+      "BLOCKED"
+    ],
+    "stops": [
+      "SPEC:approval-after",
+      "PLAN:approval-after",
+      "STRATEGY:choice-after"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-greenfield-31-07-2026",
+    "plan_path": null,
+    "spec_path": null,
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "unknown",
+      "has_ui": null,
+      "main_branch": "main",
+      "unborn_main": true,
+      "host": "none",
+      "standards_handshake": null,
+      "branching": null,
+      "auto_open_mr": null,
+      "run_mode": null,
+      "qa_env": null
+    },
+    "milestones": [],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": null,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "edge": "1",
+      "milestone": null,
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "edge": "3",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved"
+        }
+      ],
+      "observation": "SIMULATED.",
+      "set": {
+        "spec_path": "docs/specs/greenfield-31-07-2026-design.md"
+      }
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "edge": "5",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved"
+        }
+      ],
+      "observation": "SCRIPTED DEFECT: PLAN is contractually required to resolve context.has_ui from the approved design on a greenfield run, and this pass did not. Nothing here notices — that is the whole reason GATE_A preflights it.",
+      "set": {
+        "plan_path": "docs/plans/greenfield-31-07-2026-plan.md",
+        "context.stack": "frontend",
+        "milestones.0": {
+          "id": 1,
+          "name": "first screen",
+          "branch": null,
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "scaffold",
+            "unit tests"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": true
+        }
+      }
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BLOCKED",
+      "milestone": 1,
+      "observation": "Greenfield: INTAKE could not detect a UI framework and PLAN did not resolve it, so has_ui is still null. Asked and got no usable answer; halting rather than guessing — a false here deletes E2E for the whole run with nothing written down.",
+      "halt": {
+        "guards_tested": [
+          "branching ∈ {A,B,C} and milestone deps acyclic and context.has_ui is a boolean",
+          "branching == D"
+        ],
+        "tried": [
+          "re-read package.json and the workspace layout for a UI framework — none present yet",
+          "asked the user whether this run will build a user-facing surface; no answer given",
+          "did NOT default it: `NOT null` is true, so a guess of false takes edge 13 and erases E2E"
+        ]
+      },
+      "stops": [
+        {
+          "type": "choice-after",
+          "answer": "A — one branch; auto_open_mr true; continuous. has_ui left unanswered, which is what halts the run"
+        }
+      ]
+    }
+  ]
+}

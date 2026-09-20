@@ -1,0 +1,8 @@
+{
+  "run_id": "legacy-import-04-08-2026",
+  "node": "IMPLEMENT",
+  "status": "RUNNING",
+  "history": [
+    { "from": "BRANCH", "to": "IMPLEMENT", "guard": "branch checked out"
+  ]
+}

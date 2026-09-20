@@ -1,0 +1,1341 @@
+<title>sdlc-graph &mdash; the whole thing, one page</title>
+<style>
+:root{
+  --bg:#0a0d0f; --rail:#0c1012; --panel:#12171a; --panel-2:#182024; --panel-3:#1e282c;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.05);
+  --fg:#e9efef; --fg-2:#a6b8ba; --fg-3:#85989c;
+  --flow:#34d3c0; --flow-dim:rgba(52,211,192,.13);
+  --guard:#f0a94a; --guard-dim:rgba(240,169,74,.13);
+  --stop:#f2705f; --stop-dim:rgba(242,112,95,.13);
+  --hand:#9b8bf4; --hand-dim:rgba(155,139,244,.13);
+  --ok:#5ecb7a; --ok-dim:rgba(94,203,122,.13);
+  --dim:#3c4c50;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Helvetica,sans-serif;
+}
+@media (prefers-color-scheme:light){:root{
+  --bg:#eef1f1; --rail:#f7f9f9; --panel:#ffffff; --panel-2:#f4f7f7; --panel-3:#e9eeee;
+  --line:rgba(13,21,23,.13); --line-2:rgba(13,21,23,.07);
+  --fg:#0d1517; --fg-2:#445457; --fg-3:#5f7276;
+  --flow:#0d8478; --flow-dim:rgba(13,132,120,.11);
+  --guard:#a9691a; --guard-dim:rgba(169,105,26,.12);
+  --stop:#bc4436; --stop-dim:rgba(188,68,54,.11);
+  --hand:#5d4fc0; --hand-dim:rgba(93,79,192,.11);
+  --ok:#2c8639; --ok-dim:rgba(44,134,57,.11);
+  --dim:#a8b6b6;
+}}
+:root[data-theme="light"]{
+  --bg:#eef1f1; --rail:#f7f9f9; --panel:#ffffff; --panel-2:#f4f7f7; --panel-3:#e9eeee;
+  --line:rgba(13,21,23,.13); --line-2:rgba(13,21,23,.07);
+  --fg:#0d1517; --fg-2:#445457; --fg-3:#5f7276;
+  --flow:#0d8478; --flow-dim:rgba(13,132,120,.11);
+  --guard:#a9691a; --guard-dim:rgba(169,105,26,.12);
+  --stop:#bc4436; --stop-dim:rgba(188,68,54,.11);
+  --hand:#5d4fc0; --hand-dim:rgba(93,79,192,.11);
+  --ok:#2c8639; --ok-dim:rgba(44,134,57,.11);
+  --dim:#a8b6b6;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0d0f; --rail:#0c1012; --panel:#12171a; --panel-2:#182024; --panel-3:#1e282c;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.05);
+  --fg:#e9efef; --fg-2:#a6b8ba; --fg-3:#85989c;
+  --flow:#34d3c0; --flow-dim:rgba(52,211,192,.13);
+  --guard:#f0a94a; --guard-dim:rgba(240,169,74,.13);
+  --stop:#f2705f; --stop-dim:rgba(242,112,95,.13);
+  --hand:#9b8bf4; --hand-dim:rgba(155,139,244,.13);
+  --ok:#5ecb7a; --ok-dim:rgba(94,203,122,.13);
+  --dim:#3c4c50;
+}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13.5px;line-height:1.6;
+     -webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left}
+code{font-family:var(--mono);font-size:.92em;background:var(--panel-2);padding:1px 5px;border-radius:5px}
+a{color:var(--flow)}
+:focus-visible{outline:2px solid var(--hand);outline-offset:2px;border-radius:4px}
+@keyframes wpulse{0%,100%{opacity:1}50%{opacity:.25}}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--panel-3);border-radius:9px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- the one menu ---------- */
+.top{position:sticky;top:0;z-index:50;background:var(--rail);border-bottom:1px solid var(--line-2);
+     display:flex;align-items:center;gap:14px;padding:0 20px;flex-wrap:wrap}
+.top .brand{display:flex;align-items:center;gap:8px;font-weight:600;padding:11px 0;white-space:nowrap}
+.top .brand i{width:9px;height:9px;border-radius:3px;background:var(--flow);display:block;
+              animation:wpulse 2.6s infinite}
+.top .brand em{font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+               text-transform:uppercase;color:var(--fg-3)}
+.menu{display:flex;gap:2px;flex-wrap:wrap;flex:1}
+.menu button{padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--fg-3);white-space:nowrap;
+             border-bottom:2px solid transparent;border-radius:8px 8px 0 0}
+.menu button:hover{color:var(--fg-2);background:var(--panel-2)}
+.menu button.on{color:var(--fg);border-bottom-color:var(--flow)}
+.menu button b{font-weight:600}
+.themes{display:flex;gap:3px}
+.themes button{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+               padding:5px 8px;border-radius:6px;color:var(--fg-3)}
+.themes button.on{background:var(--panel-3);color:var(--fg)}
+
+main{padding:24px 26px 70px;max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.view{display:none;flex-direction:column;gap:16px}
+.view.on{display:flex}
+.vh h1{margin:0;font-family:var(--mono);font-size:21px;font-weight:600;letter-spacing:-.025em}
+.vh p{margin:8px 0 0;color:var(--fg-2);max-width:74ch}
+h2{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+   color:var(--fg-3);margin:22px 0 0}
+h3{font-size:14.5px;margin:0 0 6px;letter-spacing:-.01em}
+p{margin:0 0 10px}
+.card{background:var(--panel);border-radius:13px;padding:16px 18px}
+.card>p:last-child,.card>ul:last-child,.card>ol:last-child{margin-bottom:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+.kpi{display:flex;flex-direction:column;gap:5px;padding:14px 16px;border-radius:13px;background:var(--panel)}
+.kpi .v{font-family:var(--mono);font-size:23px;font-weight:600;letter-spacing:-.035em;line-height:1.05}
+.kpi .n{font-size:11.5px;color:var(--fg-3);line-height:1.45}
+.pill{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+      padding:3px 8px;border-radius:6px;color:var(--fg-3);background:var(--panel-2);white-space:nowrap;
+      display:inline-block}
+.pill.flow{color:var(--flow);background:var(--flow-dim)}
+.pill.guard{color:var(--guard);background:var(--guard-dim)}
+.pill.hand{color:var(--hand);background:var(--hand-dim)}
+.pill.stop{color:var(--stop);background:var(--stop-dim)}
+.pill.ok{color:var(--ok);background:var(--ok-dim)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;align-items:start}
+ul.plain,ol.plain{margin:0 0 10px;padding-left:19px}
+ul.plain li,ol.plain li{margin-bottom:5px;color:var(--fg-2)}
+ul.plain li b,ol.plain li b{color:var(--fg)}
+.note{background:var(--panel-2);border-radius:9px;padding:10px 13px;font-size:12.5px;color:var(--fg-2);
+      margin:12px 0 0}
+.note b{color:var(--fg)}
+.note.warn{background:var(--guard-dim)}
+.note.warn b{color:var(--guard)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+.scroll{overflow-x:auto;border-radius:10px}
+th{text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+   color:var(--fg-3);font-weight:600;padding:8px 11px;border-bottom:1px solid var(--line)}
+td{padding:9px 11px;border-bottom:1px solid var(--line-2);vertical-align:top;color:var(--fg-2)}
+td:first-child{color:var(--fg)}
+tr:last-child td{border-bottom:0}
+td .mono,td.m,th.m{font-family:var(--mono);font-size:11.5px}
+.num-col{font-variant-numeric:tabular-nums;text-align:right}
+pre{background:var(--panel-2);border-radius:10px;padding:13px 15px;overflow-x:auto;margin:0 0 12px;
+    font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--fg-2);white-space:pre}
+pre b{color:var(--flow);font-weight:600}
+pre i{color:var(--fg-3);font-style:normal}
+
+/* ---------- green-path stepper ---------- */
+.walkbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.walkbar .btn{display:inline-flex;align-items:center;gap:7px;background:var(--flow-dim);color:var(--flow);
+              font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.1em;
+              text-transform:uppercase;padding:8px 13px;border-radius:8px}
+.walkbar .btn.ghost{background:var(--panel-2);color:var(--fg-3)}
+.walkbar .prog{font-family:var(--mono);font-size:10px;color:var(--fg-3);margin-left:auto;
+               font-variant-numeric:tabular-nums}
+.map{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.map .n{position:relative;display:flex;flex-direction:column;gap:3px;padding:9px 11px;border-radius:9px;
+        background:var(--panel-2);min-width:104px;border:1px solid transparent;transition:.16s}
+.map .n:hover{border-color:var(--line)}
+.map .n .id{font-family:var(--mono);font-size:10.5px;font-weight:600}
+.map .n .who{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+             color:var(--fg-3)}
+.map .n.on{background:var(--flow-dim);border-color:var(--flow)}
+.map .n.on .id{color:var(--flow)}
+.map .n.seen .id{color:var(--fg-2)}
+.map .n.agent::after{content:"";position:absolute;left:0;top:9px;bottom:9px;width:2px;border-radius:2px;
+                    background:var(--flow);opacity:.55}
+.map .n.agent{padding-left:14px}
+.map .n .ask{position:absolute;top:-5px;right:-4px;width:8px;height:8px;border-radius:50%;
+             background:var(--hand);border:2px solid var(--panel)}
+.map .n .wf{position:absolute;top:-5px;right:-4px;font-family:var(--mono);font-size:8px;font-weight:700;
+            background:var(--guard);color:var(--bg);border-radius:4px;padding:0 3px}
+.map .arr{align-self:center;color:var(--fg-3);font-size:11px;opacity:.5}
+.map .n.off{background:var(--stop-dim)}
+.map .n.off .id{color:var(--stop)}
+
+/* ---------- the shared node card (Run panel, Graph panel, Nodes catalog) ---------- */
+.ncard{background:var(--panel);border-radius:13px;padding:17px 19px;border:1px solid var(--line-2)}
+.ncard .dh{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:3px}
+.ncard .dh h3{font-family:var(--mono);font-size:16px;margin:0}
+.ncard .owner{font-size:12px;color:var(--fg-2);margin:0 0 12px}
+.ncard .owner b{color:var(--fg);font-weight:600}
+.acts{list-style:none;margin:0 0 13px;padding:0;display:flex;flex-direction:column;gap:7px}
+/* NOT display:flex on the li. Each step is inline prose with <code> and <b> inside it, and a flex
+   li turns every one of those into its own flex item -- the text lays out in ragged columns. */
+.acts li{position:relative;padding-left:28px;font-size:13px;color:var(--fg-2)}
+.acts li b{color:var(--fg)}
+.acts li::before{counter-increment:a;content:counter(a);position:absolute;left:0;top:2px;
+                 width:18px;height:18px;border-radius:5px;
+                 background:var(--panel-3);color:var(--fg-3);font-family:var(--mono);font-size:9.5px;
+                 font-weight:600;display:flex;align-items:center;justify-content:center;
+                 font-variant-numeric:tabular-nums}
+.acts{counter-reset:a}
+.prow{display:flex;gap:12px;padding:7px 0;border-top:1px solid var(--line-2);font-size:12.5px}
+.prow dt{flex:0 0 96px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+         color:var(--fg-3);padding-top:2px}
+.prow dd{margin:0;color:var(--fg-2);min-width:0;overflow-wrap:anywhere}
+.ncard dl{margin:0}
+.catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;align-items:start}
+
+/* ---------- graph view (from topologies, restyled onto the shared palette) ---------- */
+.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.tab{background:var(--panel);border-radius:11px;padding:12px 14px;display:flex;flex-direction:column;
+     gap:3px;border:1px solid transparent;transition:.15s}
+.tab:hover{border-color:var(--line)}
+.tab[aria-selected="true"]{border-color:var(--flow);background:var(--flow-dim)}
+.tab .tk{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--fg-3)}
+.tab[aria-selected="true"] .tk{color:var(--flow)}
+.tab .tn{font-size:13px;font-weight:600}
+.tab .td{font-size:11.5px;color:var(--fg-3)}
+.tab .qa-pill{margin-top:5px;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
+              text-transform:uppercase;padding:2px 7px;border-radius:5px;align-self:flex-start}
+.tab .qa-pre{background:var(--ok-dim);color:var(--ok)}
+.tab .qa-non{background:var(--hand-dim);color:var(--hand)}
+.controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.btn{background:var(--panel-2);color:var(--fg-3);font-family:var(--mono);font-size:10px;
+     letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border-radius:7px}
+.btn:hover{color:var(--fg)}
+.btn[aria-pressed="true"]{background:var(--flow-dim);color:var(--flow)}
+.btn:disabled{opacity:.35;cursor:default}
+.spacer{flex:1}
+.trace-pos{font-family:var(--mono);font-size:10px;color:var(--fg-3);font-variant-numeric:tabular-nums}
+.stage{background:var(--panel);border-radius:13px;padding:16px;overflow-x:auto}
+.canvas{position:relative;min-width:760px}
+.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.band{position:relative;padding:9px 0 14px}
+.band-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+            color:var(--fg-3);margin-bottom:8px}
+.band.boxed{border:1px dashed var(--line);border-radius:11px;padding:11px 12px 14px;margin-bottom:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:2}
+.row.center{justify-content:center}
+/* These class names are the engine's, not mine -- build() emits a .nwrap column holding one
+   .node button and its .nb badges. Inventing prettier names here just leaves them unstyled. */
+.node{appearance:none;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.02em;
+      border:1.5px solid var(--flow);color:var(--flow);background:var(--flow-dim);
+      padding:8px 11px;border-radius:7px;cursor:pointer;position:relative;z-index:2;white-space:nowrap;
+      transition:transform .1s,box-shadow .1s}
+.node:hover{transform:translateY(-1px)}
+.node.gate{border-color:var(--guard);color:var(--guard);background:var(--guard-dim)}
+.node.dbg{border-color:var(--stop);color:var(--stop);background:var(--stop-dim)}
+.node.term{border-color:var(--fg-3);color:var(--fg-2);background:var(--panel-3)}
+.node.hand{border-color:var(--hand);color:var(--hand);background:var(--hand-dim)}
+.node[aria-pressed="true"]{box-shadow:0 0 0 3px var(--flow-dim),0 0 0 4.5px var(--flow)}
+.node.faded{opacity:.28;filter:grayscale(1)}
+.node.on-path{box-shadow:0 0 0 3px var(--guard-dim),0 0 0 4.5px var(--guard)}
+.nwrap{display:flex;flex-direction:column;gap:5px;align-items:flex-start;max-width:150px}
+.nb{font-family:var(--mono);font-size:9px;letter-spacing:.03em;color:var(--guard);line-height:1.35;
+    white-space:normal}
+.nb.q{color:var(--fg-3);font-style:italic}
+.nb.pos{color:var(--flow)}
+.loopbox{border:1px dashed var(--line);border-radius:11px;padding:11px 12px 14px}
+.panel{background:var(--panel);border-radius:13px;padding:17px 19px;border:1px solid var(--line-2)}
+.panel-empty{color:var(--fg-3);margin:0;font-size:12.5px}
+.pid{font-family:var(--mono);font-size:16px;font-weight:600;margin:0 0 2px}
+.powner{font-size:12px;color:var(--fg-2);margin:0 0 12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--fg-3);padding:0 2px}
+.legend .sw{display:inline-block;width:22px;border-top:2px solid;margin-right:5px;
+            transform:translateY(-3px)}
+.before-after{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+.ba{background:var(--panel);border-radius:13px;padding:16px 18px}
+.ba.old{opacity:.85}
+.ba h3{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+       color:var(--fg-3);margin-bottom:10px}
+.ba.new h3{color:var(--flow)}
+.seq{font-family:var(--mono);font-size:11px;background:var(--panel-2);border-radius:8px;padding:9px 11px;
+     margin-bottom:8px;overflow-x:auto;white-space:nowrap;color:var(--fg-2)}
+.seq .hi{color:var(--guard);font-weight:600}
+.ba ul{margin:10px 0 0;padding-left:18px;font-size:12.5px}
+.ba li{margin-bottom:6px;color:var(--fg-2)}
+.ba li b{color:var(--fg)}
+.new{color:var(--flow)} .gone{color:var(--fg-3);text-decoration:line-through}
+
+/* ---------- files view ---------- */
+.tag{font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+     padding:2px 6px;border-radius:5px;margin-right:7px}
+.t-md{background:var(--flow-dim);color:var(--flow)}
+.t-js{background:var(--guard-dim);color:var(--guard)}
+.t-ag{background:var(--hand-dim);color:var(--hand)}
+.t-cf{background:var(--panel-3);color:var(--fg-3)}
+.t-det{background:var(--flow-dim);color:var(--flow)}
+.t-exe{background:var(--hand-dim);color:var(--hand)}
+.tree td.f{font-family:var(--mono);font-size:11.5px;white-space:nowrap}
+.tree td.w{font-family:var(--mono);font-size:10px;color:var(--fg-3);white-space:nowrap}
+.ind{color:var(--fg-3)}
+.flowline{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.flowline .box{background:var(--panel-2);border-radius:7px;padding:6px 10px;font-family:var(--mono);
+               font-size:10.5px;color:var(--fg-2)}
+.flowline .box.a{background:var(--hand-dim);color:var(--hand)}
+.flowline .box.j{background:var(--guard-dim);color:var(--guard)}
+.flowline .box.d{background:var(--flow-dim);color:var(--flow)}
+.flowline .arw{color:var(--fg-3)}
+
+.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line-2);display:flex;gap:18px;
+      flex-wrap:wrap;font-family:var(--mono);font-size:9.5px;color:var(--fg-3)}
+@media (max-width:820px){
+  main{padding:18px 14px 50px}
+  .prow{flex-direction:column;gap:3px}
+  .prow dt{flex:none}
+}
+</style>
+
+<nav class="top">
+  <div class="brand"><i></i> sdlc-graph <em>v1.0.3</em></div>
+  <div class="menu" id="menu" role="tablist">
+    <button role="tab" data-v="run" class="on"><b>Run</b></button>
+    <button role="tab" data-v="graph"><b>Graph</b></button>
+    <button role="tab" data-v="nodes"><b>Nodes</b></button>
+    <button role="tab" data-v="delegation"><b>Delegation</b></button>
+    <button role="tab" data-v="files"><b>Files &amp; state</b></button>
+    <button role="tab" data-v="testing"><b>Testing</b></button>
+  </div>
+  <div class="themes">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+    <button data-theme="auto" class="on">Auto</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============================== RUN ============================== -->
+<section class="view on" id="v-run">
+  <div class="vh">
+    <h1>What actually happens when you run it</h1>
+    <p>One guarded graph drives a feature from an idea to a merged PR. The orchestrator evaluates every
+       guard and owns the run state; a <b>milestone agent</b> runs each milestone's six-node loop and returns
+       one verified bundle. Walk the green path below &mdash; every node shows what it actually does, what
+       it writes, and where it can go next.</p>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><span class="v">19</span><span class="n">nodes &mdash; 17 on the green path, 2 only on failure</span></div>
+    <div class="kpi"><span class="v">42</span><span class="n">guarded edges. Zero matches is <code>BLOCKED</code>, never a guess</span></div>
+    <div class="kpi"><span class="v">10</span><span class="n">bounded retry cycles, each with its own counter</span></div>
+    <div class="kpi"><span class="v">6</span><span class="n">human stops &mdash; 14 of 20 nodes never ask</span></div>
+    <div class="kpi"><span class="v">1</span><span class="n">Workflow script in the whole graph, at <code>GATE_A</code></span></div>
+    <div class="kpi"><span class="v">14</span><span class="n">return-gate checks, R0&ndash;R13, before any hop is recorded</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Three rules the rest follows from</h3>
+    <ul class="plain">
+      <li><b>The orchestrator evaluates every guard. The milestone agent evaluates none.</b> A milestone agent is handed a
+          fixed itinerary computed before the spawn, and branches inside it only on facts &mdash; a red
+          suite goes to <code>DEBUG</code>. It never decides which edge the run takes.</li>
+      <li><b>Verify before you record.</b> Nothing enters <code>history[]</code> until the returned
+          bundle passes R0&ndash;R13, and seven of those checks read the world (git, the test suite, the
+          filesystem) rather than the bundle.</li>
+      <li><b>A gate that could not run is written down, not skipped silently.</b> An absent tool appends
+          a <code>skipped_gates[]</code> entry, the node may never be recorded as passed, and the run
+          proceeds. The ledger is the cost; the halt would be the bug.</li>
+    </ul>
+  </div>
+
+  <h2>The green path &mdash; click any node, or walk it</h2>
+  <div class="card">
+    <div class="walkbar">
+      <button class="btn" id="play">&#9654;&nbsp; Walk the green path</button>
+      <button class="btn ghost" id="reset">Reset</button>
+      <button class="btn ghost" id="toggleLoops">Show failure nodes</button>
+      <span class="prog" id="prog">step 1 / 17</span>
+    </div>
+    <div class="map" id="map"></div>
+    <div id="walkcard" style="margin-top:14px"></div>
+    <p class="note"><b>Reading the map.</b> A teal bar on the left edge marks the six nodes a
+      <b>milestone agent</b> runs in one spawn &mdash; the orchestrator sees none of them until the milestone agent
+      returns. A purple dot marks a human stop. <span class="pill guard" style="font-size:8px">WF</span>
+      marks the one node that dispatches a Workflow script. For the same nodes drawn as a graph, with
+      loop-backs and per-strategy paths, see <a href="#" data-goto="graph">Graph</a>.</p>
+  </div>
+</section>
+
+<!-- ============================== GRAPH ============================== -->
+<section class="view" id="v-graph">
+  <div class="vh">
+    <h1>Four ways to build it. One way to ship it.</h1>
+    <p>Same 20 nodes. The branching strategy decides <b>how the milestones get built</b> &mdash; and
+       nothing else. From <code>CLOSE_OUT</code> onward every strategy runs the identical tail:
+       <code>PR &rarr; CI &rarr; QA &rarr; VERDICT &rarr; MERGE &rarr; DONE</code>. Pick a strategy, then
+       <b>click any node</b> for its contract or <b>step the trace</b> to walk the run.</p>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Branching strategy">
+    <button class="tab" role="tab" id="tab-A" aria-selected="true"  data-s="A"><span class="tk">A</span><span class="tn">One branch, one MR</span><span class="td">recommended default &middot; sequential</span><span class="qa-pill qa-pre">QA gates the merge</span></button>
+    <button class="tab" role="tab" id="tab-B" aria-selected="false" data-s="B"><span class="tk">B</span><span class="tn">Current branch</span><span class="td">BRANCH is a no-op throughout</span><span class="qa-pill qa-pre">QA gates the merge</span></button>
+    <button class="tab" role="tab" id="tab-C" aria-selected="false" data-s="C"><span class="tk">C</span><span class="tn">Branch per milestone</span><span class="td">worktrees &middot; the only parallel shape</span><span class="qa-pill qa-pre">QA gates the merge</span></button>
+    <button class="tab" role="tab" id="tab-D" aria-selected="false" data-s="D"><span class="tk">D</span><span class="tn">Hand off to /batch</span><span class="td">the graph stops &mdash; you run it</span><span class="qa-pill qa-non">outside the graph</span></button>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="t-debug" aria-pressed="true">hide debug edges</button>
+    <button class="btn" id="t-guards" aria-pressed="true">guard labels</button>
+    <span class="spacer"></span>
+    <span class="trace-pos" id="tpos">trace off</span>
+    <button class="btn" id="t-prev" disabled>&lsaquo; prev</button>
+    <button class="btn" id="t-next">trace &rsaquo;</button>
+    <button class="btn" id="t-reset">reset</button>
+  </div>
+
+  <div class="stage">
+    <div class="canvas" id="canvas">
+      <svg class="wires" id="wires" aria-hidden="true"></svg>
+      <div id="bands"></div>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="lg"><span class="sw" style="border-color:var(--flow)"></span> forward flow</span>
+    <span class="lg"><span class="sw" style="border-color:var(--guard);border-top-style:dashed"></span> loop-back</span>
+    <span class="lg"><span class="sw" style="border-color:var(--stop);border-top-style:dotted"></span> debug round-trip</span>
+    <span class="lg"><span class="sw" style="border-color:var(--hand)"></span> hand-off</span>
+    <span class="lg">greyed node = not on this strategy's path</span>
+    <span class="lg">DEBUG is on every path &mdash; its edges are toggled, not the node</span>
+  </div>
+  <div class="panel" id="panel"><p class="panel-empty">Click a node to see its contract &mdash; owner, what it writes to run state, its exit guards, and its retry bound.</p></div>
+  <div id="snote"></div>
+
+  <h2>What changed, and why</h2>
+  <div class="before-after">
+    <div class="ba old">
+      <h3>before &mdash; three different tails</h3>
+      <div class="seq"><b>A/B</b> &nbsp;GATE_B &rarr; PR &rarr; CI &rarr; <span class="hi">MERGE</span> &rarr; CLOSE_OUT &rarr; QA &rarr; VERDICT &rarr; DONE</div>
+      <div class="seq"><b>C</b> &nbsp;&nbsp;&nbsp;GATE_B &rarr; PR &rarr; CI &rarr; <span class="hi">MERGE</span> &rarr; BRANCH &rarr; &hellip; &rarr; CLOSE_OUT &rarr; QA &rarr; VERDICT</div>
+      <ul>
+        <li>Everything after <code>MERGE</code> committed <b>past the only review gate</b>: plan-file updates, <code>CLAUDE.md</code> changes, the QA plan and report &mdash; and per <code>VERDICT</code>, <b>every confirmed finding converted into a committed test</b>.</li>
+        <li>A <code>BLOCK</code> verdict meant broken work was <b>already in <code>main</code></b> and had to be fixed forward.</li>
+        <li>C bought independent landing with a <b>PR, a CI run and a merge per milestone</b> &mdash; and its "parallel worktrees" were a note in a script nothing dispatched.</li>
+      </ul>
+    </div>
+    <div class="ba new">
+      <h3>after &mdash; one tail, three loops</h3>
+      <div class="seq"><b>A/B</b> &nbsp;GATE_B &rarr; &#9131;</div>
+      <div class="seq"><b>C</b> &nbsp;&nbsp;&nbsp;GATE_B &rarr; CONSOLIDATE &rarr; GATE_B &rarr; &#9132; CLOSE_OUT &rarr; PR &rarr; CI &rarr; QA &rarr; VERDICT &rarr; <span class="hi">MERGE</span> &rarr; DONE</div>
+      <ul>
+        <li>The diff a human approves <b>carries its own QA verdict</b>, plan updates, <code>CLAUDE.md</code> changes and regression tests.</li>
+        <li>A <code>BLOCK</code> <b>never reaches <code>main</code></b> &mdash; it re-enters at <code>BRANCH</code> on the one open branch, and pushes to the already-open PR.</li>
+        <li><b>C is genuinely parallel</b>: a worktree per milestone, independent ones concurrent, merged locally into one integration branch. <b>One PR, one QA pass, one merge</b> &mdash; under every strategy.</li>
+        <li><b>The concurrency is real now, not a note in a script nothing dispatched.</b> Each milestone's loop runs in its own <b>milestone agent</b>, and under C they are spawned together.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note"><b>Why CI still comes before QA.</b> <code>CI</code>'s input is
+    <code>milestones[cursor].pr</code> &mdash; it needs an open PR to watch, so it cannot precede
+    <code>PR</code>. And QA-ing a branch that fails CI wastes the most expensive node in the graph.</div>
+
+  <h2>CONSOLIDATE &mdash; the node that lets C rejoin the tail</h2>
+  <div class="card">
+    <div class="scroll"><table>
+      <tr><th class="m">Step</th><th>What it does</th><th>Why it is not optional</th></tr>
+      <tr><td class="m">1</td><td>Create <code>&lt;task-id&gt;/integration</code> off <code>main</code></td><td>The one branch everything downstream acts on &mdash; <code>PR</code>, <code>CI</code>, <code>QA</code>, <code>MERGE</code>.</td></tr>
+      <tr><td class="m">2</td><td>Merge every milestone branch, <b>parents before children</b></td><td>A dependent milestone was branched off its parent. Out of order, the parent's commits replay as conflicts against a base that does not contain them.</td></tr>
+      <tr><td class="m">3</td><td>Run the <b>integrated</b> unit + integration suite</td><td><b>N independently-green branches are not a green whole.</b> This is the only place a semantic conflict can surface before CI.</td></tr>
+      <tr><td class="m">4</td><td><code>git worktree remove</code> each one</td><td>Worktrees hold checked-out branches; leaving them makes later branch deletion fail. Failure here is a <code>skipped_gates[]</code> entry, never a block.</td></tr>
+    </table></div>
+    <p class="note"><b>Two failure modes, kept deliberately apart.</b> A <b>textual</b> conflict &mdash;
+      two milestones edited the same lines &mdash; goes to <code>BLOCKED</code> with the paths named, because
+      git cannot resolve it and the graph must not guess. A <b>semantic</b> conflict &mdash; git merged cleanly
+      and the suite went red &mdash; goes to <code>DEBUG</code>, bounded at 3, because that is a real defect with
+      a root cause.</p>
+  </div>
+
+  <h2>The transition table</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0"><b>30 rows, 40 transitions, 20 nodes.</b> Rows 19 and 20 are
+      <b>rules</b>: six nodes route to <code>DEBUG</code> on a red result and it returns to whichever
+      called it. They were twelve hand-written rows &mdash; 29% of the table, six of the ten bound
+      rows, and six <code>debug_return_to = X</code> clauses &mdash; all restating one sentence
+      <code>DEBUG</code>’s own contract already carried. The checkers expand them, so the table is
+      shorter and the coverage gate is not.</p>
+    <div class="scroll"><table>
+      <tr><th class="m">#</th><th class="m">From &rarr; To</th><th>Guard</th><th class="m">Bound</th></tr>
+      <tr><td class="m">1</td><td class="m">INTAKE &rarr; SPEC</td><td>spec_path == null</td><td class="m">—</td></tr>
+      <tr><td class="m">2</td><td class="m">INTAKE &rarr; PLAN</td><td>spec_path != null</td><td class="m">—</td></tr>
+      <tr><td class="m">3</td><td class="m">SPEC &rarr; PLAN</td><td>spec file on disk and user approved</td><td class="m">—</td></tr>
+      <tr><td class="m">4</td><td class="m">PLAN &rarr; PLAN</td><td>user requested revisions — rewrite the file in place</td><td class="m">unbounded (user-driven)</td></tr>
+      <tr><td class="m">5</td><td class="m">PLAN &rarr; STRATEGY</td><td>plan_path on disk and every milestone has its required steps and user approved</td><td class="m">—</td></tr>
+      <tr><td class="m">6</td><td class="m">STRATEGY &rarr; BRANCH</td><td>branching ∈ {A,B,C} and milestone deps acyclic and context.has_ui is a boolean</td><td class="m">—</td></tr>
+      <tr><td class="m">7</td><td class="m">STRATEGY &rarr; HANDOFF</td><td>branching == D</td><td class="m">—</td></tr>
+      <tr><td class="m">8</td><td class="m">BRANCH &rarr; IMPLEMENT</td><td>branch checked out</td><td class="m">—</td></tr>
+      <tr><td class="m">9</td><td class="m">IMPLEMENT &rarr; TEST</td><td>every step this node owns is committed — a step whose deliverable is a test belongs to TEST and is owed at 10, never here</td><td class="m">—</td></tr>
+      <tr><td class="m">10</td><td class="m">TEST &rarr; GATE_A</td><td>every step TEST owns is committed and unit and integration not red — an absent suite is recorded to skipped_gates[] and never counted as passed</td><td class="m">—</td></tr>
+      <tr><td class="m">11</td><td class="m">GATE_A &rarr; GATE_A</td><td>step 4 found a real bug/security/regression and attempts &lt; 2</td><td class="m">1 re-run</td></tr>
+      <tr><td class="m">12</td><td class="m">GATE_A &rarr; E2E</td><td>tests green and (no rerun-worthy finding or re-run budget spent) and context.has_ui == true</td><td class="m">—</td></tr>
+      <tr><td class="m">13</td><td class="m">GATE_A &rarr; GATE_B</td><td>tests green and (no rerun-worthy finding or re-run budget spent) and context.has_ui == false</td><td class="m">—</td></tr>
+      <tr><td class="m">14</td><td class="m">E2E &rarr; GATE_B</td><td>journeys not red — an app that genuinely cannot be brought up while has_ui is recorded to skipped_gates[] and never counted as passed. Playwright merely uninstalled is NOT that case — install it (nodes.md § E2E)</td><td class="m">—</td></tr>
+      <tr><td class="m">15</td><td class="m">GATE_B &rarr; BRANCH</td><td>tests green after review-and-fixes and a milestone remains and integration.branch == null</td><td class="m">—</td></tr>
+      <tr><td class="m">16</td><td class="m">GATE_B &rarr; CONSOLIDATE</td><td>tests green after review-and-fixes and branching == C and no milestone remains and integration.branch == null</td><td class="m">—</td></tr>
+      <tr><td class="m">17</td><td class="m">GATE_B &rarr; CLOSE_OUT</td><td>tests green after review-and-fixes and ((branching ∈ {A,B} and no milestone remains) or (branching == C and integration.branch != null — the integration pass))</td><td class="m">—</td></tr>
+      <tr><td class="m">18</td><td class="m">CONSOLIDATE &rarr; GATE_B</td><td>every milestone branch merged into integration.branch and the integrated suite is green</td><td class="m">—</td></tr>
+      <tr><td class="m">19</td><td class="m">any of TEST · E2E · GATE_A · GATE_B · CI · CONSOLIDATE &rarr; DEBUG</td><td>that node&#x27;s result is red</td><td class="m">the calling node&#x27;s max attempts</td></tr>
+      <tr><td class="m">20</td><td class="m">DEBUG &rarr; the node named in debug_return_to</td><td>root cause fixed</td><td class="m">—</td></tr>
+      <tr><td class="m">21</td><td class="m">CLOSE_OUT &rarr; PR</td><td>— unconditional, every strategy; the work still has to be merged</td><td class="m">—</td></tr>
+      <tr><td class="m">22</td><td class="m">PR &rarr; CI</td><td>PR/MR open</td><td class="m">—</td></tr>
+      <tr><td class="m">23</td><td class="m">CI &rarr; QA</td><td>checks passing (or context.host ∈ {gitlab, none} — CI out of scope or no remote, logged to skipped_gates[]) and the app is assembled and runnable</td><td class="m">—</td></tr>
+      <tr><td class="m">24</td><td class="m">CI &rarr; MERGE</td><td>checks passing and the plan produced nothing runnable</td><td class="m">—</td></tr>
+      <tr><td class="m">25</td><td class="m">QA &rarr; VERDICT</td><td>verdict returned</td><td class="m">—</td></tr>
+      <tr><td class="m">26</td><td class="m">VERDICT &rarr; MERGE</td><td>verdict == PASS</td><td class="m">—</td></tr>
+      <tr><td class="m">27</td><td class="m">VERDICT &rarr; MERGE</td><td>verdict == PASS-WITH-ISSUES and no S1/S2</td><td class="m">—</td></tr>
+      <tr><td class="m">28</td><td class="m">VERDICT &rarr; BRANCH</td><td>verdict == BLOCK or any S1/S2 present</td><td class="m">2 reopens</td></tr>
+      <tr><td class="m">29</td><td class="m">MERGE &rarr; DONE</td><td>PR confirmed merged</td><td class="m">—</td></tr>
+    </table></div>
+    <p class="note"><b><code>[start]</code> and <code>[end]</code> are notation, not nodes.</b>
+      They were rows of this table for two releases, costing two transitions, two coverage
+      obligations and a fixture step apiece to assert that a graph starts where it starts.</p>
+  </div>
+</section>
+
+<!-- ============================== NODES ============================== -->
+<section class="view" id="v-nodes">
+  <div class="vh">
+    <h1>Every node, and what it owns</h1>
+    <p>All 19 contracts, from the same dataset the Run stepper and the Graph panel read &mdash; so there is
+       no second copy to drift. Every node declares the same shape:
+       <code>action &middot; emits &middot; exit guards &middot; max attempts &middot; requires</code>. A missing
+       <code>requires</code> tool writes a skipped-gate entry and the node <b>may never be recorded as
+       passed</b>.</p>
+  </div>
+  <div id="catalog"></div>
+</section>
+
+<!-- ============================== DELEGATION ============================== -->
+<section class="view" id="v-delegation">
+  <div class="vh">
+    <h1>How the work is handed out, and how it is checked coming back</h1>
+    <p>The graph delegates two ways: <b>one Workflow script</b>, for the one node whose work is wide
+       rather than deep, and <b>one milestone agent per milestone</b>, which keeps whole diffs and test output
+       out of the orchestrator's context. Both are only safe because of what happens on the return.</p>
+  </div>
+
+  <h2>Where the Workflow is, and what it does</h2>
+  <div class="card">
+    <h3>Exactly one node dispatches a Workflow: <code>GATE_A</code></h3>
+    <p>Everything else in this graph is an orchestrator turn or an agent. <code>GATE_A</code> is the
+       exception because it is the one node whose work is <em>wide</em> &mdash; every changed file needs four
+       review passes, and a single agent told to read 40 files properly cannot. The script exists to fan
+       that out without losing coverage.</p>
+    <pre>Workflow({
+  scriptPath: "${CLAUDE_PLUGIN_ROOT}/skills/sdlc-graph/workflows/<b>gate-a.workflow.js</b>",
+  args: {
+    <b>files</b>:         ["src/auth/auth.service.ts", "src/auth/auth.controller.ts"],  <i>// array, repo-relative</i>
+    <b>milestone</b>:     2,                                        <i>// labelling only</i>
+    <b>tools</b>:         { reviewer: true, simplifier: false, security: true },  <i>// the preflight result</i>
+    <b>filesPerGroup</b>: 12                                        <i>// quality limit, not a cap</i>
+  }
+})</pre>
+    <div class="two">
+      <div>
+        <h3>What it does, in order</h3>
+        <ol class="plain">
+          <li><b>Validates <code>files</code>.</b> A stringified list does not throw &mdash; strings are
+              iterable, so it would silently walk characters and review nothing. The script refuses it,
+              along with absolute paths and any <code>..</code> segment.</li>
+          <li><b>Groups by directory</b> &mdash; a "logical module", so the reviewer sees the service, its
+              controller and its tests as one thing. A module larger than <code>filesPerGroup</code> is
+              <b>split, never truncated</b>.</li>
+          <li><b>Runs four steps per file, strictly in order</b>: Code Review &rarr; Simplification &rarr;
+              Security Review &rarr; Final Review, <b>applying each step's findings before the next</b>.
+              Groups run concurrently; the steps within a file do not.</li>
+          <li><b>Re-verifies unit + integration</b> &mdash; steps 2 and 3 edited code that was green on
+              entry.</li>
+          <li><b>Returns the whole result object</b>, which the milestone agent puts in
+              <code>evidence.gate_a</code> untouched. It chooses no edge.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>What comes back</h3>
+        <pre>{ clean, <b>rerun_recommended</b>, rerun_reasons,
+  findings, skipped_steps, tools_asserted,
+  applied, uncovered,
+  groups_completed, groups_total,
+  files_reviewed, files_supplied, groups }</pre>
+        <p class="note"><b>The graph routes on <code>rerun_recommended</code>, never on
+          <code>clean</code>.</b> <code>clean</code> also goes false when a reviewer is merely
+          <em>absent</em> &mdash; routing on it meant "reviewer not installed + suite green" matched
+          <b>zero guards</b>, and a real run halted on it twice.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>It degrades context, never coverage</h3>
+    <p>Group <em>count</em> is derived from <code>filesPerGroup</code> and is deliberately uncapped &mdash;
+       <code>pipeline()</code> queues, so 85 groups all complete at roughly 16 at a time. Concurrency has
+       never limited what gets reviewed.</p>
+    <div class="scroll"><table>
+      <tr><th>Files</th><th class="num-col">Groups</th><th class="num-col">Agents</th><th class="num-col">Files per agent</th><th>Behaviour</th></tr>
+      <tr><td class="m">100</td><td class="num-col">10</td><td class="num-col">40</td><td class="num-col">12</td><td>nominal</td></tr>
+      <tr><td class="m">1,000</td><td class="num-col">85</td><td class="num-col">340</td><td class="num-col">12</td><td>nominal</td></tr>
+      <tr><td class="m">5,000</td><td class="num-col">240</td><td class="num-col">960</td><td class="num-col">22</td><td>groups auto-widened, and it says so</td></tr>
+    </table></div>
+    <p class="note">The one hard limit is the Workflow runtime's <b>1,000 agents per script lifetime</b>.
+      Past roughly 2,850 files the script widens groups to fit rather than dropping files, so
+      <code>uncovered</code> should always be empty &mdash; a non-empty one is a bug, not an expected
+      outcome. <b>This is also why the milestone loop is an Agent and not a script:</b> a milestone agent script
+      driving three milestones would pull three fan-outs into one 1,000-agent budget and exhaust it
+      silently, mid-run, on the third.</p>
+  </div>
+
+  <div class="card">
+    <h3>When there is no <code>Workflow</code> tool</h3>
+    <p>The tool is <b>not guaranteed inside a subagent session</b>, and a real run found that out: the
+       milestone agent there ran Gate A's four steps by dispatching the reviewers directly &mdash; same order, same
+       files, same fixes applied, no script. So the milestone agent <em>says how it ran the gate</em>, and the
+       return gate reads it accordingly.</p>
+    <div class="scroll"><table>
+      <tr><th><code>gate_a.dispatch</code></th><th>Means</th><th><code>run_id</code> / <code>groups_*</code></th><th><code>groups_completed == 0</code></th></tr>
+      <tr><td class="m">"workflow"</td><td>the script ran</td><td>required; the runId must appear in the milestone agent's journal</td><td><b>dispatch failure</b> &mdash; counts <code>GATE_A-dispatch</code></td></tr>
+      <tr><td class="m">"direct"</td><td>no Workflow tool here; four steps ran as agents</td><td><b><code>null</code></b> &mdash; inventing either is fabrication</td><td>meaningless; there were never any groups. <b>Charges nothing</b></td></tr>
+    </table></div>
+    <p class="note"><b><code>direct</code> is not a skipped gate.</b> The gate ran; only its dispatcher
+      differed. Ledgering it would record that Gate A did not happen &mdash; false &mdash; and would then
+      bar the node from being recorded as passed, penalising a run for the shape of its own runtime.
+      What <code>direct</code> costs is the script's coverage arithmetic, so <code>files_supplied</code>,
+      <code>uncovered_count</code> and <code>applied &sube; git diff</code> carry that weight instead.</p>
+  </div>
+
+  <h2>The milestone agent</h2>
+  <div class="card">
+    <h3>One agent, one milestone, six nodes, one return</h3>
+    <p>The orchestrator spawns <b>one milestone agent per milestone</b> and hands it a fixed itinerary. Between the
+       spawn and the return it runs the whole loop &mdash;
+       <code>BRANCH &rarr; IMPLEMENT &rarr; TEST &rarr; GATE_A &rarr; [E2E] &rarr; GATE_B</code> &mdash;
+       plus any <code>DEBUG</code> round-trips those nodes route to.</p>
+    <div class="scroll"><table>
+      <tr><th><code>context.has_ui</code></th><th>Itinerary, fixed at spawn time</th></tr>
+      <tr><td class="m">true</td><td class="m">BRANCH &rarr; IMPLEMENT &rarr; TEST &rarr; GATE_A &rarr; E2E &rarr; GATE_B, then return</td></tr>
+      <tr><td class="m">false</td><td class="m">BRANCH &rarr; IMPLEMENT &rarr; TEST &rarr; GATE_A &rarr; GATE_B, then return</td></tr>
+      <tr><td class="m">null</td><td class="m">BRANCH &rarr; IMPLEMENT &rarr; TEST &rarr; GATE_A, then <b>return immediately</b> &mdash; an unresolved <code>has_ui</code> is a halt, not a default branch</td></tr>
+    </table></div>
+    <p class="note"><b>The milestone agent's last transition is <em>into</em> <code>GATE_B</code>.</b> Its exits
+      (15 / 16 / 17) read run-level state the milestone agent was never given, so those belong to the
+      orchestrator. It also means the trace alone cannot tell a Gate B that <em>ran</em> from one merely
+      <em>arrived at</em>, which is what R3 checks against the evidence blocks.</p>
+  </div>
+
+  <h2>Runtime telemetry &mdash; three tiers</h2>
+  <div class="card">
+    <p>A milestone agent used to be invisible from spawn to return: six nodes over a long stretch, and the
+       orchestrator learned nothing until an 8&nbsp;KB bundle arrived. Each milestone agent now appends to its own
+       append-only journal at <code>docs/graph-runs/&lt;run-id&gt;/journals/milestone-&lt;milestone&gt;.jsonl</code> as it
+       leaves each node. <b>One file per milestone, one writer per file</b> &mdash; under strategy C, N milestones
+       sharing a file would mean N concurrent read-modify-write cycles with no lock.</p>
+    <div class="scroll"><table>
+      <tr><th></th><th>1 &middot; Headline &mdash; pushed</th><th>2 &middot; Record &mdash; pulled</th><th>3 &middot; Interrogation &mdash; asked</th></tr>
+      <tr><td>Size</td><td>~120 tokens</td><td>1&ndash;2k tokens</td><td>as large as the answer needs</td></tr>
+      <tr><td>Where</td><td>JSONL <code>headline</code>, streamed by <code>Monitor</code></td><td>JSONL <code>detail</code>, on disk</td><td><code>SendMessage</code> to <code>milestones[].agent_id</code></td></tr>
+      <tr><td>Trigger</td><td>every node exit, always</td><td>the orchestrator decides &mdash; two moments are mandatory</td><td>a question the record does not answer</td></tr>
+      <tr><td>Carries</td><td>node, milestone, one-line summary, counts, shas, elapsed</td><td>what was built and why, decisions, interfaces added, gotchas, what the next milestone must know</td><td>anything the milestone agent still holds &mdash; the full diff, the failing assertion, why a fix was chosen</td></tr>
+    </table></div>
+    <p class="note"><b>Telemetry, not evidence.</b> Nothing routes on the journal, with exactly one
+      exception &mdash; and that one runs the other way round. <b>R13</b> does not use the journal to
+      prove something happened; it uses it to catch the bundle <em>omitting</em> something. A milestone agent would
+      have to lie twice, in opposite directions and at different times, to defeat it.</p>
+    <p class="note"><b>Tier 3 is questions only, never instructions.</b> A returned milestone agent keeps its
+      context, so the orchestrator can ask <em>why did the auth interface change?</em> without that
+      context ever living in its own window. Telling a milestone agent to "just also fix that" would re-drive a
+      milestone with no branch discipline, no preflight and no return gate. And an answer is prose from
+      the agent the gate exists to check: it informs, it never satisfies an R-check.</p>
+  </div>
+
+  <h2>The return gate &mdash; R0 to R13</h2>
+  <div class="card">
+    <p>When a milestone agent returns, <b>nothing it claims is recorded until it is checked</b>. The whole gate runs
+       before any write, cheap checks first, on a hard budget of <b>20 lines of output</b> &mdash; every
+       command redirects to a file and the orchestrator reads an exit code, a count or a tail line.
+       A check that cannot fit that budget is the wrong check, because re-importing the context is the
+       thing delegation exists to avoid.</p>
+    <h3 style="margin-top:14px">The floor: at least one world-sourced check per node</h3>
+    <p>The bundle is agent-asserted throughout. These are not, and they are what the design rests on.</p>
+    <div class="scroll"><table>
+      <tr><th>Node</th><th>World-sourced check</th></tr>
+      <tr><td class="m">BRANCH</td><td><code>git rev-parse --verify</code>; <code>git merge-base --is-ancestor</code></td></tr>
+      <tr><td class="m">IMPLEMENT</td><td><code>git log &lt;base&gt;..&lt;branch&gt;</code> non-empty; the protected branch head unchanged</td></tr>
+      <tr><td class="m">TEST</td><td>the orchestrator re-runs the suite itself, reading only the exit code</td></tr>
+      <tr><td class="m">GATE_A</td><td><code>git diff --name-only</code> vs <code>applied</code> &mdash; always; plus the journal runId under <code>dispatch: workflow</code></td></tr>
+      <tr><td class="m">E2E</td><td>the spec files exist on disk, contain <code>test(</code>, and do not mock the thing under test</td></tr>
+      <tr><td class="m">GATE_B</td><td><code>git diff --stat &lt;main&gt;..&lt;branch&gt;</code> non-empty, plus the re-run suite</td></tr>
+      <tr><td class="m">DEBUG</td><td>the fix commit exists between the failing and the passing run</td></tr>
+    </table></div>
+    <h3 style="margin-top:16px">Four outcomes on rejection, deliberately kept apart</h3>
+    <div class="scroll"><table>
+      <tr><th>Outcome</th><th>What it is</th><th>What happens</th></tr>
+      <tr><td><span class="pill ok">Repairable</span></td><td>a missing ledger entry; a retry the bundle quietly dropped</td><td>replay the transitions <b>with the orchestrator's corrections named</b> in <code>verified</code>. Never silently</td></tr>
+      <tr><td><span class="pill guard">Unproven gate</span></td><td><code>GATE_A</code> did not really run; the suite was absent</td><td>replay up to that node, then re-run it &mdash; against <b>that node's</b> bound, not the milestone agent's. <b>Except a <code>GATE_A</code> whose dispatch ran zero agents</b>: that is a dispatch failure and counts <code>GATE_A-dispatch:&lt;id&gt;</code>, never the findings budget</td></tr>
+      <tr><td><span class="pill hand">Re-obtainable</span></td><td>the evidence is sound; a field only the milestone agent can author is missing</td><td><b>ask the milestone agent</b> &mdash; the orchestrator may not write an observation it did not witness</td></tr>
+      <tr><td><span class="pill stop">Fabricated</span></td><td>a traced node with no evidence; shas that do not exist</td><td><code>BLOCKED</code>, naming the R-check. <b>Never repaired silently</b></td></tr>
+    </table></div>
+    <p class="note">Collapsing these is how a typo burns a milestone's budget.</p>
+  </div>
+</section>
+
+<!-- ============================== FILES & STATE ============================== -->
+<section class="view" id="v-files">
+  <div class="vh">
+    <h1>What every file does, and what the run remembers</h1>
+    <p>Most of this plugin is <b>instructions a model reads</b>; some is <b>JavaScript that actually
+       executes</b>; one is an <b>agent spawned in its own context</b> that runs the entire milestone
+       loop. Nothing about a directory listing tells you which is which.</p>
+  </div>
+
+  <h2>The one distinction that matters</h2>
+  <div class="card">
+    <div class="scroll"><table>
+      <tr><th>Kind</th><th>What it is</th><th>What happens to it</th></tr>
+      <tr><td><span class="tag t-md">markdown</span></td><td>Instructions written for the model</td>
+        <td><b>Read into context</b> and followed. Nothing "runs". If the model does not read the file, nothing in it happens.</td></tr>
+      <tr><td><span class="tag t-js">javascript</span></td><td>Real code</td>
+        <td><b>Actually executed</b> by the Workflow tool. Deterministic &mdash; it does the same thing every time, whatever the model thinks.</td></tr>
+      <tr><td><span class="tag t-ag">agent</span></td><td>A prompt for a <em>separate</em> model instance</td>
+        <td><b>Spawned</b> with its own fresh context. It cannot see this conversation, and returns only its result.</td></tr>
+      <tr><td><span class="tag t-cf">config</span></td><td>Manifest</td>
+        <td>Read by Claude Code at install time. Never during a run.</td></tr>
+    </table></div>
+    <p class="note warn"><b>The practical consequence.</b> A rule in a Markdown file is only in force
+      <em>if that file was read.</em> That is why <code>SKILL.md</code> opens by ordering the model to load
+      <code>nodes.md</code>, <code>edges.md</code> and <code>state.md</code> before the first transition
+      &mdash; and why node procedures load lazily, only when their node runs. A rule in
+      <code>qa-engineer-node.md</code> does nothing until the <code>QA</code> node executes. The
+      <code>.js</code> files are the opposite: they run exactly as written regardless of what any
+      Markdown says, which is precisely why the fan-out lives in code &mdash; a review pipeline that
+      "usually" runs four steps is not a gate.</p>
+  </div>
+
+  <h2>Every file, and when it is read</h2>
+  <div class="card">
+    <div class="scroll"><table class="tree">
+      <tr><th>File</th><th>Read when</th><th>What it is</th></tr>
+      <tr><td class="f"><span class="tag t-cf">cfg</span> .claude-plugin/plugin.json</td><td class="w">install</td>
+        <td>Name, version, description. How Claude Code knows this plugin exists.</td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> <span class="ind">skills/sdlc-graph/</span>SKILL.md</td><td class="w"><b>entry point</b></td>
+        <td><b>The only file read when you type the command.</b> The Rules, the dispatch loop, the six human stops. Everything else is loaded <em>because this file says to.</em></td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> <span class="ind">graph/</span>nodes.md</td><td class="w">at start</td>
+        <td>The 19 node contracts &mdash; inputs, action, emits, exits, guards, bounds, <code>requires</code>, <code>human</code>. <b>The spec.</b></td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> <span class="ind">graph/</span>edges.md</td><td class="w">at start, then every transition</td>
+        <td>All 40 guarded transitions (30 rows) and the 10 bounded cycles. Consulted at every single transition.</td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> <span class="ind">graph/</span>state.md</td><td class="w">at start</td>
+        <td>The JSON schema for the run-state file, its write points, and the resume rules.</td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> <span class="ind">subagents/</span>workflow-dispatch.md</td><td class="w">at GATE_A, and on every milestone agent return</td>
+        <td>How to dispatch the script and the milestone agent, the <code>MILESTONE_BUNDLE</code> schema, the milestone journal, and the R0&ndash;R13 return gate.</td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> <span class="ind">nodes/</span>&lt;name&gt;-node.md &nbsp;<span class="ind">&times;8</span></td><td class="w"><b>lazily</b></td>
+        <td><b>Read only when that node runs.</b> Each is a copy of a standalone process skill trimmed to its role &mdash; <code>plan-guidelines-node.md</code> has Phase 2 removed, because that phase <em>is</em> the loop the graph itself drives.</td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> <span class="ind">nodes/qa/</span>*.md &nbsp;<span class="ind">&times;5</span></td><td class="w">at QA</td>
+        <td>The QA playbook, green-path and break-it taxonomies, edge-case catalogue, report template.</td></tr>
+      <tr><td class="f"><span class="tag t-ag">agent</span> <span class="ind">agents/</span>sdlc-graph-milestone.md</td><td class="w"><b>spawned per milestone</b></td>
+        <td><b>Spawned, not read by you.</b> Runs the milestone loop in its own context and returns one typed bundle. It evaluates no guard, writes no state file, and cannot ask a human.</td></tr>
+      <tr><td class="f"><span class="tag t-js">js</span> <span class="ind">workflows/</span>gate-a.workflow.js</td><td class="w"><b>runs at GATE_A</b></td>
+        <td><b>Executed, not read.</b> Groups the changed files by module and pipelines each group through review &rarr; simplify &rarr; security &rarr; review.</td></tr>
+      <tr><td class="f"><span class="tag t-js">js</span> <span class="ind">workflows/</span>gate-a.harness.mjs</td><td class="w">never, in a run</td>
+        <td>A test. 81 assertions against stubbed globals. In <code>run_all.py</code>, so the hook runs it.</td></tr>
+      <tr><td class="f"><span class="tag t-js">py</span> <span class="ind">skills/&hellip;/</span>evals/</td><td class="w">on every edit</td>
+        <td>Six deterministic suites plus the JS harness, eight executing scenarios, and one real-agent path. <b>The hook runs the deterministic set — this plugin's and the viewer's.</b></td></tr>
+      <tr><td class="f"><span class="tag t-md">md</span> README.md &middot; docs/artifacts/index.html</td><td class="w">by you</td>
+        <td>For humans. The model never reads them during a run. This page.</td></tr>
+    </table></div>
+  </div>
+
+  <h2>Who actually does the work</h2>
+  <div class="card">
+    <div class="scroll"><table>
+      <tr><th>Kind</th><th>Nodes</th><th>What happens</th></tr>
+      <tr><td><b>inline</b></td><td><code>INTAKE</code> <code>CONSOLIDATE</code> <code>MERGE</code> <code>VERDICT</code> <code>DONE</code></td><td><code>SKILL.md</code> performs it directly. No other file involved.</td></tr>
+      <tr><td><b>node file</b></td><td><code>SPEC</code> <code>PLAN</code> <code>STRATEGY</code> <code>PR</code> <code>CI</code> <code>CLOSE_OUT</code> <code>QA</code></td><td>Loads <code>nodes/&lt;name&gt;-node.md</code> and follows it. <b>Bundled &mdash; nothing to install, and the plugin never loads the standalone original.</b></td></tr>
+      <tr><td><b>milestone agent</b></td><td><code>BRANCH</code> <code>IMPLEMENT</code> <code>TEST</code> <code>GATE_A</code> <code>E2E</code> <code>GATE_B</code> <code>DEBUG</code></td><td>A subagent per milestone runs the whole loop and returns one typed bundle. <b>It evaluates no guard and writes no state.</b></td></tr>
+      <tr><td><b>live dispatch</b></td><td>the coding standards inside <code>IMPLEMENT</code>, and Gate A's reviewers</td><td>Calls the currently-installed skill by name. Never a copy &mdash; a stale coding standard is worse than the coupling.</td></tr>
+      <tr><td><b>script</b></td><td><code>GATE_A</code></td><td>The Workflow tool executes JavaScript. Deterministic fan-out.</td></tr>
+    </table></div>
+  </div>
+
+  <h2>The state file is the whole point</h2>
+  <div class="card">
+    <p>A run is <b>one directory</b>, and it is <b>gitignored</b> &mdash; <code>INTAKE</code> adds
+       <code>docs/graph-runs/</code> to the project's <code>.gitignore</code> before creating it. A run is
+       working memory; the committed <b>plan file</b> is the record that survives.</p>
+<pre>docs/graph-runs/&lt;run-id&gt;/
+├── state.json                       <i>// written on EVERY transition, before the next node starts</i>
+├── journals/milestone-&lt;id&gt;.jsonl    <i>// one per milestone agent — that agent is its only writer</i>
+└── history/                         <i>// only with --trace</i>
+    └── 0007_m2_GATE_A-to-E2E_20260808T094402Z.json</pre>
+    <p>A crash between two nodes leaves a file that says exactly where the run was.</p>
+<pre>{
+  "node": "GATE_A",            <i>// where the run is right now</i>
+  "status": "RUNNING",         <i>// RUNNING | BLOCKED | HANDOFF | DONE</i>
+  "context": { "stack": "backend", "has_ui": false, "branching": "A",
+               "host": "github",       <i>// or "none" - a local-only repo</i>
+               "run_mode": "continuous" },
+  "milestones": [ { "id": 1, "node": "MERGED", "delivered": "auth endpoints + guard" },
+                  { "id": 2, "node": "GATE_A",           <i>// recorded — written after the gate</i>
+                    "journal": "docs/graph-runs/r7/journals/milestone-2.jsonl",
+                    "agent_id": "a85dde11",              <i>// survives the replay; it is how you ask later</i>
+                    "progress": { "at_node": "GATE_A",   <i>// CLAIMED — nulled the moment the replay lands</i>
+                                  "headline": "Gate A: 6 files, clean",
+                                  "seen_at": "2026-08-07T09:14:22Z" } } ],
+  "cursor":     { "milestone": 2, "milestones": [2] },   <i>// the only in-flight list</i>
+  "attempts":   { "TEST:2": 1, "GATE_A:2": 0 },   <i>// every retry, per milestone</i>
+  "skipped_gates": [ { "node": "GATE_A.step2",
+                       "reason": "code-simplifier not installed" } ],
+  "history":    [ { "from": "TEST", "to": "GATE_A",
+                    "guard": "unit and integration green",
+                    "observation": "green on the 2nd attempt; the 1st failed on a fixture" } ]
+}</pre>
+    <p><b>Every transition carries an <code>observation</code></b> &mdash; one line on what actually
+       happened in the node just left, not what the guard says. It is the only <em>verified</em>
+       per-node record, written after the return gate passes.</p>
+    <p><b><code>skipped_gates[]</code> is the field the design turns on.</b> Two source skills said
+       <em>never report a gate as passed when its tool was absent</em> &mdash; but in prose nothing records
+       the absence, so the rule is unenforceable. Here it is mechanical: a missing tool appends an entry,
+       the node <em>cannot</em> be marked passed, close-out copies it into the plan, and <code>DONE</code>
+       leads with it. Entries are append-only &mdash; installing the tool later does not retroactively pass
+       the gate.</p>
+    <p class="note"><b>Provisional is not recorded.</b> <code>milestones[].progress.at_node</code> says where a milestone agent
+      <em>claims</em> to be. It drives the viewer and the orchestrator's supervision; it never advances
+      the run and is cleared on replay. Only <code>history[]</code> is the record, and it is written
+      after the gate.</p>
+    <p class="note"><b><code>--trace</code> keeps every state, not just the last one.</b> <code>state.json</code>
+      is overwritten at every hop, so on an ordinary run the counters as they climbed, the
+      <code>progress</code> block and the ledger as it grew are simply gone. With <code>--trace</code> the
+      plugin's own PostToolUse hook copies each write into <code>history/</code>, numbered and named after
+      the transition that produced it &mdash; so <code>ls</code> reads as the run's story. <b>Off by default,
+      and telemetry rather than evidence:</b> nothing routes on it, and the hook has no non-zero exit
+      path, because a lost snapshot must never be an interrupted run.</p>
+    <p class="note"><b>Resume</b> reads this file, then <em>re-derives progress from the world</em> &mdash;
+      was the branch created? are tests green? has the PR merged? The filesystem and git are the truth;
+      the file only says where to look. Counters are never rewound, because rewinding hands a stuck loop
+      an unlimited budget.</p>
+  </div>
+
+  <h2>Ten cycles, ten bounds</h2>
+  <div class="card">
+    <p>This is what the graph adds that the prose skills could not state. Each of these cycles existed
+       already &mdash; "fix it and re-run", "reopen for S1/S2", "watch the build and fix it". None of them
+       named a limit, and an agent following prose will re-run a failing gate until something else stops
+       it.</p>
+    <div class="scroll"><table>
+      <tr><th>Cycle</th><th class="num-col">Bound</th><th>On exhaustion</th></tr>
+      <tr><td class="m">TEST &harr; DEBUG</td><td class="num-col">3</td><td><code>BLOCKED</code>, surfacing the failure and every fix tried</td></tr>
+      <tr><td class="m">E2E &harr; DEBUG</td><td class="num-col">3</td><td><code>BLOCKED</code></td></tr>
+      <tr><td class="m">GATE_A &harr; DEBUG</td><td class="num-col">2</td><td><code>BLOCKED</code> &mdash; Gate A's own simplify and security edits change code that was green on entry, so a break there needs somewhere to go</td></tr>
+      <tr><td class="m">GATE_A &#8635; GATE_A</td><td class="num-col">1</td><td><b>proceeds</b> &mdash; the one cycle that does not block. For a genuine bug, security issue or regression only; never a style nit</td></tr>
+      <tr><td class="m">GATE_A dispatch retry</td><td class="num-col">1</td><td><code>BLOCKED</code> &mdash; and it has its <b>own</b> counter. A workflow that died having run zero agents reviewed nothing, so it must not spend the findings budget: a real run had a crashed dispatch consume the re-run allowance, silently downgrading a security re-review</td></tr>
+      <tr><td class="m">GATE_B &harr; DEBUG</td><td class="num-col">2</td><td><code>BLOCKED</code></td></tr>
+      <tr><td class="m">CONSOLIDATE &harr; DEBUG</td><td class="num-col">3</td><td><code>BLOCKED</code>, naming the two milestones whose merge broke it. A <em>textual</em> conflict never comes here &mdash; git cannot resolve it and the graph must not guess, so that blocks directly</td></tr>
+      <tr><td class="m">CI &harr; DEBUG</td><td class="num-col">15m</td><td>budget, plus a two-same-error guard, then <code>STILL-RED</code> or <code>BLOCKED</code></td></tr>
+      <tr><td class="m">VERDICT &rarr; BRANCH</td><td class="num-col">2</td><td><code>BLOCKED</code> &mdash; a human decision</td></tr>
+      <tr><td class="m">PLAN &rarr; PLAN</td><td class="num-col">&infin;</td><td>unbounded <b>on purpose</b> &mdash; a conversation, not a retry. Bounding it would cut off the cheapest correction in the run</td></tr>
+    </table></div>
+    <p class="note">Counters are keyed per milestone (<code>attempts["TEST:2"]</code>) and are
+      <b>never reset</b>, only keyed &mdash; so milestone 3 starts fresh while a stuck loop on milestone 2
+      stays stuck. A resumed run inherits the counter it left behind.</p>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h3>Four states a run can end in</h3>
+      <div class="scroll"><table>
+        <tr><td><span class="pill flow">RUNNING</span></td><td>Mid-flight. Written on <b>every</b> transition, before the next node starts.</td></tr>
+        <tr><td><span class="pill stop">BLOCKED</span></td><td>Something <b>failed</b>: a bound exhausted, or no guard could be satisfied. Records the node, every guard tested, and what was tried. Resumable.</td></tr>
+        <tr><td><span class="pill hand">HANDOFF</span></td><td>A deliberate stop with <b>nothing wrong</b>. Only strategy D reaches it. Kept separate from BLOCKED so nobody hunts for a failure that never happened.</td></tr>
+        <tr><td><span class="pill ok">DONE</span></td><td>Reached the end &mdash; <b>not necessarily clean</b>. Check the skipped-gate ledger before believing it.</td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Six stops, and nowhere else</h3>
+      <div class="scroll"><table>
+        <tr><th>Stop</th><th>Type</th><th>What it needs</th></tr>
+        <tr><td class="m">SPEC</td><td class="m">approval-after</td><td>Approve the design.</td></tr>
+        <tr><td class="m">PLAN</td><td class="m">approval-after</td><td>Approve the milestones. Revisions rewrite in place, unbounded.</td></tr>
+        <tr><td class="m">STRATEGY</td><td class="m">choice-after</td><td>Branching A/B/C/D, <code>auto_open_mr</code>, and <code>run_mode</code>.</td></tr>
+        <tr><td class="m">PR</td><td class="m">confirm-before</td><td>Only if you asked it not to open automatically. <b>Ask first, act once</b> &mdash; a node that opened the PR and <em>then</em> paused would open a second on resume.</td></tr>
+        <tr><td class="m">MERGE</td><td class="m">await-external</td><td>Not a question &mdash; it waits for the merge. On resume it <b>re-polls, never re-asks</b>.</td></tr>
+        <tr><td class="m">VERDICT</td><td class="m">escalation</td><td>Only on the second exhausted QA reopen.</td></tr>
+      </table></div>
+      <p class="note">The list is <em>derived from the <code>human</code> field on each node contract</em>
+        rather than maintained separately &mdash; so the two cannot drift apart. <code>run_mode</code>
+        adds cadence on top: <b>checkpoint</b> stops after every milestone's <code>GATE_B</code>,
+        <b>on-exception</b> whenever a gate is skipped, a bound is exhausted, or a milestone bundle is
+        rejected.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== TESTING ============================== -->
+<section class="view" id="v-testing">
+  <div class="vh">
+    <h1>How this graph is tested</h1>
+    <p>Two methods, and they answer different questions. One reads the specification and asks whether it
+       contradicts itself. The other <em>runs the graph</em> with real agents and asks whether it behaves.
+       Neither substitutes for the other.</p>
+  </div>
+
+  <div class="card">
+    <p>Every check exists because a real run hit the defect it catches. None is hypothetical, and several
+       were added the same day the bug they describe was found &mdash; including three in checks that had
+       been printing <code>ok</code> while testing nothing.</p>
+    <p class="note warn"><b>The rule this whole directory turns on:</b> a change is not finished until it
+      adds the eval that would have caught its absence &mdash; and that eval is not finished until a
+      deliberately broken input makes it fail. <em>A check that cannot fail is not evidence.</em></p>
+  </div>
+
+  <h2>Method 1 &mdash; deterministic <span class="pill flow">no agents</span></h2>
+  <div class="card">
+    <p>Reads the spec files and the fixtures. No model, no network, no dependencies. Runs in seconds.</p>
+    <div class="scroll"><table>
+      <tr><th>Where</th><th>How to see it</th></tr>
+      <tr><td class="m">this plugin</td><td><code>python3 evals/run_all.py --list</code> &mdash; every suite and how much of it there is now, read from the suites themselves</td></tr>
+      <tr><td class="m">the checks</td><td><code>python3 evals/spec/spec_consistency.py --list</code> &mdash; every check and the defect it would have caught</td></tr>
+      <tr><td class="m">the viewer</td><td><code>python3 evals/run_all.py</code> in <code>sdlc-graph-viewer</code> &mdash; a separate plugin, so a separate runner</td></tr>
+    </table></div>
+  </div>
+
+  <h2>Method 2 &mdash; executing <span class="pill hand">real agents</span></h2>
+  <div class="card">
+    <p>The deterministic suites cannot catch an orchestrator that reads the contract correctly and then
+       <em>behaves</em> wrong: spawns before arming its monitor, writes <code>history[]</code> from a bundle
+       it never gated, or answers a dead milestone agent by waiting longer. Those are behaviours, and a behaviour has
+       to be run to be observed.</p>
+
+    <h3 style="margin-top:14px">2a &middot; <code>evals/runs/</code> &mdash; scripted counterpart</h3>
+    <div class="flowline">
+      <span class="box a">subagent = ROOT</span><span class="arw">&rarr;</span>
+      <span class="box j">mock_milestone.py</span><span class="arw">&rarr;</span>
+      <span class="box">artifacts</span><span class="arw">&rarr;</span>
+      <span class="box d">assertions</span>
+    </div>
+    <p>A subagent plays the orchestrator against <code>mock_milestone.py</code> &mdash; a milestone agent with the model
+       taken out, which emits exactly the journal lines the scenario dictates and returns exactly the
+       bundle it dictates, <b>including a dishonest one</b>. Ten scenarios, each with a control that
+       must break it; <code>--self-test</code> runs only the controls and needs no agent at all.</p>
+    <p>This tier keeps its place for the two things a real agent cannot be relied on to do: <b>lie in one
+       exact way</b> (a bundle that hides precisely one retry) and <b>die mid-node</b>.</p>
+
+    <h3 style="margin-top:16px">2b &middot; <code>evals/real/</code> &mdash; both sides real</h3>
+    <div class="flowline">
+      <span class="box a">subagent = ROOT</span><span class="arw">&rarr;</span>
+      <span class="box a">subagent = MILESTONE</span><span class="arw">&rarr;</span>
+      <span class="box">real repo, real code, real tests</span>
+    </div>
+    <div class="flowline">
+      <span class="box d">deterministic: start &middot; path &middot; end</span><span class="arw">+</span>
+      <span class="box a">judge = top-level orchestrator</span><span class="arw">&rarr;</span>
+      <span class="box">verdict</span>
+    </div>
+    <p>A scripted milestone agent satisfies the journal contract <em>by construction</em>: perfect lines, correct
+       <code>seq</code>, appended before it returns. But almost every demand in that contract is on the
+       <b>milestone agent</b> &mdash; append as you leave each node rather than reconstructing on the way out, write a
+       <code>detail</code> useful to a reader with none of your context, never touch a sibling's file.
+       None of it can be observed against a fixture that cannot fail it, and the likeliest real failure
+       &mdash; a thin useless <code>detail</code>, or a journal written from memory at the end &mdash; is
+       invisible there.</p>
+    <p>So here both sides are real, and the target is a genuine git repository with test scripts that
+       actually run. Attribution does not need a scripted side: the artifacts are already separated by
+       author. <b>Journal shape is the milestone agent's. State-file writes are the root's.</b></p>
+    <p class="note warn"><b>What is never done:</b> asking the actor under test how it did. That is a
+      self-report from the thing being checked &mdash; the exact failure the return gate exists to
+      prevent, rebuilt one level up inside the test harness.</p>
+  </div>
+
+  <h2>What each method has actually caught</h2>
+  <div class="card">
+    <div class="scroll"><table>
+      <tr><th>Found by</th><th>Defect</th></tr>
+      <tr><td><span class="tag t-det">det</span></td><td>A guard fixed in <code>edges.md</code> and not in the viewer that renders it &mdash; repeatedly.</td></tr>
+      <tr><td><span class="tag t-det">det</span></td><td><code>guards-verbatim</code> went green <em>precisely when there was no guard to quote</em>: <code>norm(None)</code> is <code>""</code>, and <code>""</code> is a substring of everything.</td></tr>
+      <tr><td><span class="tag t-det">det</span></td><td>A guard-identifier extractor that read the cell <em>after</em> its backticks were stripped &mdash; zero matches corpus-wide, 26 of 42 guards checked against nothing.</td></tr>
+      <tr><td><span class="tag t-exe">exe</span></td><td><b>A contradiction between two spec files.</b> R13's repair path says replay the omitted hops; <code>state.md</code> says only the agent that was there may author an observation. An orchestrator obeying both had to halt on a milestone agent that merely tidied its story.</td></tr>
+      <tr><td><span class="tag t-exe">exe</span></td><td><b>The auditor accusing a run of the thing it had just prevented</b> &mdash; refusing a fabricated bundle leaves the same shape as hiding the work.</td></tr>
+      <tr><td><span class="tag t-exe">exe</span></td><td><b>R12 could never pass</b> &mdash; it demanded a clean working tree while the run's own state file lived in the repo under test. Since fixed at the root rather than patched: the run directory is gitignored, so a bare <code>git status</code> is clean on a correct run and R12 needs no exemption at all.</td></tr>
+      <tr><td><span class="tag t-exe">exe</span></td><td><b>A check that dies the moment it is actually used.</b> <code>commit-bundle-record</code> raised <code>NameError</code> whenever <code>--repo</code> was supplied &mdash; the only thing ever asserted about it was that it reports NOT RUN <em>without</em> a repo, so the branch needing git had never been executed. Found by pointing <code>graph-run-reviewer</code> at a real repository.</td></tr>
+      <tr><td><span class="tag t-exe">exe</span></td><td><b>R9 contradicted <code>edges.md</code></b> on the <code>host: none</code> path, and <b>R7 could not tell a dead dispatch from an absent one</b>.</td></tr>
+    </table></div>
+    <p class="note">The pattern is stable: the deterministic suites find <em>drift and dead checks</em>;
+      the executing ones find <em>contradictions that only appear when someone has to obey both rules at
+      once</em>.</p>
+  </div>
+
+  <h2>Running them</h2>
+  <div class="card">
+<pre>cd plugins/sdlc-graph/skills/sdlc-graph
+
+python3 evals/run_all.py                       <i># method 1 - what the hook already ran</i>
+python3 ../../../../.claude/hooks/run-graph-evals.selftest.py   <i># ...and that it still routes here</i>
+
+python3 evals/runs/run_scenario.py --list      <i># method 2a - the ten scenarios</i>
+python3 evals/real/run_real_eval.py --list     <i># method 2b - the real-agent tests</i>
+
+<i># and afterwards, on a run that actually happened:</i>
+/sdlc-graph:graph-run-reviewer &lt;run-id&gt;   <i># audit it, then WRITE the eval it needed</i>
+
+<i># a real run, after the fact, by anyone who was not there:</i>
+python3 evals/audit/audit_run.py docs/graph-runs/&lt;run-id&gt;/state.json --repo .
+
+cd ../../../sdlc-graph-viewer/skills/view-run
+python3 evals/run_all.py                       <i># method 1 - the viewer's half</i>
+python3 evals/sync_graph.py --write            <i># the WRITER, when edges.md or nodes.md moved</i></pre>
+    <p class="note"><b>Method 1 runs itself.</b> The <code>PostToolUse</code> hook matches on path
+      <em>segments</em> and covers <code>plugins/sdlc-graph/</code>, <code>plugins/sdlc-graph/</code>
+      and <code>plugins/sdlc-graph-viewer/</code> &mdash; editing the graph fires the viewer's
+      suite too, since that is the edit which makes the viewer's copy stale. The whole set costs
+      3.6&nbsp;s. Method 2 needs a model and stays manual. A red suite mid-change is expected &mdash;
+      it is the second half of the edit, not an error.</p>
+  </div>
+</section>
+
+<div class="foot">
+  <span>sdlc-graph 1.0.3</span><span>20 nodes</span><span>40 guarded transitions</span>
+  <span>10 bounded cycles</span><span>6 human stops</span><span>sdlc-graph-engineering</span>
+</div>
+</main>
+
+<script>
+const N = {
+  INTAKE:{steps:["Classify the request; decide whether a spec already exists.", "Detect <code>stack</code> from <code>package.json</code> and the workspace layout.", "Detect <code>has_ui</code> from UI-framework presence \u2014 <b>this decides whether E2E exists for the whole run</b>.", "Detect <code>main_branch</code>, and <code>unborn_main</code> (a fresh <code>git init</code> has no commit).", "Detect <code>host</code> \u2014 github, gitlab, or none.", "Gather <code>qa_env</code> where discoverable; leave the rest for CLOSE_OUT.", "Create <code>docs/graph-runs/&lt;run-id&gt;/state.json</code> with <code>status: RUNNING</code>."],k:'',own:'inline',act:'Classify the request. Detect stack, <b>has_ui</b>, main branch and host. Create the run and its state file.',em:'run_id, context.{stack,has_ui,main_branch,host}, qa_env (where discoverable), status: RUNNING',g:'spec_path == null \u2192 SPEC (1) \u00b7 spec_path != null \u2192 PLAN (2)',b:'1',rq:'git',note:'<b>has_ui</b> is resolved once, here \u2014 it decides whether the E2E node exists for the whole run.'},
+  SPEC:{steps:["Load <code>brainstorming-node.md</code>.", "Ask one question at a time \u2014 never a battery of them.", "Write the spec to a file as it forms.", "Revise <b>in place</b> on feedback; revisions are unbounded, this is a conversation.", "<b>Stop and wait for explicit approval.</b> Do not commit \u2014 there is no branch yet."],k:'',own:'brainstorming-node.md',act:'Socratic design dialogue, one question at a time. Write the spec to a file and revise it in place until approved. <b>Write it, do not commit it</b> \u2014 there is no branch yet.',em:'spec_path',g:'spec file on disk and user approved \u2192 PLAN (3)',b:'unbounded (user-driven)',rq:'\u2014',ask:1,note:'Skipped entirely when a spec was supplied at intake.'},
+  PLAN:{steps:["<code>EnterPlanMode</code> \u2014 the harness now holds an edit lock, the one guarantee the graph cannot enforce itself.", "Draft milestones: each with <code>id</code>, <code>name</code>, <code>deps</code>, <code>steps[]</code>.", "Seed <code>is_fix: false</code> and <code>touches_ui</code> on <b>every</b> milestone \u2014 a later node reading them must never find them absent.", "<code>ExitPlanMode</code> \u2014 the approval rides on it.", "Write the approved plan to <code>docs/plans/</code> and record <code>plan_path</code>."],k:'',own:'plan-guidelines-node.md \u00a7 PLAN',act:'Runs <b>inside plan mode</b>: EnterPlanMode (edit lock on) \u2192 draft \u2192 ExitPlanMode (approval) \u2192 hand the approved plan off to <code>docs/plans/</code>. <b>The edit lock is the point</b> \u2014 it is the one guarantee the graph cannot enforce itself.',em:'plan_path, milestones[] (id, name, deps, steps, is_fix:false, touches_ui)',g:'user requested revisions \u2192 PLAN (4) \u00b7 plan_path on disk and every milestone has its required steps and user approved \u2192 STRATEGY (5)',b:'revision unbounded \u2014 a conversation, not a retry',rq:'\u2014',ask:1},
+  STRATEGY:{steps:["Present the milestones and their dependency graph.", "Validate that <code>deps</code> are acyclic \u2014 a cycle halts the run here.", "Ask for the branching strategy: <b>A</b>, <b>B</b>, <b>C</b> or <b>D</b>.", "Ask whether PRs open automatically (<code>auto_open_mr</code>).", "Ask for <code>run_mode</code>: continuous \u00b7 checkpoint \u00b7 on-exception.", "On a frontend or full-stack build, settle <code>standards_handshake</code> <b>once, here</b>, so no milestone agent inside the loop has to stop and ask.", "Point <code>cursor.milestone</code> at the first milestone with no unmet deps, and seed the task list."],k:'',own:'plan-guidelines-node.md \u00a7 STRATEGY',act:'Present the milestones and their dependency graph. Ask for the branching strategy, <b>auto_open_mr</b>, and <b>run_mode</b>. Validate deps are acyclic. Seed the task list.',em:'context.branching, context.auto_open_mr, context.run_mode, cursor.milestone, tasks seeded',g:'branching ∈ {A,B,C} and milestone deps acyclic and context.has_ui is a boolean \u2192 BRANCH (6) \u00b7 branching == D \u2192 HANDOFF (7)',b:'1',rq:'\u2014',ask:1,note:'<b>The branching answer decides the loop only \u2014 the tail is shared.</b> From CLOSE_OUT onward A, B and C run the identical sequence, and QA gates the merge in all three. It used to be that C put QA after the merge; local consolidation removed that split.'},
+  BRANCH:{steps:["Resolve the parent: <code>main_branch</code>, or the parent milestone's branch when this one has <code>deps</code>.", "Refuse a protected branch; refuse a dirty tree.", "Create <code>&lt;task-id&gt;/&lt;short-description&gt;</code>.", "Under <b>C</b> only: <code>git worktree add</code>, so independent milestones never collide over one index.", "Under <b>A</b>: create once on the first milestone, then no-op. Under <b>B</b>: no-op throughout."],k:'',own:'<b>milestone agent</b> \u2192 plan-guidelines-node.md \u00a7 BRANCH',act:'Resolve the parent branch \u2014 main, or the parent milestone\'s branch when dependent \u2014 and create it. Refuse a protected branch, refuse a dirty tree.',em:'milestones[cursor].branch',g:'branch checked out \u2192 IMPLEMENT (8)',b:'1',rq:'git',note:'Idempotent under A (creates once, then no-ops) and a no-op throughout under B. <b><code>is_fix</code> no longer forces a fresh branch under any strategy</b> \u2014 by reopen time there is exactly one open unmerged branch (the run branch under A/B, <code>integration.branch</code> under C) with a PR against it, and the fix belongs on it. This node reads <code>is_fix</code> only to <i>skip</i> branch creation.'},
+  IMPLEMENT:{steps:["Live-dispatch the stack's <i>currently installed</i> standards skill \u2014 never a bundled copy.", "Implement every step in <code>milestones[cursor].steps</code> <i>that this node owns</i> \u2014 a step whose deliverable is a test is TEST's, and is owed at guard 10.", "Commit as you go, on this milestone's branch only.", "<b>The final commit and the IMPLEMENT \u2192 TEST write are one act, in one turn.</b> Two real runs halted here with work committed and nothing recorded."],k:'',own:'<b>milestone agent</b> \u2192 live dispatch \u2192 standards skill',act:'Implement every step of the milestone on its branch, committing as it goes. No scouting pass, no forced standards reload.',em:'milestones[cursor].node',g:'every step this node owns is committed \u2192 TEST (9); the test steps are owed at 10',b:'1',rq:'the stack\'s standards skill',note:'<b>Do not stop here.</b> Two real runs halted at this node with status RUNNING and blocked null \u2014 nothing had failed. Finishing a chunk of real work <i>feels</i> like a reporting point. It is not one.'},
+  TEST:{steps:["Write unit tests alongside each component built.", "Write integration tests per endpoint.", "Run the project's real unit script; then the real integration script.", "An <b>absent</b> suite is recorded to <code>skipped_gates[]</code> with the script name looked for \u2014 <b>never reported as passing</b>.", "Red \u2192 <code>DEBUG</code>, with <code>debug_return_to = TEST</code>. Bounded \u00d73."],k:'',own:'<b>milestone agent</b> \u2192 testing-standards-node.md \u00a7 TEST',act:'Write and run the milestone\'s unit tests alongside each component, plus integration tests per endpoint.',em:'attempts["TEST:id"], debug_return_to = TEST on failure',g:'this node\'s steps committed and unit and integration not red \u2192 GATE_A (10) \u00b7 that node's result is red \u2192 DEBUG (19)',b:'3, then BLOCKED',rq:'the project\'s test scripts \u2014 absent \u2192 skipped_gates[]',dbg:1},
+  GATE_A:{steps:["Preflight the three reviewer tools for <b>invocability, not installed-ness</b>; anything absent is ledgered before the gate runs.", "Dispatch <code>gate-a.workflow.js</code> and record its <code>runId</code> <b>at dispatch</b> \u2014 otherwise resume cannot reach it after a context loss.", "<b>No <code>Workflow</code> tool in this session?</b> Run the four steps directly and report <code>dispatch: \"direct\"</code> with <code>run_id</code> and both <code>groups_*</code> <b>null</b> \u2014 never <code>0</code>, which reads as a dispatch that died and charges a bound.", "Per changed file, strictly ordered: <b>review \u2192 simplify \u2192 security \u2192 final review</b>, applying each step's findings before the next.", "Files run <b>concurrently</b>; the four steps never do.", "<b>Re-run the suite afterwards</b> \u2014 steps 2 and 3 changed code that was green on entry.", "Real findings may trigger <b>one</b> re-run; a workflow error is a <i>separate</i> counter, so a crashed dispatch never eats the findings budget."],k:'gate',own:'<b>milestone agent</b> \u2192 code-quality-pipeline-node.md \u2192 gate-a.workflow.js',act:'Per file: review \u2192 simplify \u2192 security \u2192 review. Files run <b>concurrently</b>, the four steps sequential within a file. Then <b>re-verify the suite</b> \u2014 steps 2 and 3 changed code that was green on entry.',em:'attempts["GATE_A:id"], debug_return_to, skipped_gates[] per absent reviewer',g:'step 4 found a real bug/security/regression and attempts < 2 \u2192 GATE_A (11) \u00b7 tests green and (no rerun-worthy finding or re-run budget spent) and context.h… \u2192 E2E (12) \u00b7 tests green and (no rerun-worthy finding or re-run budget spent) and context.h… \u2192 GATE_B (13) \u00b7 that node's result is red \u2192 DEBUG (19)',b:'1 re-run for a real finding \u00b7 then <b>proceeds</b>',rq:'code-reviewer \u00b7 code-simplifier \u00b7 security-review',dbg:1,note:'<b>The only node in the graph that dispatches a Workflow script.</b> The one cycle that does <b>not</b> block on exhaustion. Routes on <code>rerun_recommended</code>, never on <code>clean</code> \u2014 routing on <code>clean</code> once halted a run because a reviewer tool was merely absent.'},
+  E2E:{steps:["Confirm the app and API are locally runnable; genuinely unbootable is ledgered, and the run may not be called e2e-covered.", "<b>If <code>touches_ui</code>: author Playwright specs for the components this milestone built</b> \u2014 always, before the suite runs.", "Playwright missing is <b>work to do, not a gate to skip</b>: install it and run.", "Drive the real front and back end; no network mocking (a disposable DB is the one permitted substitution).", "Red \u2192 <code>DEBUG</code>, bounded \u00d73."],k:'',own:'<b>milestone agent</b> \u2192 testing-standards-node.md \u00a7 E2E',act:'Run the app\'s Playwright suite. <b>When <code>touches_ui</code> is true, author specs for the components this milestone built</b> \u2014 always, before the suite runs, driving the real front and back locally with <b>no network mocking</b> (a disposable DB is the one permitted substitution).',em:'attempts["E2E:id"], debug_return_to = E2E on failure',g:'journeys not red \u2192 GATE_B (14) \u00b7 that node's result is red \u2192 DEBUG (19)',b:'3, then BLOCKED',rq:'a locally runnable app and API \u2014 <b>Playwright deliberately NOT listed</b>',dbg:1,note:'When <b>has_ui is false this node does not exist</b> \u2014 a structural absence, never a skipped gate. has_ui true with an app that <i>genuinely cannot be brought up</i> is a skipped gate. Different things. <b>Playwright merely uninstalled is neither \u2014 install it</b>: it is a devDependency plus a browser download, so \u201cnot installed\u201d is work this node owed, and the ledger is append-only \u2014 installing costs two commands, ledgering costs forever. <b>And <code>touches_ui</code> decides what this pass owes</b>: specs to write, or a regression re-run of the existing set. A UI milestone that ships without specs is ledgered and the node is not recorded as passed \u2014 the old <i>\u201conly when it adds a money path\u201d</i> rule made that a judgement call, and the judgement came out \u201cnot this one\u201d every time.'},
+  GATE_B:{steps:["Review the <b>entire change set at once</b>, against <code>main</code> \u2014 cross-file interaction and coherence a per-file pass structurally cannot see.", "Fix every finding.", "Re-run the suite after the fixes.", "An absent reviewer is ledgered; on <code>host: none</code> the tool is structurally inapplicable and that is recorded, not passed.", "<b>This is where the milestone agent's itinerary ends</b> \u2014 the exits read run-level state the milestone agent was never given."],k:'gate',own:'<b>milestone agent</b> \u2192 code-quality-pipeline-node.md \u00a7 GATE_B',act:'Holistic review of the <b>entire diff against main</b> \u2014 cross-file interaction and overall coherence, which a per-file pass structurally cannot see.',em:'attempts["GATE_B:id"], debug_return_to, skipped_gates[]',g:'tests green after review-and-fixes and a milestone remains and integration.bra… \u2192 BRANCH (15) \u00b7 tests green after review-and-fixes and branching == C and no milestone remains… \u2192 CONSOLIDATE (16) \u00b7 tests green after review-and-fixes and ((branching ∈ {A,B} and no milestone re… \u2192 CLOSE_OUT (17) \u00b7 that node's result is red \u2192 DEBUG (19)',b:'2, then BLOCKED',rq:'code-review',dbg:1,note:'<b>Its exit is where the topologies split.</b> Under A/B the last milestone falls through to CLOSE_OUT with nothing merged yet (17); under C the last milestone goes to CONSOLIDATE (16), and the integration pass comes back here before taking 17. <b>C no longer opens a PR per milestone</b> \u2014 C no longer opens a PR per milestone. <b>Under C this node runs twice</b>, and the second pass is the only one that sees the cross-milestone diff.'},
+  CLOSE_OUT:{steps:["Mark every milestone and step in the plan file <b>[DONE] / [SKIPPED] / [DEFERRED]</b>, each with its reason.", "Record the key decisions taken during execution that deviated from the plan.", "Record the verification results \u2014 which suites ran, and what they returned.", "<b>Copy every <code>skipped_gates[]</code> entry into the plan file.</b> This is the node's real job: the ledger becomes permanent and reviewable instead of living only in run state.", "Update the project <code>CLAUDE.md</code> \u2014 structural changes only, kept under 100 lines.", "Run <code>claude-md-improver</code> on it; absent \u2192 ledgered.", "<b>Complete <code>context.qa_env</code></b> \u2014 how to run and reach the app, plus two identities for authorization probing. QA reads only from here, so a resumed run still knows how to reach the app.", "All of this runs <b>before</b> the PR, so it lands inside the diff a human reviews."],k:'',own:'plan-guidelines-node.md \u00a7 CLOSE_OUT',act:'Mark every milestone, record key decisions and verification results, <b>copy every skipped-gate entry into the plan</b>, update CLAUDE.md, run the improver. Complete qa_env.',em:'plan file updated, context.qa_env completed',g:'— unconditional, every strategy; the work still has to be merged \u2192 PR (21)',b:'1',rq:'claude-md-improver \u2014 absent \u2192 skipped_gates[]',note:'<b>This runs before the PR, under every strategy, and has exactly one exit.</b> Its plan-file and CLAUDE.md commits therefore land <i>inside</i> the reviewed diff. Under the old ordering they were committed after MERGE, past the only review gate in the graph.'},
+  PR:{steps:["Build \u2192 format \u2192 lint \u2192 test, fixing each failure before moving on.", "Commit, and push with upstream set.", "<b>Check for an existing PR on this branch first</b> \u2014 update it, never open a second.", "Open against <code>main_branch</code> with a clear title, description and issue ID.", "<b>Does not re-run the quality pipeline</b> \u2014 GATE_A and GATE_B already ran as their own nodes."],k:'',own:'pr-mr-prepare-node.md',act:'Build \u2192 format \u2192 lint \u2192 test, fixing each failure before the next. Commit, push, open the PR/MR. <b>Idempotent</b> \u2014 check for an existing PR on this branch and update it, never open a second. <b>Does not re-run the quality gates.</b>',em:'milestones[cursor].pr',g:'PR/MR open \u2192 CI (22)',b:'2',rq:'gh or glab, matching context.host',ask:'only when auto_open_mr is false',note:'<b>Idempotency is now load-bearing, not theoretical.</b> Under A/B this node is re-entered on every QA reopen \u2014 edge 28 sends the fix back through the loop and 21 returns here with the PR still open. A second PR would split the review the node exists to obtain.'},
+  CI:{steps:["Poll the run to completion \u2014 <b>never a blocking wait</b>.", "On red: pull the failing job's logs.", "<b>Reproduce the failing command locally</b> before changing anything.", "Fix the cause, verify locally, push, re-watch.", "Bounded by a time budget (default 15 min), enforced at cycle boundaries."],k:'',own:'watch-ci-node.md',act:'Poll the run to completion \u2014 never a blocking wait. On red: pull logs, reproduce the failing command <b>locally</b>, fix the cause, verify, push, re-watch.',em:'attempts["CI:id"], debug_return_to = CI on failure',g:'that node's result is red \u2192 DEBUG (19) \u00b7 checks passing (or context.host ∈ {gitlab, none} \u2192 QA (23) \u00b7 checks passing and the plan produced nothing runnable \u2192 MERGE (24)',b:'15-min budget + a 2-same-error guard',rq:'gh with GitHub Actions',dbg:1,note:'<b>Never fakes green.</b> Skipped tests, continue-on-error, || true, lowered thresholds \u2014 all forbidden. This node owns the QA-skip decision (edge 24) under every strategy, because CLOSE_OUT cannot route to DONE without stranding the branch \u2014 and 24 is the <b>only</b> legitimate path that skips QA.'},
+  DEBUG:{steps:["<b>Root-cause before proposing any fix.</b> The Iron Law: no fix without investigation.", "Apply the <b>minimal legitimate</b> fix.", "Never mask: no skipped test, no loosened assertion, no <code>|| true</code>.", "Charge the attempt to <b>the caller's</b> counter, never to a counter of its own.", "Return to whichever node is in <code>debug_return_to</code>, and clear it."],k:'dbg',own:'<b>milestone agent</b>, except the CI and CONSOLIDATE round-trips \u2192 systematic-debugging-node.md',act:'Root-cause the failure <b>before</b> proposing any fix. Apply the minimal legitimate fix. Never mask a failure.',em:'the CALLER\'s attempts key \u2014 never its own; clears debug_return_to on success',g:'root cause fixed \u2192 debug_return_to (20)',b:'inherited from the caller',rq:'\u2014',note:'Re-entrant from <b>six</b> callers: TEST, E2E, GATE_A, GATE_B, CI, CONSOLIDATE. The caller\'s bound wins even when it is tighter than the method wants.'},
+  QA:{steps:["Bring up the full real stack \u2014 the deployed shape, not a test harness.", "<b>Write the QA plan to <code>docs/qa/</code> before the first probe.</b>", "Read the committed tests first, and target only the delta they do not cover.", "Cover every green path; tick the plan off live as you go.", "Then attack: authorization abuse (BOLA/IDOR), injection, serialization leaks, fuzz.", "Close with a final report and return the verdict.", "<b>Always probes an unmerged branch</b>, under every strategy \u2014 so a BLOCK never reaches main."],k:'',own:'qa-engineer-node.md',act:'Bring up the real stack. Write the QA plan to a file <b>before the first probe</b>. Cover every green path, then attack. Close it with a final report.',em:'qa.{verdict, qa_plan_path, bugs[]}',g:'verdict returned \u2192 VERDICT (25)',b:'1 per pass',rq:'a runnable app + two identities for authorization probing',note:'<b>This always probes an unmerged branch, under every strategy</b> \u2014 the run branch under A/B, <code>integration.branch</code> under C \u2014 with the PR open against it, so a BLOCK stops the work before main. Under C that is only true because CONSOLIDATE merged the worktrees <i>locally</i> first; the earlier shape merged each milestone to main as it landed, so QA could only ever run after the fact.'},
+  VERDICT:{steps:["Read the QA verdict.", "<b>PASS</b> \u2192 MERGE. <b>PASS-WITH-ISSUES with no S1/S2</b> \u2192 MERGE, the rest becoming documented follow-ups.", "<b>BLOCK, or any S1/S2</b> \u2192 append a fix milestone scoped to those findings, <code>is_fix: true</code>, <code>deps: []</code>.", "Point <code>cursor.milestone</code> at it; it commits on the one open unmerged branch and pushes to the already-open PR.", "Convert every confirmed finding into a committed regression test.", "Bounded at 2 reopens; the second exhausted one escalates to you."],k:'',own:'inline',act:'Route on the QA verdict. On reopen, append a fix milestone scoped to the S1/S2 findings and point the cursor at it.',em:'attempts.QA, a new is_fix milestone, cursor.milestone',g:'verdict == PASS \u2192 MERGE (26) \u00b7 verdict == PASS-WITH-ISSUES and no S1/S2 \u2192 MERGE (27) \u00b7 verdict == BLOCK or any S1/S2 present \u2192 BRANCH (28)',b:'2 reopens, then BLOCKED',rq:'\u2014',ask:'on the second exhausted reopen',note:'Every confirmed finding becomes a committed test before DONE, and <b>those tests land inside the reviewed diff</b> under every strategy \u2014 under the old ordering they were committed to main after the merge. The reopen commits on the one open unmerged branch and pushes to the already-open PR, which is what makes PR idempotency load-bearing.'},
+  CONSOLIDATE:{steps:["Create <code>&lt;task-id&gt;/integration</code> off <code>main_branch</code>.", "Merge every milestone branch into it in <b>dependency order</b>, parents first.", "<b>Run the full unit + integration suite on the integrated result</b> \u2014 N independently-green branches are not a green whole.", "Remove every worktree.", "A semantic conflict routes to <code>DEBUG</code>; a textual one halts."],k:'gate',own:'inline',act:'Create <code>&lt;task-id&gt;/integration</code> off main. Merge <b>every milestone branch</b> into it in <b>dependency order</b>, parents first. Then run the <b>integrated</b> unit + integration suite \u2014 N independently-green branches are not a green whole. Finally remove every worktree.',em:'integration.branch, integration.merged[], milestones[*].node = CONSOLIDATED',g:'every milestone branch merged into integration.branch and the integrated suite… \u2192 GATE_B (18) \u00b7 that node's result is red \u2192 DEBUG (19)',b:'3, then BLOCKED',rq:'git with worktree support',dbg:1,note:'<b>A conflict is not a bug \u2014 a red suite is.</b> A <i>textual</i> conflict means two milestones edited the same lines: git cannot resolve it and neither should the graph guess, so it BLOCKs with the paths named. A <i>semantic</i> conflict \u2014 git merged cleanly and the suite went red \u2014 <i>is</i> a defect with a root cause, so it routes to DEBUG like any other red suite.'},
+  MERGE:{steps:["<b>Does not merge.</b> Polls <code>gh pr view --json state</code> until <code>MERGED</code>.", "Blocks if the PR is closed unmerged.", "Then mark <b>every</b> milestone <code>MERGED</code> at once \u2014 one PR carried them all, under every strategy.", "Close every task."],k:'',own:'inline',act:'<b>Waits for the merge; never performs it.</b> Polls until a human or configured auto-merge lands the PR.',em:'milestones[*].node = MERGED, cursor.milestone',g:'PR confirmed merged \u2192 DONE (29)',b:'1',rq:'gh or glab',note:'<b>This is the last node before DONE, under every strategy, and that is the point.</b> Everything producing evidence has already run on the branch, so the human approving the merge sees a diff that carries its own QA verdict. <b>One merge per run</b> \u2014 under C, CONSOLIDATE has already collapsed every worktree into the single branch this node waits on.'},
+  DONE:{steps:["Write <code>status: DONE</code>.", "Link the QA plan from the plan file.", "<b>Report what was skipped, first.</b> A run finishing with a non-empty ledger is not a clean run.", "Then: milestones completed, and follow-ups outstanding.", "Note the viewer server if one is still running \u2014 a forgotten server should be a known one."],k:'term',own:'terminal',act:'Report: milestones completed, <b>what was skipped and why \u2014 first</b>, and any follow-ups.',em:'status: DONE',g:'\u2014',b:'\u2014',rq:'\u2014',note:'A run reaching DONE with a non-empty skipped-gate ledger is <b>not a clean run</b>. The report must lead with it, never bury it.'},
+  HANDOFF:{k:'hand',own:'terminal',act:'The graph writes the plan, states that strategy D was chosen, and stops. <b>/batch is a user command a skill cannot invoke.</b>',em:'status: HANDOFF',g:'\u2014',b:'\u2014',rq:'\u2014',note:'Deliberately distinct from BLOCKED: nothing went wrong here, so nobody should go hunting for a failure. It needs action, not diagnosis.'}
+}
+const AGENT_NODES=["BRANCH", "IMPLEMENT", "TEST", "GATE_A", "E2E", "GATE_B"]
+const GREEN=["INTAKE", "SPEC", "PLAN", "STRATEGY", "BRANCH", "IMPLEMENT", "TEST", "GATE_A", "E2E", "GATE_B", "CLOSE_OUT", "PR", "CI", "QA", "VERDICT", "MERGE", "DONE"]
+const E=(f,t,l,ty)=>({f,t,l,ty})
+const SETUP=[E('INTAKE','SPEC','no spec','flow'),E('SPEC','PLAN','approved','flow'),E('INTAKE','PLAN','spec supplied','flow'),E('PLAN','PLAN','revisions','loop'),E('PLAN','STRATEGY','on disk AND approved','flow')]
+const CORE=[E('BRANCH','IMPLEMENT','','flow'),E('IMPLEMENT','TEST','its own steps committed','flow'),E('TEST','GATE_A','tests green','flow'),E('GATE_A','E2E','clean \u00b7 has_ui','flow'),E('E2E','GATE_B','journeys green','flow'),E('GATE_A','GATE_B','clean \u00b7 no ui','flow')]
+const DEBUGS=[E('TEST','DEBUG','red \u00d73','dbg'),E('GATE_A','DEBUG','tests red \u00d72','dbg'),E('E2E','DEBUG','red \u00d73','dbg'),E('GATE_B','DEBUG','red \u00d72','dbg'),E('CI','DEBUG','red \u00b7 budget','dbg'),E('CONSOLIDATE','DEBUG','integrated red \u00d73','dbg')]
+
+// Every strategy shares this tail from CLOSE_OUT onward.
+const TAIL=[E('CLOSE_OUT','PR','21 \u00b7 unconditional','flow'),E('PR','CI','22','flow'),
+  E('CI','QA','23 \u00b7 checks green \u00b7 runnable','flow'),E('CI','MERGE','24 \u00b7 nothing runnable \u2014 QA skipped','loop'),
+  E('QA','VERDICT','25','flow'),E('VERDICT','MERGE','26/27 \u00b7 PASS or only S3/S4','flow'),
+  E('VERDICT','BRANCH','28 \u00b7 BLOCK or S1/S2 \u2014 reopen \u00d72, same open branch','loop'),E('MERGE','DONE','29','flow')]
+// A/B \u2014 the loop exits straight to close-out.
+const AB_LOOP=[E('GATE_B','BRANCH','15 \u00b7 a milestone remains','loop'),E('GATE_B','CLOSE_OUT','17 \u00b7 last milestone','flow')]
+// C \u2014 the loop exits to CONSOLIDATE, which merges the worktrees and re-enters GATE_B.
+const C_LOOP=[E('GATE_B','BRANCH','15 \u00b7 a milestone remains \u2014 new worktree','loop'),
+  E('GATE_B','CONSOLIDATE','16 \u00b7 last milestone','flow'),
+  E('CONSOLIDATE','GATE_B','18 \u00b7 merged \u00b7 integrated suite green','flow'),
+  E('GATE_B','CLOSE_OUT','17 \u00b7 the integration pass','flow')]
+
+const ALL=['INTAKE','SPEC','PLAN','STRATEGY','BRANCH','IMPLEMENT','TEST','GATE_A','E2E','GATE_B','CONSOLIDATE','PR','CI','MERGE','CLOSE_OUT','QA','VERDICT','DONE','DEBUG']
+const AB_TRACE=['INTAKE','SPEC','PLAN','STRATEGY','BRANCH','IMPLEMENT','TEST','GATE_A','E2E','GATE_B','BRANCH','IMPLEMENT','TEST','GATE_A','E2E','GATE_B','CLOSE_OUT','PR','CI','QA','VERDICT','MERGE','DONE']
+
+const S={
+  A:{on:ALL,edges:[...SETUP,E('STRATEGY','BRANCH','A \u00b7 deps acyclic','flow'),...CORE,...AB_LOOP,...TAIL],trace:AB_TRACE,
+     note:'<b>One branch, one pull request \u2014 and QA gates it.</b> Every milestone commits onto the same branch and the loop returns from <code>GATE_B</code> <i>without</i> opening a PR. After the last one: close-out, PR, CI, QA, verdict, <i>then</i> merge. <b>Nothing reaches <code>main</code> until QA has passed</b>, and a <code>BLOCK</code> re-enters at <code>BRANCH</code> on the same still-open branch \u2014 no second PR, no fixing forward on main.'},
+  B:{on:ALL,edges:[...SETUP,E('STRATEGY','BRANCH','B \u00b7 deps acyclic','flow'),...CORE,...AB_LOOP,...TAIL],trace:AB_TRACE,
+     note:'<b>Identical in shape to A \u2014 but <code>BRANCH</code> never creates anything.</b> It is a no-op throughout, because you are already on a working branch. The node still exists and still refuses to proceed if that branch is protected, which is the only reason it is not simply removed.'},
+  C:{on:ALL,edges:[...SETUP,E('STRATEGY','BRANCH','C \u00b7 deps acyclic','flow'),...CORE,...C_LOOP,...TAIL],
+     trace:['INTAKE','SPEC','PLAN','STRATEGY','BRANCH','IMPLEMENT','TEST','GATE_A','E2E','GATE_B','BRANCH','IMPLEMENT','TEST','GATE_A','E2E','GATE_B','CONSOLIDATE','GATE_B','CLOSE_OUT','PR','CI','QA','VERDICT','MERGE','DONE'],
+     note:'<b>A worktree per milestone \u2014 the only shape that runs them concurrently.</b> Milestones whose <code>deps</code> are satisfied build at the same time in separate working directories, so they cannot collide over one index. <code>CONSOLIDATE</code> then merges every branch into <b>one integration branch</b>, in dependency order, runs the <i>integrated</i> suite, and removes the worktrees \u2014 and from there C runs the identical tail as A and B. <b>One PR, one QA pass, one merge.</b><br><br><b>Note that <code>GATE_B</code> appears twice in the trace.</b> The per-milestone pass reviews one worktree&rsquo;s diff; the integration pass reviews the whole merged diff \u2014 the cross-<i>milestone</i> interactions no single worktree could contain. Under A/B the last milestone&rsquo;s pass already does both jobs.'},
+  D:{on:['INTAKE','SPEC','PLAN','STRATEGY','HANDOFF'],edges:[...SETUP,E('STRATEGY','HANDOFF','7 \u00b7 strategy D','hand')],
+     trace:['INTAKE','SPEC','PLAN','STRATEGY','HANDOFF'],
+     note:'<b>The loop never runs.</b> <code>/batch</code> is a user command \u2014 a skill cannot invoke it \u2014 so the graph writes the plan, records that D was chosen, and stops at <code>HANDOFF</code>. That status is deliberately <i>not</i> <code>BLOCKED</code>: nothing failed, so nobody should go looking for a failure.'}
+}
+
+const POS={BRANCH:{A:'created once',B:'no-op \u2014 current branch',C:'+ a worktree each milestone',D:''},
+           CONSOLIDATE:{A:'not on this path',B:'not on this path',C:'merges every worktree',D:''},
+           GATE_B:{A:'once per milestone',B:'once per milestone',C:'per milestone + integration',D:''},
+           MERGE:{A:'last node before DONE',B:'last node before DONE',C:'last node before DONE',D:''}}
+
+const LAYOUT=[
+  {label:'setup',box:0,rows:[['INTAKE','SPEC','PLAN','STRATEGY']]},
+  {label:'milestone loop \u2014 once per milestone',box:1,rows:[['BRANCH','IMPLEMENT','TEST','GATE_A','E2E','GATE_B']]},
+  {label:'consolidate \u2014 strategy C only \u00b7 GATE_B exits the loop HERE, then the tail',box:0,rows:[['CONSOLIDATE']],center:1},
+  {label:'the shared tail \u2014 identical under A, B and C \u00b7 no PR exists until the loop is done',box:0,rows:[['CLOSE_OUT','PR','CI','QA','VERDICT','MERGE','DONE','HANDOFF']]},
+  {label:'debug \u2014 re-entrant from six callers',box:0,rows:[['DEBUG']],center:1}
+]
+
+let cur='A',showDbg=true,showGuards=true,traceIdx=-1,selected=null
+const bands=document.getElementById('bands'),wires=document.getElementById('wires'),
+      panel=document.getElementById('panel'),snote=document.getElementById('snote'),tpos=document.getElementById('tpos')
+
+function build(){
+  bands.innerHTML=''
+  LAYOUT.forEach(band=>{
+    const outer=document.createElement('div'); outer.className='band'
+    const inner=band.box?document.createElement('div'):outer
+    if(band.box){inner.className='loopbox'; inner.id='loopbox'}
+    const lab=document.createElement('p'); lab.className='band-label'; lab.textContent=band.label; inner.appendChild(lab)
+    band.rows.forEach((row,ri)=>{
+      const r=document.createElement('div'); r.className='row'+(band.center?' center':'')
+      if(ri>0) r.style.marginTop='30px'
+      row.forEach(id=>{
+        const n=N[id]; if(!n) return
+        const w=document.createElement('div'); w.className='nwrap'
+        const b=document.createElement('button')
+        b.className='node '+(n.k||''); b.textContent=id; b.id='n-'+id
+        b.setAttribute('aria-pressed','false'); b.title=id+' \u2014 click for its contract'
+        b.addEventListener('click',()=>select(id))
+        w.appendChild(b)
+        if(POS[id]){const s=document.createElement('span');s.className='nb pos';s.id='pos-'+id;w.appendChild(s)}
+        if(id==='DEBUG'){const s=document.createElement('span');s.className='nb q';s.id='dbg-hint';w.appendChild(s)}
+        if(n.ask){const s=document.createElement('span');s.className='nb q';s.textContent=typeof n.ask==='string'?'asks you: '+n.ask:'asks you';w.appendChild(s)}
+        if(n.dbg){const s=document.createElement('span');s.className='nb';s.textContent='\u21ba debug \u00b7 '+n.b.replace(', then BLOCKED','').replace(/<[^>]+>/g,'');w.appendChild(s)}
+        r.appendChild(w)
+      })
+      inner.appendChild(r)
+    })
+    if(band.box) outer.appendChild(inner)
+    bands.appendChild(outer)
+  })
+  render()
+}
+
+function edgesNow(){
+  const base=S[cur].edges.slice()
+  if(showDbg) for(const d of DEBUGS) if(S[cur].on.includes(d.f)) base.push(d,E('DEBUG',d.f,'return_to','dbg'))
+  return base
+}
+
+function render(){
+  const on=S[cur].on
+  Object.keys(N).forEach(id=>{
+    const el=document.getElementById('n-'+id); if(!el) return
+    const live=on.includes(id)   // greying means ONE thing: not on this strategy's path.
+                                // DEBUG is reachable from six callers everywhere, so it is never greyed;
+                                // the toggle controls only whether its EDGES are drawn.
+    el.classList.toggle('faded',!live); el.disabled=!live
+    el.classList.toggle('on-path',traceIdx>=0&&S[cur].trace[traceIdx]===id)
+    el.setAttribute('aria-pressed',selected===id?'true':'false')
+    const p=document.getElementById('pos-'+id)
+    if(p) p.textContent = live&&POS[id]?POS[id][cur]:''
+    if(id==='DEBUG'){const h=document.getElementById('dbg-hint')
+      if(h) h.textContent = showDbg?'6 callers \u00b7 returns to debug_return_to':'edges hidden \u2014 press \u201cdebug edges\u201d'}
+  })
+  const lb=document.getElementById('loopbox'); if(lb) lb.classList.toggle('off',cur==='D')
+  drawWires()
+  snote.innerHTML='<div class="note'+(cur==='D'?' hand':(cur==='C'?'':' flow'))+'">'+S[cur].note+'</div>'
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.s===cur?'true':'false'))
+  tpos.textContent = traceIdx<0?'trace off':'step '+(traceIdx+1)+'/'+S[cur].trace.length+' \u2014 '+S[cur].trace[traceIdx]
+  document.getElementById('t-prev').disabled=traceIdx<=0
+  document.getElementById('t-next').disabled=traceIdx>=S[cur].trace.length-1
+}
+
+function drawWires(){
+  const c=document.getElementById('canvas'),cb=c.getBoundingClientRect()
+  wires.innerHTML=''
+  wires.setAttribute('viewBox','0 0 '+c.offsetWidth+' '+c.offsetHeight)
+  const col={flow:'var(--flow)',loop:'var(--guard)',dbg:'var(--stop)',hand:'var(--hand)'}
+  const dash={flow:'',loop:'6 4',dbg:'2 4',hand:''}
+  const pos=id=>{const e=document.getElementById('n-'+id); if(!e) return null
+    const r=e.getBoundingClientRect(); return {l:r.left-cb.left,r:r.right-cb.left,t:r.top-cb.top,b:r.bottom-cb.top,cx:r.left-cb.left+r.width/2,cy:r.top-cb.top+r.height/2}}
+  const at=traceIdx>0?[S[cur].trace[traceIdx-1],S[cur].trace[traceIdx]]:null
+
+  edgesNow().forEach(e=>{
+    const a=pos(e.f),b=pos(e.t); if(!a||!b) return
+    const sameRow=Math.abs(a.cy-b.cy)<12
+    let d,mx,my
+    if(sameRow&&b.l>a.r){ d=`M${a.r+3},${a.cy} L${b.l-6},${b.cy}`; mx=(a.r+b.l)/2; my=a.cy-9 }
+    else if(sameRow&&a.l>b.r){ const y=a.b+16; d=`M${a.cx},${a.b+2} C${a.cx},${y+22} ${b.cx},${y+22} ${b.cx},${b.b+2}`; mx=(a.cx+b.cx)/2; my=y+27 }
+    else { const c1=a.cy<b.cy?a.b+2:a.t-2,c2=a.cy<b.cy?b.t-6:b.b+6
+      d=`M${a.cx},${c1} C${a.cx},${(c1+c2)/2} ${b.cx},${(c1+c2)/2} ${b.cx},${c2}`; mx=(a.cx+b.cx)/2+8; my=(c1+c2)/2 }
+    const hot=at&&at[0]===e.f&&at[1]===e.t
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path')
+    p.setAttribute('d',d); p.setAttribute('fill','none')
+    p.setAttribute('stroke',col[e.ty]); p.setAttribute('stroke-width',hot?2.6:1.4)
+    p.setAttribute('opacity',hot?1:(cur==='D'&&e.ty!=='hand'&&e.ty!=='flow'?.25:.62))
+    if(dash[e.ty]) p.setAttribute('stroke-dasharray',dash[e.ty])
+    wires.appendChild(p)
+    if(showGuards&&e.l){
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text')
+      t.setAttribute('x',mx); t.setAttribute('y',my); t.setAttribute('text-anchor','middle')
+      t.setAttribute('font-family','ui-monospace,Menlo,monospace'); t.setAttribute('font-size','8.5')
+      t.setAttribute('fill',col[e.ty]); t.setAttribute('opacity',hot?1:.85); t.textContent=e.l
+      wires.appendChild(t)
+    }
+  })
+}
+
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{cur=t.dataset.s; traceIdx=-1; if(selected&&!S[cur].on.includes(selected)) selected=null; render()}))
+document.getElementById('t-debug').addEventListener('click',e=>{showDbg=!showDbg; e.currentTarget.setAttribute('aria-pressed',showDbg); e.currentTarget.textContent=showDbg?'hide debug edges':'debug edges'; render()})
+document.getElementById('t-guards').addEventListener('click',e=>{showGuards=!showGuards; e.currentTarget.setAttribute('aria-pressed',showGuards); render()})
+document.getElementById('t-next').addEventListener('click',()=>{if(traceIdx<S[cur].trace.length-1){traceIdx++; pick(S[cur].trace[traceIdx]);}})
+document.getElementById('t-prev').addEventListener('click',()=>{if(traceIdx>0){traceIdx--; pick(S[cur].trace[traceIdx]);}})
+document.getElementById('t-reset').addEventListener('click',()=>{traceIdx=-1; selected=null; panel.innerHTML='<p class="panel-empty">Click a node to see its contract.</p>'; render()})
+addEventListener('resize',drawWires)
+
+/* ---------------------------------------------------------------------------
+   ONE node renderer, three consumers: the green-path stepper, the graph's
+   click panel, and the Nodes catalog. Each of those used to live on its own
+   page with its own copy of this markup, which is how the old schematic page ended up
+   publishing a bound count one release out of date.
+   --------------------------------------------------------------------------- */
+function nodeCard(id, opts){
+  const n = N[id], o = opts || {}
+  if(!n) return '<div class="ncard"><p class="pid">' + id + '</p></div>'
+  const tags = []
+  if (AGENT_NODES.includes(id))       tags.push('<span class="pill flow">milestone agent</span>')
+  if (id === 'GATE_A')         tags.push('<span class="pill guard">dispatches a workflow</span>')
+  if (n.ask)                   tags.push('<span class="pill hand">human stop</span>')
+  if (!GREEN.includes(id))     tags.push('<span class="pill stop">failure path only</span>')
+  const where = (typeof POS !== 'undefined' && POS[id] && o.strategy && POS[id][o.strategy])
+    ? ' <span style="font-family:var(--sans);font-size:12px;font-weight:400;color:var(--flow)">'
+      + '\u2014 under ' + o.strategy + ': ' + POS[id][o.strategy] + '</span>'
+    : ''
+  return '<div class="ncard">'
+    + '<div class="dh"><h3>' + id + where + '</h3>' + tags.join('') + '</div>'
+    + '<p class="owner">Owner &mdash; ' + n.own + '</p>'
+    + (n.steps ? '<ol class="acts"><li>' + n.steps.join('</li><li>') + '</li></ol>' : '')
+    + '<dl>'
+    + '<div class="prow"><dt>emits</dt><dd><code>' + n.em + '</code></dd></div>'
+    + '<div class="prow"><dt>exit guards</dt><dd><code>' + n.g + '</code></dd></div>'
+    + '<div class="prow"><dt>max attempts</dt><dd>' + n.b + '</dd></div>'
+    + '<div class="prow"><dt>requires</dt><dd>' + n.rq + '</dd></div>'
+    + '</dl>'
+    + (n.note ? '<div class="note">' + n.note + '</div>' : '')
+    + '</div>'
+}
+
+/* Everything nodeCard() interpolates comes from the N dataset authored in this file -- it is not
+   run data, and nothing here is user-supplied. (The run viewer, which DOES render run data,
+   escapes every field; this page has no such input to escape.) */
+
+/* The graph engine's own select() was cut at build time; these replace it, against the shared
+   renderer, so a node's contract reads identically wherever you are looking at it. */
+const _panel = document.getElementById('panel')
+function paintPanel(id){
+  _panel.innerHTML = id
+    ? nodeCard(id, {strategy: (typeof cur !== 'undefined' ? cur : null)})
+    : '<p class="panel-empty">Click a node to see its contract.</p>'
+}
+function pick(id){ selected = id; paintPanel(selected); render() }          // trace: never toggles
+function select(id){ pick(selected === id ? null : id) }                    // click: toggles
+
+/* ---------------------------------------------------------------------------
+   Green-path stepper
+   --------------------------------------------------------------------------- */
+const OFFPATH = ['DEBUG', 'CONSOLIDATE']
+const mapEl = document.getElementById('map'),
+      walkEl = document.getElementById('walkcard'),
+      progEl = document.getElementById('prog')
+let step = 0, showFail = false, timer = null
+
+function walkList(){ return showFail ? GREEN.concat(OFFPATH) : GREEN }
+
+function drawMap(){
+  const list = walkList()
+  mapEl.innerHTML = ''
+  list.forEach((id, i) => {
+    if (i && i < GREEN.length){
+      const a = document.createElement('span')
+      a.className = 'arr'; a.textContent = '\u2192'; a.setAttribute('aria-hidden', 'true')
+      mapEl.appendChild(a)
+    }
+    const n = N[id], off = !GREEN.includes(id)
+    const b = document.createElement('button')
+    b.className = 'n' + (AGENT_NODES.includes(id) ? ' agent' : '') + (off ? ' off' : '')
+                + (i === step ? ' on' : (i < step ? ' seen' : ''))
+    b.setAttribute('aria-current', i === step ? 'step' : 'false')
+    const badge = id === 'GATE_A'
+      ? '<span class="wf" title="dispatches a Workflow script">WF</span>'
+      : (n && n.ask ? '<span class="ask" title="stops for you"></span>' : '')
+    b.innerHTML = badge + '<span class="id">' + id + '</span><span class="who">'
+                + (off ? 'on failure' : AGENT_NODES.includes(id) ? 'milestone agent'
+                   : (n && n.ask) ? 'asks you' : 'orchestrator') + '</span>'
+    b.addEventListener('click', () => { stopWalk(); step = i; paintWalk() })
+    mapEl.appendChild(b)
+  })
+}
+
+function paintWalk(){
+  drawMap()
+  const id = walkList()[step]
+  progEl.textContent = step < GREEN.length
+    ? 'step ' + (step + 1) + ' / ' + GREEN.length
+    : 'off the green path'
+  walkEl.innerHTML = nodeCard(id, {})
+}
+
+function stopWalk(){
+  if (timer){ clearInterval(timer); timer = null }
+  document.getElementById('play').innerHTML = '\u25B6&nbsp; Walk the green path'
+}
+
+document.getElementById('play').addEventListener('click', () => {
+  if (timer){ stopWalk(); return }
+  if (step >= GREEN.length - 1) step = 0
+  document.getElementById('play').innerHTML = '\u25A0&nbsp; Pause'
+  paintWalk()
+  timer = setInterval(() => {
+    if (step >= GREEN.length - 1){ stopWalk(); return }
+    step++; paintWalk()
+  }, 2100)
+})
+document.getElementById('reset').addEventListener('click', () => { stopWalk(); step = 0; paintWalk() })
+document.getElementById('toggleLoops').addEventListener('click', e => {
+  showFail = !showFail
+  e.currentTarget.textContent = showFail ? 'Hide failure nodes' : 'Show failure nodes'
+  if (!showFail && step >= GREEN.length) step = 0
+  paintWalk()
+})
+
+/* ---------------------------------------------------------------------------
+   Nodes catalog - same renderer, grouped the way the graph is grouped
+   --------------------------------------------------------------------------- */
+const PHASES = [
+  ['Setup', ['INTAKE', 'SPEC', 'PLAN', 'STRATEGY']],
+  ['Milestone loop \u2014 inside a milestone agent', ['BRANCH', 'IMPLEMENT', 'TEST', 'GATE_A', 'E2E', 'GATE_B']],
+  ['Failure paths', ['DEBUG', 'CONSOLIDATE']],
+  ['The shared tail \u2014 identical under A, B and C', ['CLOSE_OUT', 'PR', 'CI', 'QA', 'VERDICT', 'MERGE', 'DONE']]
+]
+document.getElementById('catalog').innerHTML = PHASES.map(([label, ids]) =>
+  '<h2>' + label + ' <span style="color:var(--fg-3)">\u00B7 ' + ids.length + '</span></h2>'
+  + '<div class="catalog">' + ids.map(id => nodeCard(id, {})).join('') + '</div>'
+).join('')
+
+/* ---------------------------------------------------------------------------
+   The menu
+   --------------------------------------------------------------------------- */
+const views = [...document.querySelectorAll('.view')],
+      tabs = [...document.querySelectorAll('#menu button')]
+let graphDrawn = false
+
+function show(v){
+  views.forEach(s => s.classList.toggle('on', s.id === 'v' + '-' + v))
+  tabs.forEach(b => b.classList.toggle('on', b.dataset.v === v))
+  if (location.hash.slice(1) !== v) history.replaceState(null, '', '#' + v)
+  // The topology SVG measures node positions, and elements inside display:none have none --
+  // so the first paint has to wait until the view is actually on screen.
+  if (v === 'graph'){
+    if (!graphDrawn){ build(); graphDrawn = true }
+    requestAnimationFrame(drawWires)
+  }
+  scrollTo({top: 0, behavior: 'instant'})
+}
+document.getElementById('menu').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (b) show(b.dataset.v)
+})
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-goto]')
+  if (a){ e.preventDefault(); show(a.dataset.goto) }
+})
+addEventListener('hashchange', () => {
+  const v = location.hash.slice(1)
+  if (tabs.some(b => b.dataset.v === v)) show(v)
+})
+
+/* theme */
+const themeBtns = [...document.querySelectorAll('.themes button')]
+themeBtns.forEach(b => b.addEventListener('click', () => {
+  themeBtns.forEach(x => x.classList.toggle('on', x === b))
+  if (b.dataset.theme === 'auto') document.documentElement.removeAttribute('data-theme')
+  else document.documentElement.setAttribute('data-theme', b.dataset.theme)
+  if (graphDrawn) requestAnimationFrame(drawWires)
+}))
+
+paintWalk()
+const start = location.hash.slice(1)
+show(tabs.some(b => b.dataset.v === start) ? start : 'run')
+
+</script>

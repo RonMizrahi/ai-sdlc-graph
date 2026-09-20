@@ -1,0 +1,328 @@
+{
+  "run_id": "pricing-api-28-07-2026",
+  "plan_path": "docs/plans/pricing-api-28-07-2026-plan.md",
+  "spec_path": "docs/specs/pricing-api-28-07-2026-design.md",
+  "node": "DONE",
+  "status": "DONE",
+  "schema_version": 5,
+  "context": {
+    "stack": "backend",
+    "has_ui": false,
+    "main_branch": "trunk",
+    "unborn_main": false,
+    "host": "gitlab",
+    "standards_handshake": {
+      "stack": "Go 1.23, chi router, sqlc",
+      "specialist_skills": [
+        "go-api-standards"
+      ],
+      "approved": true
+    },
+    "branching": "C",
+    "auto_open_mr": true,
+    "run_mode": "continuous",
+    "qa_env": {
+      "run_instructions": "make run  # binds :8080, requires a local postgres on :5432 (docker compose up db)",
+      "api_base_url": "http://localhost:8080",
+      "web_base_url": null,
+      "api_docs": "/openapi.json",
+      "identities": [
+        "service token (see .env.example)",
+        "read-only analyst token"
+      ],
+      "seed": "make seed — loads 400 tariff rows from testdata/tariffs.csv"
+    }
+  },
+  "milestones": [
+    {
+      "id": 1,
+      "name": "Tariff store + migrations",
+      "branch": "price/m1",
+      "deps": [],
+      "pr": 88,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "sqlc schema + migrations",
+        "Repository with tests"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Quote engine",
+      "branch": "price/m2",
+      "deps": [
+        1
+      ],
+      "pr": 89,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Rule evaluation order",
+        "Golden-file tests over 40 quotes"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "HTTP surface + auth",
+      "branch": "price/m3",
+      "deps": [
+        1
+      ],
+      "pr": 90,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "POST /quotes",
+        "Token middleware",
+        "Integration tests"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Observability + rate limits",
+      "branch": "price/m4",
+      "deps": [
+        2,
+        3
+      ],
+      "pr": 91,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Structured logs",
+        "Per-token limiter",
+        "Load smoke"
+      ]
+    }
+  ],
+  "integration": {
+    "branch": "price/integrate",
+    "merged": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "attempts": {
+    "TEST:1": 1,
+    "GATE_A:1": 1,
+    "GATE_B:1": 1,
+    "TEST:2": 1,
+    "GATE_A:2": 1,
+    "GATE_B:2": 1,
+    "TEST:3": 1,
+    "GATE_A:3": 2,
+    "GATE_B:3": 1,
+    "TEST:4": 2,
+    "GATE_A:4": 1,
+    "GATE_B:4": 1,
+    "CONSOLIDATE": 2,
+    "QA": 1,
+    "PR_FINAL_REVIEW": 1
+  },
+  "qa": {
+    "verdict": "PASS",
+    "qa_plan_path": "docs/qa/pricing-api-28-07-2026-qa-plan.md",
+    "bugs": []
+  },
+  "monitor": {
+    "spawned": true,
+    "verified_at_history_len": 18,
+    "respawns": 1
+  },
+  "skipped_gates": [
+    {
+      "node": "E2E",
+      "reason": "context.has_ui == false for the whole run — there are no journeys to drive. Structurally off-path, not a gap",
+      "at_milestone": 2
+    },
+    {
+      "node": "CI",
+      "reason": "host == gitlab and no pipeline is configured for this project — the documented short-circuit. Checks vacuously pass; the binary was built and smoke-run locally instead",
+      "at_milestone": 4
+    }
+  ],
+  "history": [
+    {
+      "from": "[start]",
+      "to": "INTAKE",
+      "guard": "run created",
+      "milestone": null,
+      "observation": "existing Go service, 1.2k commits, trunk-based"
+    },
+    {
+      "from": "INTAKE",
+      "to": "PLAN",
+      "guard": "spec supplied",
+      "milestone": null,
+      "observation": "a design doc was handed in with the request, so SPEC is skipped entirely"
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "guard": "plan_path on disk and every milestone has its required steps and user approved",
+      "milestone": null,
+      "observation": "4 milestones; 2 and 3 both depend only on 1, so there is real parallelism to exploit"
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "guard": "branching in {A,B,C} and deps acyclic",
+      "milestone": null,
+      "observation": "strategy C chosen for the fan-out at milestones 2 and 3; four branches off trunk"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "price/m1"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 1,
+      "observation": "sqlc-generated store, 3 migrations"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 1,
+      "observation": "48/48 green"
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "guard": "…the same AND has_ui == false",
+      "milestone": 1,
+      "observation": "clean, 0 findings"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 1,
+      "observation": "milestone 1 done; 2 and 3 unblocked"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "price/m2"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 2,
+      "observation": "quote engine with an explicit rule order; 40 golden files"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 2,
+      "observation": "61/61 green"
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "guard": "…the same AND has_ui == false",
+      "milestone": 2,
+      "observation": "one real finding: rule order was not deterministic under equal priority. Fixed"
+    },
+    {
+      "from": "GATE_B",
+      "to": "CONSOLIDATE",
+      "guard": "tests green AND C AND last milestone AND integration.branch == null",
+      "milestone": 4,
+      "observation": "all four milestone branches complete; opening price/integrate"
+    },
+    {
+      "from": "CONSOLIDATE",
+      "to": "DEBUG",
+      "guard": "integrated suite red — semantic conflict · ×3",
+      "milestone": null,
+      "observation": "milestones 2 and 3 both introduced a Quote type; the merge compiled but the HTTP layer serialised the wrong one"
+    },
+    {
+      "from": "DEBUG",
+      "to": "CONSOLIDATE",
+      "guard": "root cause fixed → return to the caller",
+      "milestone": null,
+      "observation": "collapsed to one type in the store package; the duplicate was a genuine semantic conflict, exactly what the integration pass is for"
+    },
+    {
+      "from": "CONSOLIDATE",
+      "to": "GATE_B",
+      "guard": "all branches merged AND integrated suite green (the integration pass)",
+      "milestone": null,
+      "observation": "203/203 green on the integrated branch, attempt 2 of 3"
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "guard": "tests green AND (A/B and last milestone OR C and the integration pass is green)",
+      "milestone": 4,
+      "observation": "whole-diff review of the integrated branch clean"
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "guard": "plan updated, qa_env complete — unconditional, every strategy",
+      "milestone": null,
+      "observation": "plan closed out, qa_env filled in with the make targets"
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "guard": "PR/MR open — or context.host == none, nothing to open, ledgered",
+      "milestone": 4,
+      "observation": "MR !412 opened, price/integrate → trunk"
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "guard": "review posted — or the reviewer could not run and the ledger says so. Unconditional: this node has one exit",
+      "milestone": 4,
+      "observation": "code-review:code-review --comment over MR !412: 1 comment posted (unbounded page size on /prices). Reports only; VERDICT still routes the run."
+    },
+    {
+      "from": "CI",
+      "to": "QA",
+      "guard": "checks passing (or context.host in {gitlab, none} — CI out of scope or no remote, logged to skipped_gates) AND the app is assembled and runnable",
+      "milestone": 4,
+      "observation": "no gitlab pipeline configured — ledgered; binary built and smoke-run locally"
+    },
+    {
+      "from": "QA",
+      "to": "VERDICT",
+      "guard": "verdict returned",
+      "milestone": 4,
+      "observation": "19/19 green paths, 14/14 break-it attempts held; no findings at any severity"
+    },
+    {
+      "from": "VERDICT",
+      "to": "MERGE",
+      "guard": "verdict == PASS",
+      "milestone": 4,
+      "observation": "clean PASS; routed to MERGE"
+    },
+    {
+      "from": "MERGE",
+      "to": "DONE",
+      "guard": "PR landed — close-out, QA and verdict already ran, pre-merge",
+      "milestone": 4,
+      "observation": "MR !412 merged by a human at 14:02; trunk green"
+    }
+  ],
+  "cursor": 4,
+  "in_flight": [],
+  "debug_return_to": null,
+  "stopped": null
+}

@@ -1,0 +1,20 @@
+{
+  "name": "sdlc-graph-viewer",
+  "displayName": "SDLC Viewer",
+  "version": "1.0.2",
+  "description": "The run viewer for sdlc-graph — one zero-dependency page that renders parallel milestone agents, live or as a self-contained snapshot. Reads the run-directory layout: docs/graph-runs/<run-id>/{state.json,journals/}.",
+  "author": {
+    "name": "Ron Mizrahi",
+    "email": "ronmizr@gmail.com"
+  },
+  "homepage": "https://github.com/RonMizrahi/sdlc-graph-engineering",
+  "repository": "https://github.com/RonMizrahi/sdlc-graph-engineering",
+  "license": "MIT",
+  "keywords": [
+    "sdlc",
+    "viewer",
+    "observability",
+    "dashboard",
+    "live"
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "name": "on-exception mode, both reopens spent — the escalation stop finally fires",
+  "why": "The two stops no other walk reaches. VERDICT declares `escalation`, which is silent while reopens remain — every other fixture leaves VERDICT without stopping, and this one asserts that it DOES stop once attempts.QA reaches its bound. on-exception mode is asserted alongside it: two gates are skipped for host:none and the run must stop at each, because the ledger's design is record-and-continue and this mode exists to stop that meaning 'find out at DONE'. Resumed mid-run, which is itself the thing the state file is for.",
+  "expect": {
+    "final_status": "BLOCKED",
+    "reaches": [
+      "PR",
+      "CI",
+      "QA",
+      "VERDICT",
+      "BLOCKED"
+    ],
+    "stops": [
+      "PR:on-exception",
+      "CI:on-exception",
+      "VERDICT:escalation"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-escalation-31-07-2026",
+    "plan_path": "docs/plans/graph-escalation-31-07-2026-plan.md",
+    "spec_path": "docs/specs/graph-escalation-31-07-2026-design.md",
+    "node": "CLOSE_OUT",
+    "status": "RUNNING",
+    "context": {
+      "stack": "both",
+      "has_ui": true,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "none",
+      "standards_handshake": {
+        "approved_at": "STRATEGY",
+        "note": "simulated"
+      },
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "on-exception",
+      "qa_env": {
+        "run_instructions": "simulated",
+        "api_base_url": "http://localhost:3001",
+        "web_base_url": "http://localhost:5173",
+        "api_docs": "/api-json",
+        "identities": [
+          "qa-a",
+          "qa-b"
+        ],
+        "seed": "simulated"
+      }
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "the original work",
+        "branch": "esc/run",
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked"
+        ],
+        "pr": 3,
+        "is_fix": false,
+        "touches_ui": true
+      },
+      {
+        "id": 2,
+        "name": "first QA fix",
+        "branch": "esc/run",
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked"
+        ],
+        "pr": null,
+        "is_fix": true,
+        "touches_ui": true
+      },
+      {
+        "id": 3,
+        "name": "second QA fix",
+        "branch": "esc/run",
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked"
+        ],
+        "pr": null,
+        "is_fix": true,
+        "touches_ui": true
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {
+      "QA": 2,
+      "GATE_A:3": 1,
+      "GATE_B:3": 1
+    },
+    "qa": {
+      "verdict": "BLOCK",
+      "qa_plan_path": "docs/qa/graph-escalation-simulated.md",
+      "bugs": []
+    },
+    "skipped_gates": [
+      {
+        "node": "E2E",
+        "reason": "SIMULATED: carried in from earlier in this run",
+        "at_milestone": 1
+      }
+    ],
+    "history": [],
+    "cursor": 3,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "edge": "21",
+      "milestone": 3,
+      "observation": "RESUMED here. Both reopens are already spent — attempts.QA reads 2 — so this pass through the tail is the last one the graph is allowed to take on its own."
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "edge": "22",
+      "milestone": 3,
+      "stops": [
+        {
+          "type": "on-exception",
+          "answer": "acknowledged — local-only repo, carry on"
+        }
+      ],
+      "observation": "host is none: no remote, so no PR to open. Ledgered and passed through — never a halt. Under on-exception mode that ledger entry is itself a stop, which is the point of the mode: record-and-continue is right, but you should not learn at DONE that a gate ran degraded.",
+      "skipped_gates": [
+        {
+          "node": "PR",
+          "reason": "SIMULATED: context.host == none, no remote and therefore no PR to open.",
+          "at_milestone": 3
+        }
+      ]
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "edge": "30",
+      "milestone": 3,
+      "observation": "SKIPPED GATE: host is none, so there is no PR to review either. code-review:code-review is ledgered and the node passes straight through — one exit, and it never blocks."
+    },
+    {
+      "from": "CI",
+      "to": "QA",
+      "edge": "23",
+      "milestone": 3,
+      "stops": [
+        {
+          "type": "on-exception",
+          "answer": "acknowledged"
+        }
+      ],
+      "observation": "Second ledger entry, second stop. Edge 22a and not 22b — the app IS runnable, so QA is not skipped. Note that auto_open_mr is true, so PR's confirm-before did NOT fire above; the only stop there was the mode's.",
+      "skipped_gates": [
+        {
+          "node": "CI",
+          "reason": "SIMULATED: context.host == none, GitHub Actions out of scope.",
+          "at_milestone": 3
+        }
+      ]
+    },
+    {
+      "from": "QA",
+      "to": "VERDICT",
+      "edge": "25",
+      "milestone": 3,
+      "observation": "A third BLOCK. The app runs and the finding is real, so this is qa.verdict = BLOCK rather than a missing-qa_env BLOCKED — the first spends a reopen, the second would not, and collapsing them would burn the budget on a typo.",
+      "set": {
+        "qa.verdict": "BLOCK",
+        "qa.bugs": [
+          {
+            "severity": "S1",
+            "summary": "SIMULATED: the same authorization hole, third pass"
+          }
+        ]
+      }
+    },
+    {
+      "from": "VERDICT",
+      "to": "BLOCKED",
+      "milestone": 3,
+      "stops": [
+        {
+          "type": "escalation",
+          "answer": "escalated to the user — no third reopen taken"
+        }
+      ],
+      "halt": {
+        "guards_tested": [
+          "30a: verdict == PASS — false, the verdict is BLOCK",
+          "31a: verdict == PASS-WITH-ISSUES and no S1/S2 — false on both clauses",
+          "32: verdict == BLOCK or any S1/S2 present — TRUE, but attempts.QA == 2 and the bound is 2"
+        ],
+        "tried": [
+          "reopen 1: fix milestone 2, scoped to the S1 — QA re-probed and found it again",
+          "reopen 2: fix milestone 3, scoped to the same S1 — QA re-probed and found it again",
+          "two scoped fixes have not held; the architectural doubt is that the check belongs in a guard, not per-endpoint"
+        ]
+      },
+      "observation": "THE ESCALATION STOP. Silent while reopens remained — every other walk leaves VERDICT without stopping, correctly — and it fires exactly once, when the bound is spent. The graph does not grant itself a third reopen: bounds are never widened from the inside. tried[] carries the architectural doubt forward so the human inherits the thought instead of losing it."
+    }
+  ]
+}

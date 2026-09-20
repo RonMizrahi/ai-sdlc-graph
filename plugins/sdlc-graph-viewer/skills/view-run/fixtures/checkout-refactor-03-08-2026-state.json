@@ -1,0 +1,247 @@
+{
+  "run_id": "checkout-refactor-03-08-2026",
+  "plan_path": "docs/plans/checkout-refactor-03-08-2026-plan.md",
+  "spec_path": null,
+  "node": "GATE_A",
+  "status": "BLOCKED",
+  "schema_version": 5,
+  "context": {
+    "stack": "both",
+    "has_ui": null,
+    "main_branch": "main",
+    "unborn_main": false,
+    "host": "github",
+    "standards_handshake": {
+      "stack": "Vue 3 + Vite + TypeScript",
+      "specialist_skills": [
+        "vue-best-practices"
+      ],
+      "approved": false
+    },
+    "branching": "A",
+    "auto_open_mr": false,
+    "run_mode": "step",
+    "qa_env": {
+      "run_instructions": null,
+      "api_base_url": null,
+      "web_base_url": null,
+      "api_docs": null,
+      "identities": [],
+      "seed": null
+    }
+  },
+  "milestones": [
+    {
+      "id": 1,
+      "name": "Extract pricing into a pure module",
+      "branch": "CHK-1/run",
+      "deps": [],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Move price maths out of the controller",
+        "Property tests for rounding",
+        "Unit: rounding, currency, discounts"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Idempotent checkout endpoint",
+      "branch": "CHK-1/run",
+      "deps": [
+        1
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Idempotency-Key header handling",
+        "Replay returns the original order",
+        "Integration: duplicate submit, expired key"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Retire the legacy /pay route",
+      "branch": null,
+      "deps": [
+        2
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "410 with a migration note",
+        "Delete dead adapters"
+      ]
+    }
+  ],
+  "integration": {
+    "branch": null,
+    "merged": []
+  },
+  "attempts": {
+    "TEST:1": 1,
+    "GATE_A:1": 1,
+    "GATE_B:1": 1,
+    "TEST:2": 2,
+    "GATE_A:2": 2,
+    "GATE_A-dispatch:2": 1
+  },
+  "qa": {
+    "verdict": null,
+    "qa_plan_path": null,
+    "bugs": []
+  },
+  "monitor": {
+    "spawned": true,
+    "verified_at_history_len": 12,
+    "respawns": 0
+  },
+  "skipped_gates": [
+    {
+      "node": "GATE_A.simplifier",
+      "reason": "code-simplifier plugin not installed on this machine — reviewer and security ran, the simplification pass did not. Recorded, not counted as passed",
+      "at_milestone": 1
+    }
+  ],
+  "history": [
+    {
+      "from": "[start]",
+      "to": "INTAKE",
+      "guard": "run created",
+      "milestone": null,
+      "observation": "existing repo, 41 commits on main; no docs/graph-runs directory yet"
+    },
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "guard": "spec_path == null",
+      "milestone": null,
+      "observation": "stack read as \"both\" from the workspace layout; has_ui could not be resolved — apps/web exists but contains no routes and no entry component"
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "guard": "spec file on disk and user approved",
+      "milestone": null,
+      "observation": "user declined to write a spec (\"it is a refactor, the plan is enough\"); proceeded on the plan alone — recorded here because it means has_ui was never pinned down"
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "guard": "plan_path on disk and every milestone has its required steps and user approved",
+      "milestone": null,
+      "observation": "3 milestones, strictly sequential; approved on the second pass after splitting the original milestone 2 in two"
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "guard": "branching in {A,B,C} and deps acyclic",
+      "milestone": null,
+      "observation": "strategy A on CHK-1/run; auto_open_mr=false (the user wants to confirm), run_mode=step"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "CHK-1/run cut from main at 8e21c4f"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 1,
+      "observation": "pricing extracted into packages/pricing with no framework imports; 3 commits"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 1,
+      "observation": "22/22 green on the 1st attempt including 4 new property tests over rounding"
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "guard": "…the same AND has_ui == false",
+      "milestone": 1,
+      "observation": "ran under the earlier assumption has_ui == false — this is the assumption that later turned out to be unowned; simplifier absent and ledgered"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 1,
+      "observation": "whole-diff read clean; milestone 1 done, advancing to milestone 2"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "strategy A no-op: staying on CHK-1/run"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 2,
+      "observation": "Idempotency-Key stored against a hash of the request body; replay path returns the original order untouched"
+    },
+    {
+      "from": "TEST",
+      "to": "DEBUG",
+      "guard": "suite red · ×3",
+      "milestone": 2,
+      "observation": "the duplicate-submit integration test hung: the in-memory key store was never cleared between tests, so the second suite file replayed the first file’s order"
+    },
+    {
+      "from": "DEBUG",
+      "to": "TEST",
+      "guard": "root cause fixed → return to the caller",
+      "milestone": 2,
+      "observation": "test-harness fault, not product code: added a per-file store reset. Attempt 2 of 3"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 2,
+      "observation": "31/31 green on attempt 2"
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_A",
+      "guard": "real bug / security / regression AND attempts < 2 · ×1 re-run",
+      "milestone": 2,
+      "observation": "first pass found a real replay hole: an expired key was treated as absent and created a second order. Fixed, re-running the gate — budget now spent (2/2)"
+    },
+    {
+      "from": "GATE_A",
+      "to": "BLOCKED",
+      "guard": "has_ui unresolved (null) — tested before 13/14",
+      "milestone": 2,
+      "observation": "edge 12d fires: neither 13 nor 14 can be evaluated while context.has_ui is null, and the graph will not guess. Everything else about this milestone is green — the run is stopped on one unanswered question, not on a failure"
+    }
+  ],
+  "cursor": 2,
+  "in_flight": [],
+  "debug_return_to": null,
+  "stopped": {
+    "kind": "blocked",
+    "at_node": "GATE_A",
+    "guards_tested": [
+      "12d (has_ui unresolved)",
+      "13 (has_ui == true)",
+      "14 (has_ui == false)"
+    ],
+    "tried": [
+      "re-read the spec for a UI section — there is no spec on disk",
+      "inspected the repo for a web workspace: apps/web exists but has no routes",
+      "asked the user at INTAKE; the answer never came back"
+    ]
+  }
+}

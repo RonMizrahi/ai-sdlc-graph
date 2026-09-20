@@ -1,0 +1,210 @@
+{
+  "name": "a milestone agent dies without returning a bundle — the re-spawn is counted, and not against the node budgets",
+  "why": "The failure delegation creates. A milestone agent that dies takes a whole milestone's worth of crash window with it: the state file says `node: BRANCH` while commits may or may not exist on a branch nobody has looked at. `milestone agents` is written BEFORE the spawn precisely so this state is legible — it names the branch and the base_sha, which is where re-derivation starts. What this walk asserts is the counter: the re-spawn is charged to attempts['MILESTONE-dispatch:1'], NEVER to TEST:1 or GATE_A:1. A milestone agent that returned no bundle tested nothing and reviewed nothing, and charging it to a node budget hands the milestone a re-run allowance it never spent — verbatim the GATE_A-dispatch lesson, where a checkpointed dispatch spent the findings budget and the gate that actually ran had none left. It also proves the block-open rule: the second milestone agent starts at BRANCH again, because it re-derives from the world rather than resuming mid-itinerary.",
+  "expect": {
+    "final_status": "RUNNING",
+    "reaches": [
+      "IMPLEMENT",
+      "TEST",
+      "GATE_A",
+      "GATE_B",
+      "CLOSE_OUT"
+    ],
+    "stops": []
+  },
+  "initial_state": {
+    "run_id": "graph-milestone-death-06-08-2026",
+    "plan_path": "docs/plans/graph-milestone-death-06-08-2026-plan.md",
+    "spec_path": "docs/specs/graph-milestone-death-06-08-2026-design.md",
+    "node": "BRANCH",
+    "status": "RUNNING",
+    "context": {
+      "stack": "backend",
+      "has_ui": false,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": null,
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "continuous",
+      "qa_env": null
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "simulated milestone one",
+        "branch": "PROJ-1/simulated",
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked 1a"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": false,
+        "base_sha": "a1b2c3d",
+        "spawned_at_history_len": 5,
+        "main_sha_at_spawn": "0f1e2d3c4b5a",
+        "progress": null
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": 1,
+    "in_flight": [
+      1
+    ],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "The first milestone agent for this milestone never returned a bundle. milestone agents['1'] was open with no history entries after it — the death signature — so before…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "The first milestone agent for this milestone never returned a bundle. milestone agents['1'] was open with no history entries after it — the death signature — so before re-spawning I ran git log a1b2c3d..PROJ-1/simulated: no commits, the milestone agent died before it wrote anything. Re-spawned once; the branch already existed and was reused.",
+      "set": {
+        "attempts.MILESTONE-dispatch:1": 1
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Second milestone agent committed the one step. Checked the sha exists on the branch and that the diff carries no .skip, no || true and no continue-on-error."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "a1b2c3d"
+        ],
+        "run_id": null
+      },
+      "observation": "Second milestone agent committed the one step. Checked the sha exists on the branch and that the diff carries no .skip, no || true and no continue-on-error."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Re-ran yarn test:unit and test:int myself rather than reading the bundle's word for it — exit 0 both. attempts.TEST:1 is still absent, which is the…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Re-ran yarn test:unit and test:int myself rather than reading the bundle's word for it — exit 0 both. attempts.TEST:1 is still absent, which is the point: the dead milestone agent spent nothing here."
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "edge": "13",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Gate A dispatched by the milestone agent: runId wf_a1b2 found in the journal, 3 of 3 groups completed, tools asserted, applied matched git diff --name-only…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_a1b2"
+      },
+      "observation": "Gate A dispatched by the milestone agent: runId wf_a1b2 found in the journal, 3 of 3 groups completed, tools asserted, applied matched git diff --name-only exactly. No findings worth a re-run.",
+      "set": {
+        "attempts.GATE_A:1": 1
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Holistic pass clean, suite re-run by me green. Milestone agent 1's replay is finished, so its entry is cleared — a milestone agents key with no transitions and no blocked…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Holistic pass clean, suite re-run by me green. Milestone agent 1's replay is finished, so its entry is cleared — a milestone agents key with no transitions and no blocked is the halt signature, and leaving it set would fake one.",
+      "set": {
+        "attempts.GATE_B:1": 1,
+        "in_flight": []
+      }
+    }
+  ]
+}

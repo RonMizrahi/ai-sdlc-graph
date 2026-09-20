@@ -1,0 +1,219 @@
+{
+  "name": "NEGATIVE CONTROL — six deliberate stop-and-coverage violations the harness must catch",
+  "why": "The second control, for the checks added when the question became 'does the graph stop where it says it stops?'. Every transition below is a legal edge quoting a verbatim guard — the walk is structurally perfect. What is wrong is WHERE it stops: a stop skipped, a stop invented at a node declared non-interactive, a conditional stop taken while its condition is false, a mode stop declared under the wrong mode, an unanswered stop, and a UI milestone leaving E2E with neither specs nor a ledger entry. If this fixture ever passes, the stop checks have stopped checking and every green above it is worthless.",
+  "expect": {
+    "rejected": true,
+    "because": [
+      "records no answer",
+      "left PLAN without its declared",
+      "IMPLEMENT declares human",
+      "without authoring",
+      "run_mode is 'continuous'",
+      "its condition is false",
+      "node stop is declared inside a milestone block"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-negative-stops-31-07-2026",
+    "plan_path": "docs/plans/graph-negative-stops-31-07-2026-plan.md",
+    "spec_path": "docs/specs/graph-negative-stops-31-07-2026-design.md",
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "frontend",
+      "has_ui": true,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": {
+        "approved_at": "STRATEGY",
+        "note": "simulated"
+      },
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "continuous",
+      "qa_env": null
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "simulated UI milestone",
+        "branch": null,
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": true
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": 1,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "edge": "1",
+      "milestone": null,
+      "observation": "legal"
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "edge": "3",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": ""
+        }
+      ],
+      "observation": "VIOLATION 1: the stop is declared but carries no answer. A stop nobody answered is a stall wearing a stop's clothes — the exact ambiguity `paused` exists to remove."
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "edge": "5",
+      "milestone": null,
+      "observation": "VIOLATION 2: left PLAN with no stop at all. The guard itself says 'user approved', so the walk claims an approval it never asked for — the last cheap moment to change direction, skipped."
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "edge": "6",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "choice-after",
+          "answer": "A / continuous / auto_open_mr true"
+        }
+      ],
+      "observation": "legal — this one is correct, so the control cannot be dismissed as 'the checker rejects everything'.",
+      "set": {
+        "milestones.0.branch": "neg/run"
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "legal"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "looks good"
+        }
+      ],
+      "violation": "a node stop declared inside a milestone block — a milestone agent cannot reach the user at all, so this is a stop nobody could have served; the orchestrator serves stops at the boundary",
+      "observation": "legal"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "here is what I built — shall I continue?"
+        }
+      ],
+      "observation": "VIOLATION 3, and the most important one in this file. IMPLEMENT declares human 'none'. This is the seventh stop, invented mid-run, at precisely the node where three real runs halted with nothing wrong. The answer text is what that halt actually looks like."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "observation": "legal"
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 1,
+      "observation": "legal"
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 1,
+      "observation": "VIOLATION 4: has_ui and touches_ui are both true, so this milestone owed Playwright specs for the components it built. It authored none and ledgered nothing — the node simply reported green. This is what 'the Playwright tests are missing' looks like from inside the graph, and the whole reason the mandate is mechanical rather than advisory."
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "checkpoint",
+          "answer": "acknowledged"
+        }
+      ],
+      "observation": "VIOLATION 5: a checkpoint stop under run_mode 'continuous'. The extra stops belong to a mode the user chose at STRATEGY; helping yourself to one mid-run is inventing a stop, however reasonable it feels."
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "edge": "21",
+      "milestone": 1,
+      "observation": "legal"
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "edge": "22",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "confirm-before",
+          "answer": "confirmed"
+        }
+      ],
+      "observation": "VIOLATION 6: PR's confirm-before is real, but conditional on auto_open_mr == false, and STRATEGY answered true. Stopping anyway is the mirror image of violation 2 — the run halting where it was told to run. Both cost the same thing: the user's attention, spent where they said not to spend it."
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "edge": "30",
+      "milestone": 1,
+      "observation": "code-review:code-review runs HERE and nowhere else: a PR finally exists for it to read and comment on. Findings become inline PR comments; this node reports and never routes."
+    }
+  ]
+}

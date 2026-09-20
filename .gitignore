@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 node_modules/
 .claude/settings.local.json
+
+# Playwright MCP writes console/snapshot artifacts here during browser checks
+.playwright-mcp/
+
+# Eval scratch dirs — built by run_scenario.py --setup / run_real_eval.py --setup, never source
+**/evals/.scratch/
+**/evals/real/.scratch/

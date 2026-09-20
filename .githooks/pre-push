@@ -1,0 +1,19 @@
+#!/bin/sh
+# Nothing leaves this machine against an sdlc plugin on stale test evidence.
+#
+# git does not version `.git/hooks/`, so this directory is the checked-in copy. Activate it once,
+# per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# Git passes the remote name and URL as arguments, and one `<local ref> <local sha> <remote ref>
+# <remote sha>` line per pushed ref on stdin. The gate reads those lines to work out which files
+# are actually leaving, so stdin is handed straight through untouched.
+#
+# Silent and instant unless a pushed path lives under a directory whose name contains `sdlc`. When
+# it blocks, it names the tests that need re-driving and the command that drives them. Override
+# with `SDLC_SKIP_EVAL_GATE=1 git push ...` — which prints everything it waved through.
+#
+# The same script is wired as a PreToolUse hook in `.claude/settings.json`, because an agent pushes
+# through Bash and never reaches a git hook.
+exec python3 "$(git rev-parse --show-toplevel)/.claude/hooks/pre-push-eval-gate.py"

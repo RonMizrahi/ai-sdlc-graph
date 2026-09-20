@@ -1,0 +1,522 @@
+{
+  "run_id": "icecream-store-31-07-2026",
+  "plan_path": "docs/plans/icecream-store-31-07-2026-plan.md",
+  "spec_path": "docs/specs/icecream-store-31-07-2026-design.md",
+  "node": "MERGE",
+  "status": "RUNNING",
+  "schema_version": 5,
+  "context": {
+    "stack": "both",
+    "has_ui": true,
+    "main_branch": "main",
+    "unborn_main": false,
+    "host": "github",
+    "standards_handshake": {
+      "stack": "React + Vite + TypeScript, Tailwind CSS for styling",
+      "specialist_skills": [
+        "tailwind-design-system",
+        "vercel:react-best-practices"
+      ],
+      "approved": true
+    },
+    "branching": "B",
+    "auto_open_mr": true,
+    "run_mode": "continuous",
+    "qa_env": {
+      "run_instructions": "PORT=3010 npm run dev --workspace=api & VITE_API_BASE_URL=http://localhost:3010 npm run dev --workspace=web -- --port 5183  # this dev machine has other projects' servers bound to the framework defaults (3000/5173); use these ports, already CORS-allowlisted as e2e defaults",
+      "api_base_url": "http://localhost:3010",
+      "web_base_url": "http://localhost:5183",
+      "api_docs": "/api-docs",
+      "identities": [
+        "guest (no account, anyone)",
+        "admin (username: admin, see apps/api/.env.example)"
+      ],
+      "seed": "automatic on boot — the in-memory store seeds itself from apps/api/src/products/products.seed.ts, no separate seed command"
+    }
+  },
+  "milestones": [
+    {
+      "id": 1,
+      "name": "Monorepo scaffold + shared types",
+      "branch": "dev",
+      "deps": [],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Initialize Turborepo workspace (turbo.json, root package.json workspaces)",
+        "Scaffold apps/api (NestJS skeleton)",
+        "Scaffold apps/web (Vite + React + TS)",
+        "Create packages/shared with Product/CartItem/Order/DTO types",
+        "Wire apps/api and apps/web to depend on packages/shared",
+        "Root scripts: dev/build/test/lint",
+        "Unit: smoke test per app confirming workspace wiring"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "API: products + in-memory store + seed",
+      "branch": "dev",
+      "deps": [
+        1
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "In-memory ProductsRepository (CRUD)",
+        "Seed 8-10 starter products across flavor/topping/combo",
+        "ProductsController: GET /products, GET /products/:id",
+        "Unit: repository CRUD, seed shape, availability filtering",
+        "Integration: GET /products and GET /products/:id happy path + 404"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "API: orders + admin auth + admin CRUD",
+      "branch": "dev",
+      "deps": [
+        1,
+        2
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "OrdersRepository + OrdersController POST /orders with server-side pricing and validation",
+        "AdminAuthController: POST /admin/login, POST /admin/logout via env creds + HttpOnly JWT cookie",
+        "AdminGuard protecting /admin/* and product-mutation routes",
+        "Guarded POST/PATCH/DELETE /products + admin-only includeUnavailable query",
+        "GET /admin/orders (guarded)",
+        "Unit: total calculation, admin credential check, guard rejection",
+        "Integration: order creation incl. rejection paths, admin login success/failure, guarded routes, admin CRUD round-trip"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Frontend: menu, cart, checkout, confirmation",
+      "branch": "dev",
+      "deps": [
+        1,
+        2,
+        3
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": true,
+      "steps": [
+        "API client module using packages/shared types",
+        "Cart context (React context + localStorage, cleared post-order)",
+        "Routes: /, /cart, /checkout, /order/:id",
+        "Inline checkout error handling",
+        "Unit: cart context reducer logic, price/total formatting",
+        "Playwright: golden path browse→cart→checkout→confirmation + one negative case"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Frontend: admin login, menu management, orders view",
+      "branch": "dev",
+      "deps": [
+        1,
+        3,
+        4
+      ],
+      "pr": 1,
+      "is_fix": false,
+      "touches_ui": true,
+      "steps": [
+        "/admin/login page + auth-gated /admin/menu and /admin/orders with redirect",
+        "/admin/menu: product table with inline create/edit/delete",
+        "/admin/orders: read-only list newest first",
+        "Unit: admin auth-gate redirect logic, menu-table edit/delete state",
+        "Playwright: admin golden path login→add product→visible on public menu→guest orders it→visible in admin orders"
+      ]
+    }
+  ],
+  "integration": {
+    "branch": null,
+    "merged": []
+  },
+  "attempts": {
+    "TEST:1": 1,
+    "GATE_A:1": 1,
+    "GATE_B:1": 1,
+    "TEST:2": 1,
+    "GATE_A:2": 1,
+    "GATE_B:2": 1,
+    "TEST:3": 1,
+    "GATE_A:3": 1,
+    "GATE_B:3": 1,
+    "TEST:4": 1,
+    "GATE_A:4": 1,
+    "E2E:4": 1,
+    "GATE_B:4": 1,
+    "TEST:5": 1,
+    "GATE_A:5": 1,
+    "E2E:5": 1,
+    "GATE_B:5": 1,
+    "QA": 1,
+    "PR_FINAL_REVIEW": 1
+  },
+  "qa": {
+    "verdict": "PASS-WITH-ISSUES",
+    "qa_plan_path": "docs/qa/icecream-store-app-31-07-2026-qa-plan.md",
+    "bugs": [
+      {
+        "id": "F-1",
+        "severity": "S4",
+        "title": "Admin session-probe logs benign 401s to the console twice on unauthenticated guarded-route mount (dev-only, React StrictMode double-invoke)"
+      }
+    ]
+  },
+  "monitor": {
+    "spawned": true,
+    "verified_at_history_len": 40,
+    "respawns": 0
+  },
+  "skipped_gates": [
+    {
+      "node": "E2E",
+      "reason": "Playwright not yet installed and no e2e specs exist yet (touches_ui=false this milestone; first specs land at milestone 4) — tool absent while context.has_ui == true",
+      "at_milestone": 1
+    },
+    {
+      "node": "E2E",
+      "reason": "same as milestone 1 — Playwright still not installed, no specs yet (touches_ui=false)",
+      "at_milestone": 2
+    },
+    {
+      "node": "E2E",
+      "reason": "same as milestones 1-2 — Playwright still not installed, no specs yet (touches_ui=false)",
+      "at_milestone": 3
+    },
+    {
+      "node": "GATE_B",
+      "reason": "code-review:code-review is built around an open GitHub PR (gh pr view/comment); no PR exists yet at this point in the loop (PR only opens after CLOSE_OUT, once all milestones are done) — structurally inapplicable pre-PR, same class as the documented host:none case. Did a manual holistic read of the whole dev..main diff in its place; found nothing beyond what Gate A already caught.",
+      "at_milestone": 1
+    },
+    {
+      "node": "GATE_B",
+      "reason": "same as milestone 1 — no PR exists yet. Manual holistic read of c25b031..HEAD found nothing beyond Gate A’s pass: well-formed module wiring, correctly typed against shared types",
+      "at_milestone": 2
+    },
+    {
+      "node": "GATE_B",
+      "reason": "same as milestones 1-2 — no PR yet. Manual holistic read of 24175d4..HEAD: module graph acyclic (Orders→{Products,Admin}, Products→Admin, Admin standalone); found and fixed a real gap — ADMIN_USERNAME/ADMIN_PASSWORD/JWT_SECRET/NODE_ENV introduced by this milestone had no documentation anywhere, added apps/api/.env.example",
+      "at_milestone": 3
+    },
+    {
+      "node": "GATE_B",
+      "reason": "same as milestones 1-3 — no PR yet. Manual holistic read of 0141252..HEAD found nothing beyond Gate A’s pass; verified the ConflictException→ApiError→inline-UI error chain is coherent",
+      "at_milestone": 4
+    },
+    {
+      "node": "GATE_B",
+      "reason": "final gate before CLOSE_OUT — no PR yet, same class as every prior GATE_B pass. Reviewed the whole 95-file dev..main diff instead of just milestone 5’s slice; nothing found beyond Gate A’s pass",
+      "at_milestone": 5
+    },
+    {
+      "node": "CI",
+      "reason": "no .github/workflows exist in this repo — CI/CD setup was never in scope for this local-dev-only sandbox app. gh works fine and host=github, but there are zero configured checks to watch (same short-circuit class the graph documents for host ∈ {gitlab, none}). Checks vacuously pass; the app is assembled and runnable — routed to QA per edge 22a",
+      "at_milestone": 5
+    }
+  ],
+  "history": [
+    {
+      "from": "[start]",
+      "to": "INTAKE",
+      "guard": "run created",
+      "milestone": null,
+      "observation": "greenfield repo, git initialized fresh; created GitHub repo RonMizrahi/ice-cream-store-tests (private); main holds only README documenting a since-superseded \"main stays empty\" policy"
+    },
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "guard": "spec_path == null",
+      "milestone": null,
+      "observation": "stack unknown, has_ui null (normal for greenfield); main_branch=main, unborn_main=false (README commit exists); host=github; no spec supplied"
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "guard": "spec file on disk and user approved",
+      "milestone": null,
+      "observation": "user overrode initial Next.js-full-stack direction mid-dialogue to NestJS+React in a Turborepo monorepo, in-memory data, local-only; spec written and approved on first pass, no revisions requested; stack resolved to \"both\", has_ui resolved to true"
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "guard": "plan_path on disk and every milestone has its required steps and user approved",
+      "milestone": null,
+      "observation": "ran via harness plan mode (edit lock held); 5 milestones drafted directly from the approved spec with no Explore/Plan sub-agents (greenfield, no code to explore); approved on first pass; plan copied to docs/plans/ and mirrored into milestones[]"
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "guard": "branching in {A,B,C} and deps acyclic",
+      "milestone": null,
+      "observation": "dependency chain is fully sequential (1→2→3→4→5, no independent milestones), so strategy C’s parallelism would buy nothing; user chose B (stay on the pre-existing \"dev\" branch), auto_open_mr=true, run_mode=continuous; settled standards_handshake for the frontend stack so IMPLEMENT won’t re-ask; cursor set to milestone 1"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "strategy B no-op: already on \"dev\", clean except the state file itself; milestone 1 recorded against \"dev\""
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 1,
+      "observation": "manual scaffold (create-turbo refused: non-empty dir): root workspace+turbo.json, apps/api via Nest CLI, apps/web via create-vite react-ts + Tailwind v4, packages/shared with the spec’s types; had to bump vitest 2.1.8→4.1.10 because create-vite’s scaffolded vite@8.2.0 exceeded vitest 2’s vite@^5 dependency, causing a duplicate nested vite and a tsc type-mismatch; committed to dev"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 1,
+      "observation": "turbo run build/test/lint all green on the 1st attempt across all 3 packages: shared tsc build, api Nest smoke spec (1/1), web vitest smoke test (1/1); oxlint 0 warnings, eslint 0 after the main.ts fix"
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "tests green AND (no rerun-worthy finding OR budget spent) AND context.has_ui == true",
+      "milestone": 1,
+      "observation": "1 group, 12/12 files reviewed, 0 findings, rerun_recommended=false, tools_asserted=true; applied=[] but git diff showed a real under-reported edit (an api-side workspace-wiring smoke test) — cross-checked per workflow-dispatch.md, accepted as legitimate; routes to E2E because context.has_ui==true for the whole run even though this milestone’s touches_ui=false"
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "journeys not red (Playwright or the app absent while has_ui → skipped_gates, recorded and never counted as passed)",
+      "milestone": 1,
+      "observation": "Playwright not installed yet and no e2e spec set exists (touches_ui=false this milestone); ledgered as skipped, node not recorded as passed, run proceeds"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 1,
+      "observation": "code-review:code-review is PR-shaped and no PR exists yet this early in the loop — ledgered as skipped, substituted a manual holistic read of the whole dev..main diff, found nothing beyond Gate A’s pass; milestone 1 done, 4 remain, advancing cursor to milestone 2"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "strategy B no-op: staying on dev"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 2,
+      "observation": "ProductsRepository/Service/Controller, 10-item seed catalog (incl. 1 unavailable, for filter coverage), Swagger wired into main.ts (@nestjs/swagger 11.x — 8.x conflicted with Nest 11 peer range), CORS enabled; repository intentionally ships only findAll/findById this milestone per YAGNI; denied @scarf/scarf’s telemetry postinstall"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 2,
+      "observation": "13/13 tests green on 1st attempt (4 unit repo, 3 unit service, 3 integration controller, 3 carried from milestone 1); build+lint clean"
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "tests green AND (no rerun-worthy finding OR budget spent) AND context.has_ui == true",
+      "milestone": 2,
+      "observation": "1 group, 11/11 files reviewed, clean=true; 1 nit finding about exporting the repository vs the service, left as-is (deliberate: milestone 3’s OrdersService needs direct repository access); git diff showed real under-reported fixes — repository now returns copies instead of leaking internal references, and the global ValidationPipe the standards mandate was wired into main.ts; re-ran full pipeline: 13/13 green"
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "journeys not red (Playwright or the app absent while has_ui → skipped_gates, recorded and never counted as passed)",
+      "milestone": 2,
+      "observation": "same as milestone 1 — ledgered, run proceeds"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 2,
+      "observation": "same as milestone 1 — no PR yet, ledgered, manual holistic read clean; milestone 2 done, 3 remain, advancing cursor to milestone 3"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 3,
+      "observation": "strategy B no-op: staying on dev"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 3,
+      "observation": "OrdersRepository/Service/Controller (server-side pricing, 404/409 on unknown/unavailable products) + GET /admin/orders (guarded); AdminAuthService/Guard/Controller (JWT in HttpOnly cookie); hit a real bug mid-implementation — ProductsModule imported AdminModule but AdminModule’s JwtModule factory only bare-imported ConfigModule without .forRoot(), so ConfigService was unresolvable in any test that didn’t boot through AppModule; also fixed login/logout returning 201 instead of 200; 33/33 tests, build+lint clean"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 3,
+      "observation": "33/33 tests green on 1st attempt (11 new: 5 admin unit, 4 orders unit, plus integration coverage for admin auth+guarded routes and order creation incl. 404/409 paths)"
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "tests green AND (no rerun-worthy finding OR budget spent) AND context.has_ui == true",
+      "milestone": 3,
+      "observation": "3 groups, 28/28 files reviewed, clean=true; 6 findings, all real: (1) constant-time credential comparison added — was vulnerable to a timing side-channel; (2) ADMIN_USERNAME/PASSWORD and JWT_SECRET now throw in production instead of silently accepting dev defaults; (3) clearCookie on logout now matches the attributes cookie() set — browsers no-op a mismatched clearCookie; (4) GET /products/:id now hides unavailable products from non-admins; (5) @ApiBearerAuth corrected to @ApiCookieAuth across admin-guarded routes; (6) products.module.ts exporting ProductsRepository (nit, left as-is). Re-ran full pipeline: 36/36 green"
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "journeys not red (Playwright or the app absent while has_ui → skipped_gates, recorded and never counted as passed)",
+      "milestone": 3,
+      "observation": "same as milestones 1-2 — ledgered, run proceeds"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 3,
+      "observation": "same as milestones 1-2 — no PR yet, ledgered; manual holistic read found and fixed a real doc gap (.env.example); milestone 3 done, 2 remain, advancing to milestone 4 — first UI-touching milestone, first Playwright specs land here"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 4,
+      "observation": "strategy B no-op: staying on dev"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 4,
+      "observation": "React Router shell (Layout + / /cart /checkout /order/:id), CartContext (localStorage v1, cleared post-order), typed API client against packages/shared, inline checkout error handling; fixed a real tsc error — ApiError’s constructor used a parameter-property shorthand which erasableSyntaxOnly rejects; 13/13 web tests green; Playwright specs deferred to the E2E node per its own contract"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 4,
+      "observation": "13/13 web tests green on 1st attempt (8 cart reducer, 4 price formatting, 1 app smoke); build+lint clean"
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "tests green AND (no rerun-worthy finding OR budget spent) AND context.has_ui == true",
+      "milestone": 4,
+      "observation": "2 groups, 14/14 files reviewed, clean=true; 1 finding (quality): localStorage.setItem in the persistence effect could throw (quota/Safari private mode) and crash the tree; the gate’s own edits did NOT include the flagged fix — fixed it by hand (try/catch, degrades to non-persisted rather than crashing); re-ran pipeline: 15/15 web + 36/36 api green"
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "journeys not red (Playwright or the app absent while has_ui → skipped_gates, recorded and never counted as passed)",
+      "milestone": 4,
+      "observation": "first UI-touching milestone: installed @playwright/test + chromium, authored the mandatory new specs (golden path browse→cart→checkout→confirmation; negative case marking a cart item unavailable via the real admin API mid-flow, asserting the inline 409). Real stack, no mocking. Hit a real environment issue: default ports 5173/3000 were already bound by unrelated dev servers on this machine — reuseExistingServer silently attached the first run to the WRONG APP entirely. Did not touch those foreign processes; moved this app’s e2e run to dedicated ports (3010/5183). Both specs green (2/2)"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 4,
+      "observation": "same as milestones 1-3 — no PR yet, ledgered; manual holistic read clean; milestone 4 done, last milestone remains, advancing cursor to milestone 5"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 5,
+      "observation": "strategy B no-op: staying on dev"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 5,
+      "observation": "AdminAuthContext derives session state from probing GET /admin/orders (the HttpOnly cookie can’t be read from JS — reused the existing guarded endpoint); RequireAdmin route guard; /admin/login, /admin/menu, /admin/orders. Fixed a real apiFetch bug — it always called response.json(), which throws on Nest’s empty-body 200 for void handlers. Two test-authoring bugs of my own: vitest was picking up the Playwright e2e specs, and admin-menu tests leaked mock call counts across it() blocks. 21/21 web tests green"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 5,
+      "observation": "21/21 web tests green on 1st attempt (3 new RequireAdmin redirect-logic tests, 3 new AdminMenuPage edit/delete-state tests, plus all prior coverage)"
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "tests green AND (no rerun-worthy finding OR budget spent) AND context.has_ui == true",
+      "milestone": 5,
+      "observation": "2 groups, 13/13 files reviewed, 0 findings reported by the script itself; git diff showed real, legitimate under-reported edits that streamed in while the workflow ran (AdminMenuPage now shows the error instead of getting stuck on \"Loading menu...\" forever, +1 test; a non-JSON error body now surfaces as ApiError; logout clears local session state even if the API call fails). Separately, an automated CORS/CSRF security-review hook flagged app.enableCors({origin:true, credentials:true}) as HIGH — reflecting any origin while allowing credentials lets any site read cross-origin responses using the visitor’s cookies. Fixed immediately: restricted to an explicit CORS_ORIGINS allowlist"
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "journeys not red (Playwright or the app absent while has_ui → skipped_gates, recorded and never counted as passed)",
+      "milestone": 5,
+      "observation": "last milestone, mandatory admin golden path authored: login → add a product → visible on the public menu → guest orders it → visible in /admin/orders, in one continuous session. Real stack, no mocking. All 3 specs across the whole app green"
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "guard": "tests green AND branching in {A,B} AND no milestone remains",
+      "milestone": 5,
+      "observation": "final gate before CLOSE_OUT — reviewed the WHOLE accumulated dev..main diff (95 files, all 5 milestones), not just milestone 5’s slice: no stray console.log/TODO/FIXME anywhere, module graph acyclic end to end. code-review:code-review still structurally inapplicable (no PR yet), ledgered. Full pipeline one final time: 58 unit/integration tests and all 3 Playwright specs green"
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "guard": "plan updated, qa_env complete — unconditional, every strategy",
+      "milestone": null,
+      "observation": "plan file updated: all 5 milestones marked [DONE], a close-out section with key decisions that deviated from the plan, a per-milestone verification-results table, and the full skipped-gates ledger copied in verbatim. Created CLAUDE.md (none existed) — 31 lines. Completed context.qa_env"
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "guard": "PR/MR open — or context.host == none, nothing to open, ledgered",
+      "milestone": 5,
+      "observation": "auto_open_mr=true (settled at STRATEGY), no confirmation needed. Checked for an existing open PR on dev first (none). Working tree clean and fully pushed. Opened PR #1: RonMizrahi/ice-cream-store-tests#1 (dev → main)"
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "guard": "review posted — or the reviewer could not run and the ledger says so. Unconditional: this node has one exit",
+      "milestone": 5,
+      "observation": "code-review:code-review --comment over PR #1: 3 comments posted (one N+1 on the orders list, two naming nits). Reports only — nothing routes on it, and QA is still ahead."
+    },
+    {
+      "from": "CI",
+      "to": "QA",
+      "guard": "checks passing (or context.host in {gitlab, none} — CI out of scope or no remote, logged to skipped_gates) AND the app is assembled and runnable",
+      "milestone": 5,
+      "observation": "no GitHub Actions workflows configured in this repo at all — ledgered as a checks-vacuously-pass case (same short-circuit class as host:none/gitlab, though not literally that guard’s condition since host IS github); the app is real and runnable, already smoke-tested end to end at GATE_B"
+    },
+    {
+      "from": "QA",
+      "to": "VERDICT",
+      "guard": "verdict returned",
+      "milestone": 5,
+      "observation": "whole-app independent live pass: 15/15 green paths PASS, 16/16 break-it attacks PASS (BFLA, mass assignment on both products and orders, auth bypass incl. NoSQL-operator-shaped credentials, JWT tampering incl. alg:none, broken state transitions, referential integrity, boundary/malformed input, stored XSS render check via real browser, CORS allowlist enforcement, UI double-submit). One S4 finding (cosmetic, dev-only console noise). Had to correct context.qa_env mid-pass: the documented default ports are occupied by unrelated projects on this dev machine. Teardown: 2 QA-created test products deleted, 5 QA-created orders left in place by design"
+    },
+    {
+      "from": "VERDICT",
+      "to": "MERGE",
+      "guard": "verdict == PASS-WITH-ISSUES AND no S1/S2",
+      "milestone": 5,
+      "observation": "only finding is S4 (cosmetic); no reopen needed. Routes straight to MERGE, awaiting the human to merge PR #1"
+    }
+  ],
+  "cursor": 5,
+  "in_flight": [],
+  "debug_return_to": null,
+  "stopped": {
+    "kind": "paused",
+    "reason": "MERGE awaits a human (or configured auto-merge) to land the PR — the graph never merges its own work",
+    "at_node": "MERGE"
+  }
+}

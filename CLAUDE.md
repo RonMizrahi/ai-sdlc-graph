@@ -1,69 +1,84 @@
 # sdlc-graph-engineering — repository guide
 
-A single-plugin Claude Code marketplace. The plugin installs **graph engineering** into someone
-else's project. This file is short by design; the method itself lives in the skill.
+**A bundle of three Claude Code plugins, not a catalog.** Two of them are one product in two halves
+— `sdlc-graph` (the SDLC as a guarded graph) and `sdlc-graph-viewer` (the page that renders a run).
+The third, `sdlc-graph-engineering-install`, is the method that produces a graph for any *other*
+process. The `plugins/<name>/` layout and the root `marketplace.json` exist because installing from
+a repository requires a manifest — the manifest is a bundle, not a catalog.
 
 ## Sources of truth
 
-- Marketplace manifest: `.claude-plugin/marketplace.json` (name: `sdlc-graph-engineering`)
-- Plugin manifest: `plugins/sdlc-graph-engineering/.claude-plugin/plugin.json`
-- **The method**: `plugins/sdlc-graph-engineering/skills/sdlc-graph-engineering-install/SKILL.md`
-- References: `references/{templates,evals,failure-modes}.md` beside it
+- Bundle manifest: `.claude-plugin/marketplace.json` · plugin manifests: `plugins/*/.claude-plugin/plugin.json`
+- The graph model: `plugins/sdlc-graph/skills/sdlc-graph/graph/{nodes,edges,state}.md`
+- **A plugin's own rules live with the plugin.** Before changing the graph, read
+  [`plugins/sdlc-graph/docs/EDITING.md`](plugins/sdlc-graph/docs/EDITING.md) — it comes before this
+  file, and testing is [`plugins/sdlc-graph/docs/TESTING.md`](plugins/sdlc-graph/docs/TESTING.md).
+- **The tools the graph dispatches to are listed once**, in
+  [`plugins/sdlc-graph/docs/DEPENDENCIES.md`](plugins/sdlc-graph/docs/DEPENDENCIES.md) — all of them
+  third-party and optional, `git` being the only hard requirement. `/sdlc-graph:onboarding` walks
+  that file; a second roster anywhere else is a check failure.
+- A skill directory groups files by kind (`graph/ nodes/ evals/ …`) — never a pile.
 
-```
-.claude-plugin/marketplace.json
-plugins/sdlc-graph-engineering/
-├── .claude-plugin/plugin.json
-└── skills/sdlc-graph-engineering-install/{SKILL.md,references/}
-docs/assets/            screenshots used by README.md
-```
+## Rules that bind every change here
 
-## Changing the skill — REQUIRED
-
-1. **Keep the plugin self-contained.** Reference only files inside
-   `plugins/sdlc-graph-engineering/`; never `../`. Use `${CLAUDE_PLUGIN_ROOT}` for absolute paths.
-   This is not style — a plugin that reads above its own root breaks on install.
-2. **A new rule belongs beside a new failure mode.** Every rule in `SKILL.md` exists because a real
-   graph broke without it. If you cannot name the failure it prevents, it is advice, not a rule —
-   add the entry to `references/failure-modes.md` first, then the rule that references it.
-3. **Re-check the counts you published.** The number of failure modes, steps, and stop types appears
-   in `SKILL.md`, both READMEs and the manifests. They drift silently, and they are the first thing a
-   reader uses to decide whether the docs are current.
-4. **Bump `version` in BOTH manifests** — `plugin.json` and `marketplace.json`. They must agree, and
-   installed users only receive the change if it moves.
-5. **Validate — must pass:**
-   ```bash
-   claude plugin validate ./plugins/sdlc-graph-engineering --strict
-   claude plugin validate .
-   ```
-6. **Update `README.md`** (root and plugin) in the same change, not as a follow-up. Skipping this is
-   how the catalog drifts from the skill.
-
-## Authoring rules
-
-- Follow the open Agent Skills spec. Real frontmatter fields only — no `metadata`, `license`, or
-  `compatibility` keys.
-- The skill's `description` states **capability + when to trigger**; that string is the whole
-  triggering mechanism, so trigger phrases belong there, not in the body.
-- Least-privilege `allowed-tools`. This skill writes files into a user's project — anything that
-  broadens what it may touch is a security change, not a convenience.
-- The marketplace `name` must never contain "claude" (reserved for official marketplaces).
+- **A plugin references nothing above its own root.** No `../`; `${CLAUDE_PLUGIN_ROOT}` for absolute
+  paths. A plugin that reads above its root breaks on install.
+  **One legal exception:** the viewer's `evals/lib/paths.py` reads the sibling graph spec, because
+  the viewer holds a copy of the transition table and is the only side allowed to look. That is why
+  both plugin directories must keep their names.
+- **Twinned skills.** The eight `nodes/*-node.md` carry a `copied-from:` header naming a source that
+  does not live in this repository. They are *meant* to diverge — `plan-guidelines-node.md` has its
+  milestone loop removed because the graph drives that loop; `pr-mr-prepare-node.md` has its quality
+  step removed because Gate A and Gate B are their own nodes. "Make them identical" is the wrong
+  default.
+- **Bump `version` in BOTH manifests** — `plugin.json` and `marketplace.json`. They must agree, and
+  installed users only receive a change if it moves.
+- **Re-check published counts.** Node, edge, cycle and stop counts appear in `SKILL.md`, both
+  READMEs, the manifests and the rendered HTML. They drift silently, and they are the first thing a
+  reader uses to decide whether the docs are current. `published-counts-match-reality` checks them.
+- **Validate before opening a PR:** `claude plugin validate ./plugins/<plugin> --strict` and
+  `claude plugin validate .`
+- **`main` is PR-only.** Push a side branch and open a PR.
+- The repo is public: no private paths, hostnames or internal repo names — **and no name of an
+  unpublished plugin.** `sdlc-graph` live-dispatches *the project's installed* coding-standards and
+  local-stack skills; it names none of them anywhere, in any file, and requires none.
+  `no-unpublished-plugin-name-ships-in-this-plugin` in `evals/spec/spec_consistency.py` fails on one
+  that comes back.
 - Keep this file under 100 lines; describe current state, not history.
 
-## The skill's own standard, applied to itself
+## The evals — what runs when
 
-The skill tells people to bound their cycles, type their stops, and ship the eval with the change.
-Hold this repo to the same bar:
+```bash
+git config core.hooksPath .githooks                                   # once per clone
+python3 plugins/sdlc-graph/skills/sdlc-graph/evals/run_all.py         # 9 suites
+python3 plugins/sdlc-graph-viewer/skills/view-run/evals/run_all.py    # 8 suites
+python3 .claude/hooks/run-graph-evals.selftest.py                     # the hook still routes
+python3 .claude/hooks/pre-push-eval-gate.selftest.py                  # the gate can still fail
+python3 plugins/sdlc-graph-viewer/skills/view-run/evals/sync/sync_graph.py --write   # regenerate the
+                                                                      # viewer's GRAPH from the spec
+```
 
-- **No unbounded claim.** "Usually", "as needed", "consider" in a step is the prose vagueness this
-  skill exists to remove. Give it a number or a named condition.
-- **Derive, never duplicate.** If a summary table and a contract state the same facts, one of them
-  will go stale and it will be the one people read.
-- **Never edit `references/` and `SKILL.md` in opposite directions.** `SKILL.md` names the step that
-  loads each reference; a reference that no step loads is dead weight.
+- **`.claude/hooks/run-graph-evals.py` (PostToolUse)** runs the affected suites after every
+  Edit/Write under a graph plugin. **Editing the graph also fires the viewer's suite** — a guard
+  edited in `edges.md` is exactly what makes the viewer's copy stale. The whole set costs ~3.6s.
+- **`.claude/hooks/pre-push-eval-gate.py`** blocks a push carrying a red suite. It fires on any
+  pushed path under a directory whose name contains `sdlc`, so `sdlc-graph-engineering-install` is
+  in scope; it has no suite of its own, so such a push runs the routing self-test and nothing else.
+  `SDLC_SKIP_EVAL_GATE=1` overrides, loudly. A `PreToolUse` twin catches agents, who push through
+  Bash and never reach a git hook.
+- **A red suite mid-change is expected** — it is the second half of the edit, not an error.
+- **The executing tier is reported, never gated, and driven on demand:**
+  `python3 .claude/hooks/eval-receipts.py --list` (`--drive --only <id>` runs one). **This repo
+  carries no receipts** — the registry stayed with the fork this graph was promoted out of — so
+  every executing test reads `NO RECEIPT` and the gate passes anyway. That is honest: authoring the
+  case is mandatory, driving it is a decision someone makes with the minutes in front of them.
 
-## Repository rules
+> `sdlc-graph` also ships **its own** hook (`plugins/sdlc-graph/hooks/hooks.json`), separate from
+> the repo's: it snapshots every state a `--trace` run passes through. It fires in every project the
+> plugin is installed in, so it self-gates to a no-op and never exits non-zero.
 
-- **`main` is PR-only.** Push a side branch and open a PR.
-- The repo is public. Nothing in it should contain project-internal paths, hostnames, or names from
-  the private repos this skill was developed against.
+## Licensing
+
+MIT, and every plugin manifest says so. Two node procedures derive from obra/superpowers (MIT) and
+are covered by [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md); each points at it from its own
+header. **Anything new that is not first-party gets a row there in the same change.**
