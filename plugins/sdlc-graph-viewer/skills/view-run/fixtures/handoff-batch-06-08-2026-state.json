@@ -1,0 +1,142 @@
+{
+  "run_id": "handoff-batch-06-08-2026",
+  "plan_path": "docs/plans/handoff-batch-06-08-2026-plan.md",
+  "spec_path": "docs/specs/handoff-batch-06-08-2026-design.md",
+  "node": "HANDOFF",
+  "status": "HANDOFF",
+  "context": {
+    "stack": "backend",
+    "has_ui": false,
+    "main_branch": "main",
+    "unborn_main": false,
+    "host": "github",
+    "standards_handshake": null,
+    "branching": "D",
+    "auto_open_mr": true,
+    "run_mode": "continuous",
+    "qa_env": null
+  },
+  "milestones": [
+    {
+      "id": 1,
+      "name": "independent slice 1",
+      "branch": null,
+      "worktree": null,
+      "deps": [],
+      "steps": [
+        "mocked 1a"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false
+    },
+    {
+      "id": 2,
+      "name": "independent slice 2",
+      "branch": null,
+      "worktree": null,
+      "deps": [],
+      "steps": [
+        "mocked 2a"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false
+    },
+    {
+      "id": 3,
+      "name": "independent slice 3",
+      "branch": null,
+      "worktree": null,
+      "deps": [],
+      "steps": [
+        "mocked 3a"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false
+    },
+    {
+      "id": 4,
+      "name": "independent slice 4",
+      "branch": null,
+      "worktree": null,
+      "deps": [],
+      "steps": [
+        "mocked 4a"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false
+    },
+    {
+      "id": 5,
+      "name": "independent slice 5",
+      "branch": null,
+      "worktree": null,
+      "deps": [],
+      "steps": [
+        "mocked 5a"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false
+    },
+    {
+      "id": 6,
+      "name": "independent slice 6",
+      "branch": null,
+      "worktree": null,
+      "deps": [],
+      "steps": [
+        "mocked 6a"
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false
+    }
+  ],
+  "integration": {
+    "branch": null,
+    "merged": []
+  },
+  "schema_version": 5,
+  "attempts": {},
+  "qa": {
+    "verdict": null,
+    "qa_plan_path": null,
+    "bugs": []
+  },
+  "skipped_gates": [],
+  "history": [
+    {
+      "from": "INTAKE",
+      "to": "PLAN",
+      "guard": "spec_path != null",
+      "milestone": null,
+      "observation": "Spec supplied on the command line, so SPEC is skipped entirely."
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "guard": "plan_path on disk and every milestone has its required steps and user approved",
+      "milestone": null,
+      "observation": "Six milestones, every deps list empty — broadly independent, which is what makes D worth offering."
+    },
+    {
+      "from": "STRATEGY",
+      "to": "HANDOFF",
+      "guard": "branching == D",
+      "milestone": null,
+      "observation": "User chose D. The graph parks here: /batch is a user command and nothing in this run can invoke it. Nothing failed — this is a park, not a halt, and `paused` says so."
+    }
+  ],
+  "cursor": null,
+  "in_flight": [],
+  "debug_return_to": null,
+  "stopped": {
+    "kind": "handoff",
+    "reason": "handed off to /batch — a user command the graph cannot invoke",
+    "at_node": "HANDOFF"
+  }
+}

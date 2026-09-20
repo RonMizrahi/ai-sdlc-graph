@@ -1,0 +1,30 @@
+{
+  "description": "sdlc-graph — when a traced run's state file is written, copy it into that run's history/ so every state the run passed through survives. Does nothing unless the run was started with --trace.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Write(**/graph-runs/**)",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/snapshot_state.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/graph-runs/**)",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/snapshot_state.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "if": "MultiEdit(**/graph-runs/**)",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/snapshot_state.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

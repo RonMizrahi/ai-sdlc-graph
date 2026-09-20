@@ -2,20 +2,19 @@
 
 https://github.com/user-attachments/assets/c717c1dc-214d-4b6b-8ad5-55dd5107baf1
 
-What you are watching is *my* graph running — not a graph this plugin ships. There is no bundled
-graph. The plugin turns **your** skills and process into one, and yours will look nothing like this.
+What you are watching is **`sdlc-graph`** — the software lifecycle as a guarded graph, running a
+real feature end to end. It ships here, and so does the viewer rendering it.
 
 *Two minutes, no audio. Not seeing a player? [Watch it on YouTube](https://www.youtube.com/watch?v=qrY74MvaVoU).*
 
-**Turn the process you already have into a graph a machine can actually execute.**
+**A process a machine can actually execute — and the method for turning any other process into one.**
 
-A [Claude Code](https://code.claude.com) plugin that takes your existing process — a set of skills, a
-runbook, a CI config, or something you can only describe out loud — and installs it as a **guarded
-graph**: typed nodes, *total* exit guards, bounded retry loops, a durable run-state file that
-survives a crash, and a ledger of every step that could not run.
-
-It writes the orchestrator that walks the graph, the auditor that checks it, and the eval suite that
-keeps it honest — into *your* project. Then it proves the result sound before handing it over.
+Three [Claude Code](https://code.claude.com) plugins in one bundle. Two of them *are* a graph: the
+software lifecycle expressed as typed nodes, *total* exit guards, bounded retry loops, a durable
+run-state file that survives a crash, a ledger of every gate that could not run — and a
+zero-dependency page that shows a run as it happens. The third turns **your** process into a graph
+of its own: it writes the orchestrator, the auditor and the eval suite into your project, then
+proves the result sound before handing it over.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 &nbsp;![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757)
@@ -26,13 +25,29 @@ keeps it honest — into *your* project. Then it proves the result sound before 
 
 ---
 
+## What's in the bundle
+
+| Plugin | Skill | What it is |
+|---|---|---|
+| **`sdlc-graph`** | `sdlc-graph` · `graph-run-reviewer` | The software lifecycle already built as a graph: **20 nodes, 40 guarded transitions, ten bounded cycles, six declared human stops.** Spec → plan → strategy → per milestone (implement, test, Gate A, e2e, Gate B) → close-out → PR → CI → QA → merge. A run is one gitignored directory that survives context loss and resumes where it stopped. **Command-invoked — it never auto-triggers.** → [README](plugins/sdlc-graph/README.md) |
+| **`sdlc-graph-viewer`** | `view-run` | The run viewer: one zero-dependency page rendering parallel milestone lanes, live or as a snapshot that opens from `file://`. One server per project, on a port derived from the project path. Optional — the graph runs identically without it. → [README](plugins/sdlc-graph-viewer/README.md) |
+| **`sdlc-graph-engineering-install`** | `sdlc-graph-engineering-install` | The **method**: takes a process that has no graph — skills, a runbook, a CI config, or a description — and installs one, with its own orchestrator, auditor and eval suite. Domain-agnostic; needs no other plugin. → [README](plugins/sdlc-graph-engineering-install/README.md) |
+
+The first two are one product in two halves — the viewer holds a copy of the graph's transition
+table and checks itself against the spec on every edit. The third generalises what they are: the
+method they are the worked reference for, and what you want if your process is not software
+delivery.
+
+---
+
 ## Example output
 
 Example — superpowers as a graph (by [obra/superpowers](https://github.com/obra/superpowers)),
-produced by this plugin: **21 nodes, 96 guarded edges, 9 bounded cycles, 19 declared human stops** →
+produced by `sdlc-graph-engineering-install`: **21 nodes, 96 guarded edges, 9 bounded cycles, 19
+declared human stops** →
 [RonMizrahi/superpowers-graph](https://github.com/RonMizrahi/superpowers-graph).
 
-![Example output of this plugin — the spine: every node a run passes through, and the two shapes execution can take](docs/assets/superpowers-graph-spine.svg)
+![Example output of the method — the spine: every node a run passes through, and the two shapes execution can take](docs/assets/superpowers-graph-spine.svg)
 
 Read it as a state machine, not a flowchart. Guards are evaluated in table order and **exactly one
 must match** — zero matching guards is a defect that halts the run, never a stall the graph guesses
@@ -64,27 +79,43 @@ Every one of those nine cycles already existed in the prose. None of them named 
 
 ```
 /plugin marketplace add RonMizrahi/sdlc-graph-engineering
-/plugin install sdlc-graph-engineering@sdlc-graph-engineering
+
+/plugin install sdlc-graph@sdlc-graph-engineering                       # the SDLC as a graph
+/plugin install sdlc-graph-viewer@sdlc-graph-engineering                # optional: watch a run
+/plugin install sdlc-graph-engineering-install@sdlc-graph-engineering   # the method
 ```
 
-Then, in the project you want a graph for:
+Install any one of them on its own; none requires the others.
 
-```
-Install graph engineering here.
-```
+> **Breaking change, 0.7.0.** The method plugin was `sdlc-graph-engineering` through 0.6.0 and is
+> **`sdlc-graph-engineering-install`** from 0.7.0. The *marketplace* name is unchanged, so
+> `/plugin marketplace add` still works — but an existing install has to be removed and re-added
+> under the new id.
 
-Or invoke it directly: `sdlc-graph-engineering:sdlc-graph-engineering-install`.
+**To run the lifecycle graph**, in the project you want it for: `/sdlc-graph start <feature>`, then
+`resume` or `status`. It never auto-triggers — running an entire SDLC is not something to enter on a
+description match.
 
-It also triggers on the things people actually say — *"turn my workflow into a graph"*, *"make this
-runbook executable"*, *"my agent loses track halfway"*, *"it retries forever"*, *"it says it did
-things it didn't do"*.
+**To install a graph for your own process**, say so: *"Install graph engineering here."* Or invoke
+it directly: `sdlc-graph-engineering-install:sdlc-graph-engineering-install`. It also triggers on the
+things people actually say — *"turn my workflow into a graph"*, *"make this runbook executable"*,
+*"my agent loses track halfway"*, *"it retries forever"*, *"it says it did things it didn't do"*.
 
-**No dependencies.** No other plugin, no npm install, no runtime. The eval suite it emits is plain
-Python 3 with an empty import list.
+**No dependencies.** No npm install, no runtime, no service. Every eval suite here is plain Python 3
+with an empty import list, and the viewer's server imports nothing but `node:*`. `sdlc-graph`
+*dispatches* to review tools when they happen to be installed — see [Optional
+tools](#optional-tools-and-what-happens-without-them) — and records the absence of every one that
+is not.
 
 ---
 
-## What it writes into your project
+## The method
+
+*Everything from here to* **Layout** *is about `sdlc-graph-engineering-install` — the plugin that
+builds a graph for a process that has none. `sdlc-graph` is the finished article: the same structure,
+already built, for software delivery.*
+
+### What it writes into your project
 
 ```
 <your project>/
@@ -105,9 +136,9 @@ eval run with its coverage line** — *N/N edges, N/N nodes*. Anything less name
 
 ---
 
-## The method
+### The nine steps
 
-Nine steps. **Step 4 carries the weight** — the rest is drawing boxes.
+**Step 4 carries the weight** — the rest is drawing boxes.
 
 | | Step | The point |
 |---|---|---|
@@ -121,7 +152,7 @@ Nine steps. **Step 4 carries the weight** — the rest is drawing boxes.
 | 8 | **Emit the files** | Model files, the orchestrator, the monitor, and the observability surface the state file has already paid for. |
 | 9 | **Prove it** | Dry-trace the happy path, a retry that recovers, a retry that exhausts — then **emit those traces as an executable suite**. |
 
-### The trap step 4 exists to catch
+#### The trap step 4 exists to catch
 
 Guard sets get written exhaustive over the **happy predicates** but not over their **product**. A
 result with three independent properties has eight combinations; the three obvious guards cover
@@ -136,14 +167,14 @@ than a missing guard.
 > Formally this is van der Aalst's **option to complete**: from every reachable state, the end must
 > remain reachable. A guard gap is a state from which it is not.
 
-### And the reason to build a graph at all
+#### And the reason to build a graph at all
 
 > **The ledger is the load-bearing part.** Any process can claim it ran a step. Only one that
 > records the *absence* can be trusted when it says it did.
 
 ---
 
-## What ships with it
+### What ships with it
 
 | File | Load at | Contents |
 |---|---|---|
@@ -154,7 +185,7 @@ than a missing guard.
 
 ---
 
-## Philosophy
+### Philosophy
 
 - **A paper trace protects exactly one version of the graph.** Emit the traces as a suite and gate on
   coverage: every node entered, every edge traversed. A change that leaves the suite green without
@@ -171,7 +202,7 @@ than a missing guard.
 
 ---
 
-## When *not* to use it
+### When *not* to use it
 
 - **The process is genuinely linear** — no branching, no retries, no human stops. A checklist is the
   right tool; a graph is overhead.
@@ -183,28 +214,62 @@ than a missing guard.
 ## Layout
 
 ```
-.claude-plugin/marketplace.json                    marketplace manifest
-plugins/sdlc-graph-engineering/
-├── .claude-plugin/plugin.json                     plugin manifest
-└── skills/sdlc-graph-engineering-install/
-    ├── SKILL.md                                   the method
-    └── references/{templates,evals,failure-modes}.md
-docs/assets/                                       diagrams
-CLAUDE.md                                          repo operating guide
+.claude-plugin/marketplace.json     the bundle manifest — three entries
+plugins/
+├── sdlc-graph/                     the SDLC as a graph
+│   ├── agents/                     the milestone agent
+│   ├── hooks/                      snapshots every state a --trace run passes through
+│   ├── docs/                       EDITING · TESTING · the illustrated page
+│   └── skills/{sdlc-graph,graph-run-reviewer}/
+│       └── {graph,nodes,subagents,workflows,observability,evals}/
+├── sdlc-graph-viewer/              the run viewer
+│   └── skills/view-run/{viewer,server,fixtures,evals}/
+└── sdlc-graph-engineering-install/ the method
+    └── skills/sdlc-graph-engineering-install/{SKILL.md,references/}
+.claude/hooks/                      runs the eval suites on every edit; gates every push
+.githooks/pre-push                  the same gate for a human typing `git push`
+docs/assets/                        the diagrams this README uses
+THIRD-PARTY-NOTICES.md              the two files that are not first-party
+CLAUDE.md                           repo operating guide
 ```
+
+## Optional tools, and what happens without them
+
+`sdlc-graph` dispatches to other tools at its quality gates rather than copying them, because a
+copied reviewer drifts and then reviews against a stale rulebook. **Every absence is recorded in the
+run's `skipped_gates[]` ledger and the run continues** — nothing is ever reported as passed because
+its tool was missing.
+
+| | Used at | Without it |
+|---|---|---|
+| `code-review`, `security-review` — built into Claude Code | Gate B, PR review, Gate A step 3 | Ledgered, run continues |
+| `pr-review-toolkit:code-reviewer`, `code-simplifier` | Gate A steps 1, 2 and 4 | Ledgered, run continues |
+| `claude-md-management:claude-md-improver` | Close-out | Ledgered; do the CLAUDE.md update by hand |
+| `nestjs-backend-standards`, `front-react-development` — **the author's own private plugins, not installable from here** | Implement | Code is written against the project's own conventions instead |
 
 ## Contributing
 
 Issues and PRs welcome. Two things make a change easy to accept:
 
-1. **Say which failure it prevents.** Every rule in this skill is there because a real graph broke
-   without it — `references/failure-modes.md` is the running list, and new rules belong beside a new
-   entry.
-2. **`main` is PR-only**, and every change bumps the plugin `version` in *both* manifests so
+1. **Say which failure it prevents.** Every rule here exists because a real graph broke without it
+   — `references/failure-modes.md` is the running list, and a new rule belongs beside a new entry.
+2. **A change is not done until it adds the eval that would have caught its absence**, and that eval
+   is not done until a deliberately broken input makes it fail. *A check that cannot fail is not
+   evidence.*
+3. **`main` is PR-only**, and every change bumps the plugin `version` in *both* manifests so
    installed users actually receive it.
 
-Skill authoring follows the open [Agent Skills](https://code.claude.com/docs/en/skills) spec; validate
-with `claude plugin validate ./plugins/sdlc-graph-engineering --strict` before opening a PR.
+```bash
+git config core.hooksPath .githooks                                        # once per clone
+python3 plugins/sdlc-graph/skills/sdlc-graph/evals/run_all.py              # 9 suites
+python3 plugins/sdlc-graph-viewer/skills/view-run/evals/run_all.py         # 8 suites
+claude plugin validate ./plugins/<plugin> --strict && claude plugin validate .
+```
+
+Skill authoring follows the open [Agent Skills](https://code.claude.com/docs/en/skills) spec. The
+rules that bind a change to this repo are in [`CLAUDE.md`](CLAUDE.md); the rules that bind a change
+to the graph are in [`plugins/sdlc-graph/docs/EDITING.md`](plugins/sdlc-graph/docs/EDITING.md), and
+that file comes first.
 
 ## Credits
 
@@ -213,3 +278,7 @@ By [Ron Mizrahi](https://github.com/RonMizrahi).
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+Two node procedures in `sdlc-graph` derive from [obra/superpowers](https://github.com/obra/superpowers)
+(MIT, © 2025 Jesse Vincent) and carry its notice: see
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Everything else here is first-party.

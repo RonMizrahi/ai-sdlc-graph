@@ -1,0 +1,505 @@
+{
+  "name": "strategy B, backend-only — the run continues at every place it is told to continue",
+  "why": "The mirror of the happy path: this walk exists to assert the stops that must NOT happen. A spec is supplied so SPEC is never entered; auto_open_mr is true so PR does not pause; has_ui is false so E2E does not exist and is never ledgered; the plan produces nothing runnable so 22b skips QA out loud. It also drives the two loops the happy path cannot reach on this spine — a PLAN revision (5b) and a red CI round-trip through DEBUG.",
+  "expect": {
+    "final_status": "DONE",
+    "reaches": [
+      "PLAN",
+      "STRATEGY",
+      "BRANCH",
+      "IMPLEMENT",
+      "TEST",
+      "GATE_A",
+      "GATE_B",
+      "CLOSE_OUT",
+      "PR",
+      "CI",
+      "DEBUG",
+      "MERGE",
+      "DONE"
+    ],
+    "stops": [
+      "PLAN:approval-after",
+      "PLAN:approval-after",
+      "STRATEGY:choice-after",
+      "MERGE:await-external"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-strategy-b-31-07-2026",
+    "plan_path": null,
+    "spec_path": "docs/specs/supplied-by-the-user.md",
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "backend",
+      "has_ui": false,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": null,
+      "branching": null,
+      "auto_open_mr": null,
+      "run_mode": null,
+      "qa_env": null
+    },
+    "milestones": [],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": null,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "PLAN",
+      "edge": "2",
+      "milestone": null,
+      "observation": "Edge 3: a spec was supplied, so SPEC is never entered and its approval-after stop never happens. NOT stopping here is the assertion."
+    },
+    {
+      "from": "PLAN",
+      "to": "PLAN",
+      "edge": "4",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "revisions requested — split milestone 1 in two"
+        }
+      ],
+      "observation": "Edge 5b. Withholding approval IS the stop firing, not a skipped stop — the file is rewritten in place and the question asked again. Unbounded on purpose: this is a conversation, not a retry."
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "edge": "5",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved on the second reading"
+        }
+      ],
+      "observation": "The same stop a second time, which is what an unbounded revision loop means. touches_ui seeded FALSE on both milestones — a backend plan, and the field is seeded rather than left absent.",
+      "set": {
+        "plan_path": "docs/plans/graph-strategy-b-31-07-2026-plan.md",
+        "milestones.0": {
+          "id": 1,
+          "name": "auth repository",
+          "branch": null,
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "repo",
+            "unit tests"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": false
+        },
+        "milestones.1": {
+          "id": 2,
+          "name": "auth endpoints",
+          "branch": null,
+          "worktree": null,
+          "deps": [
+            1
+          ],
+          "steps": [
+            "POST /auth/login",
+            "integration tests"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": false
+        }
+      }
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "edge": "6",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "choice-after",
+          "answer": "B / continuous / auto_open_mr true"
+        }
+      ],
+      "observation": "auto_open_mr answered TRUE, which is what disarms the PR stop later. No standards handshake — backend stack, so front-react-development is never dispatched.",
+      "set": {
+        "in_flight": [
+          1
+        ],
+        "context.branching": "B",
+        "context.auto_open_mr": true,
+        "context.run_mode": "continuous",
+        "cursor": 1
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "No-op throughout under B — stays on the current branch, which is not a protected one."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "No-op throughout under B — stays on the current branch, which is not a protected one.",
+      "set": {
+        "milestones.0.branch": "feat/auth"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "a1b2c3d"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "SIMULATED green."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SIMULATED green."
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "edge": "13",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Edge 14. E2E does not exist for this run — a STRUCTURAL absence, so it is NOT written to skipped_gates[]. Recording it would log a gate that was…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_a1b2"
+      },
+      "observation": "Edge 14. E2E does not exist for this run — a STRUCTURAL absence, so it is NOT written to skipped_gates[]. Recording it would log a gate that was never in the graph.",
+      "set": {
+        "attempts.GATE_A:1": 1
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "edge": "15",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Edge 18."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18.",
+      "set": {
+        "in_flight": [
+          1
+        ],
+        "attempts.GATE_B:1": 1,
+        "cursor": 2
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "No-op."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "No-op.",
+      "set": {
+        "milestones.1.branch": "feat/auth"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "b2c3d4e"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED green."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SIMULATED green."
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "edge": "13",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Edge 14 again. Two milestones, zero E2E entries, zero ledger entries — correct for a backend run."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_b2c3"
+      },
+      "observation": "Edge 14 again. Two milestones, zero E2E entries, zero ledger entries — correct for a backend run.",
+      "set": {
+        "attempts.GATE_A:2": 1
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Edge 18c."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18c.",
+      "set": {
+        "in_flight": [],
+        "attempts.GATE_B:2": 1
+      }
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "edge": "21",
+      "milestone": 2,
+      "observation": "Unconditional. Even though this plan produced nothing runnable, there is no DONE shortcut here — that decision lives at CI.",
+      "set": {
+        "context.qa_env": {
+          "run_instructions": "n/a — library only",
+          "api_base_url": null,
+          "web_base_url": null,
+          "api_docs": null,
+          "identities": [],
+          "seed": null
+        }
+      }
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "edge": "22",
+      "milestone": 2,
+      "observation": "NO STOP. auto_open_mr is true, so PR's confirm-before does not apply and the graph opens the MR without asking. This is the assertion the walk exists for — a stop taken here would be the run stopping where it was told to continue.",
+      "set": {
+        "milestones.1.pr": 7
+      }
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "edge": "30",
+      "milestone": 2,
+      "observation": "code-review:code-review runs HERE and nowhere else: a PR finally exists for it to read and comment on. Findings become inline PR comments; this node reports and never routes."
+    },
+    {
+      "from": "CI",
+      "to": "DEBUG",
+      "edge": "19·CI",
+      "milestone": 2,
+      "observation": "SCRIPTED FAILURE: a required check went red. debug.return_to written BEFORE control leaves — it is the only thing that tells a CI failure from a test failure on resume.",
+      "set": {
+        "attempts.CI:2": 1,
+        "debug_return_to": "CI"
+      }
+    },
+    {
+      "from": "DEBUG",
+      "to": "CI",
+      "edge": "20·CI",
+      "milestone": 2,
+      "observation": "Root-caused, fixed, pushed, re-watching. return_to honoured and cleared.",
+      "set": {
+        "debug_return_to": null
+      }
+    },
+    {
+      "from": "CI",
+      "to": "MERGE",
+      "edge": "24",
+      "milestone": 2,
+      "observation": "Edge 22b — the ONLY legitimate path that skips QA, and it is said out loud here rather than taken quietly. A library with no runnable surface has nothing for QA to probe. QA and VERDICT are both correctly never entered."
+    },
+    {
+      "from": "MERGE",
+      "to": "DONE",
+      "edge": "29",
+      "milestone": 2,
+      "stops": [
+        {
+          "type": "await-external",
+          "answer": "merged"
+        }
+      ],
+      "observation": "The one stop in the tail. Unconditional, so it fires even on a run where nothing else did."
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+{
+  "name": "NEGATIVE CONTROL — four ways a milestone bundle claims work nothing checked",
+  "why": "The failure mode delegation introduces, planted four ways. Once the milestone loop runs inside an agent, every transition in it is something the orchestrator did not witness — so a bundle is a CLAIM, and the return gate is what turns a claim into a record. These four are what that looks like when it is skipped: a gate transition recorded with no R7/R8 (nobody looked for the workflow runId or diffed `applied`), an IMPLEMENT transition with no commits to check the branch against, an e2e pass claiming authored specs that nobody opened, and a milestone block that opens mid-itinerary rather than at BRANCH — the shape of a bundle stitched together from a milestone agent that was never spawned for this milestone. The first step is deliberately LEGAL: a control a checker can satisfy by rejecting everything is not a control.",
+  "expect": {
+    "rejected": true,
+    "because": [
+      "records no R7 verification",
+      "carries no evidence.commits",
+      "nobody opened the spec files",
+      "milestone block opens at IMPLEMENT, not BRANCH"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-bundle-rejected-06-08-2026",
+    "plan_path": "docs/plans/graph-bundle-rejected-06-08-2026-plan.md",
+    "spec_path": "docs/specs/graph-bundle-rejected-06-08-2026-design.md",
+    "node": "BRANCH",
+    "status": "RUNNING",
+    "context": {
+      "stack": "both",
+      "has_ui": true,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": {
+        "approved_at": "STRATEGY",
+        "note": "simulated"
+      },
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "continuous",
+      "qa_env": null
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "simulated milestone one",
+        "branch": "PROJ-1/simulated",
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked 1a"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": true,
+        "base_sha": "a1b2c3d",
+        "spawned_at_history_len": 5,
+        "main_sha_at_spawn": "0f1e2d3c4b5a",
+        "progress": null
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": 1,
+    "in_flight": [
+      1
+    ],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "LEGAL STEP — branch verified against base_sha before anything else. Kept legal on purpose: a control every checker rejects proves nothing."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "LEGAL STEP — branch verified against base_sha before anything else. Kept legal on purpose: a control every checker rejects proves nothing."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "VIOLATION 1 — the bundle says the steps are committed and returns no shas. commit => bundle => record has nothing to check the branch against, so…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": null
+      },
+      "observation": "VIOLATION 1 — the bundle says the steps are committed and returns no shas. commit => bundle => record has nothing to check the branch against, so 'implemented' rests entirely on the milestone agent's word."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Legal: the suite was re-run by the orchestrator."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Legal: the suite was re-run by the orchestrator."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "VIOLATION 2 — a Gate A pass written with no R7 and no R8: nobody looked for the workflow runId in the journal, and nobody diffed `applied` against…"
+          }
+        ],
+        "bundle": true,
+        "verified": []
+      },
+      "observation": "VIOLATION 2 — a Gate A pass written with no R7 and no R8: nobody looked for the workflow runId in the journal, and nobody diffed `applied` against git. This is 'Gate A returning clean having run zero agents', one agent further away."
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "VIOLATION 3 — the milestone agent claims it authored component specs for a touches_ui milestone and no R9 was run, so nobody opened the files to see whether…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "e2e_specs": "authored",
+      "observation": "VIOLATION 3 — the milestone agent claims it authored component specs for a touches_ui milestone and no R9 was run, so nobody opened the files to see whether they exist, assert anything, or mock the API they are supposed to be driving."
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "edge": "15",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Legal: the milestone agent's replay ends here, and this is the orchestrator taking edge 18 to the next milestone. The block is now closed, which is what makes…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Legal: the milestone agent's replay ends here, and this is the orchestrator taking edge 18 to the next milestone. The block is now closed, which is what makes the next step's violation visible."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 7,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "VIOLATION 4 — a milestone block that opens at IMPLEMENT. A milestone agent is spawned for a milestone and its first transition leaves BRANCH; a block beginning…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "b2c3d4e"
+        ],
+        "run_id": null
+      },
+      "observation": "VIOLATION 4 — a milestone block that opens at IMPLEMENT. A milestone agent is spawned for a milestone and its first transition leaves BRANCH; a block beginning mid-itinerary is a bundle assembled from something other than a milestone agent this orchestrator spawned, and the broken history chain is the same fabrication seen from the other side."
+    }
+  ]
+}

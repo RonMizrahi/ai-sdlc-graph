@@ -1,0 +1,251 @@
+{
+  "run_id": "mobile-shell-01-08-2026",
+  "plan_path": "docs/plans/mobile-shell-01-08-2026-plan.md",
+  "spec_path": "docs/specs/mobile-shell-01-08-2026-design.md",
+  "node": "IMPLEMENT",
+  "status": "RUNNING",
+  "schema_version": 5,
+  "context": {
+    "stack": "frontend",
+    "has_ui": true,
+    "main_branch": "main",
+    "unborn_main": false,
+    "host": "github",
+    "standards_handshake": {
+      "stack": "React Native (Expo) + TypeScript",
+      "specialist_skills": [
+        "rn-navigation-standards"
+      ],
+      "approved": true
+    },
+    "branching": "A",
+    "auto_open_mr": true,
+    "run_mode": "continuous",
+    "qa_env": {
+      "run_instructions": "npx expo start --ios",
+      "api_base_url": "http://localhost:4000",
+      "web_base_url": null,
+      "api_docs": null,
+      "identities": [
+        "demo@acme.test / demo1234"
+      ],
+      "seed": "fixtures load from mocks/handlers.ts"
+    }
+  },
+  "milestones": [
+    {
+      "id": 1,
+      "name": "Navigation shell + theming",
+      "branch": "MOB-1/run",
+      "deps": [],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": true,
+      "steps": [
+        "Tab + stack navigators",
+        "Theme tokens",
+        "Detox smoke"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Auth screens",
+      "branch": "MOB-1/run",
+      "deps": [
+        1
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": true,
+      "steps": [
+        "Sign-in, sign-up, reset",
+        "Secure token storage",
+        "Unit: form validation",
+        "Detox: sign-in golden path"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Offline cache",
+      "branch": null,
+      "deps": [
+        2
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Query persistence",
+        "Conflict policy"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Push notifications",
+      "branch": null,
+      "deps": [
+        2
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": true,
+      "steps": [
+        "Permission flow",
+        "Deep links"
+      ]
+    }
+  ],
+  "integration": {
+    "branch": null,
+    "merged": []
+  },
+  "attempts": {
+    "TEST:1": 1,
+    "GATE_A:1": 1,
+    "E2E:1": 2,
+    "GATE_B:1": 1,
+    "TEST:2": 3
+  },
+  "qa": {
+    "verdict": null,
+    "qa_plan_path": null,
+    "bugs": []
+  },
+  "monitor": {
+    "spawned": true,
+    "verified_at_history_len": 9,
+    "respawns": 0
+  },
+  "skipped_gates": [
+    {
+      "node": "E2E",
+      "reason": "Detox needs a booted simulator; none available in this session. Two of three journeys were driven by hand instead and are described in the observation — recorded as skipped, never counted as passed",
+      "at_milestone": 1
+    }
+  ],
+  "history": [
+    {
+      "from": "[start]",
+      "to": "INTAKE",
+      "guard": "run created",
+      "milestone": null,
+      "observation": "existing Expo app, 3 screens"
+    },
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "guard": "spec_path == null",
+      "milestone": null,
+      "observation": "stack frontend, has_ui true, host github"
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "guard": "spec file on disk and user approved",
+      "milestone": null,
+      "observation": "spec approved after one revision (added the offline story)"
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "guard": "plan_path on disk and every milestone has its required steps and user approved",
+      "milestone": null,
+      "observation": "4 milestones; 3 and 4 both depend on 2"
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "guard": "branching in {A,B,C} and deps acyclic",
+      "milestone": null,
+      "observation": "strategy A on MOB-1/run — the user wants one review surface"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "MOB-1/run off main"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 1,
+      "observation": "tab + stack navigators, theme tokens lifted from the design file"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 1,
+      "observation": "18/18 green"
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "guard": "tests green AND (no rerun-worthy finding OR budget spent) AND context.has_ui == true",
+      "milestone": 1,
+      "observation": "clean; 1 nit about inline styles in the tab bar"
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "guard": "journeys not red (Playwright or the app absent while has_ui → skipped_gates, recorded and never counted as passed)",
+      "milestone": 1,
+      "observation": "no simulator available — Detox could not run. Drove the tab and deep-link journeys by hand on a physical device and described the result; ledgered as skipped"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 1,
+      "observation": "milestone 1 done, advancing to milestone 2"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 2,
+      "observation": "strategy A no-op: staying on MOB-1/run"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 2,
+      "observation": "sign-in and sign-up wired to the mock handlers; secure storage behind an interface"
+    },
+    {
+      "from": "TEST",
+      "to": "DEBUG",
+      "guard": "suite red · ×3",
+      "milestone": 2,
+      "observation": "reset-password form validation test red: the schema allowed an empty confirmation field"
+    },
+    {
+      "from": "DEBUG",
+      "to": "TEST",
+      "guard": "root cause fixed → return to the caller",
+      "milestone": 2,
+      "observation": "real product bug, not a test fault. Attempt 2"
+    },
+    {
+      "from": "TEST",
+      "to": "DEBUG",
+      "guard": "suite red · ×3",
+      "milestone": 2,
+      "observation": "secure-storage mock leaked between tests, two suites saw each other’s tokens"
+    },
+    {
+      "from": "DEBUG",
+      "to": "IMPLEMENT",
+      "guard": "root cause fixed → return to the caller",
+      "milestone": 2,
+      "observation": "returned to IMPLEMENT rather than TEST: the fix needed a real interface change (storage is now injected), which is implementation work. TEST budget stands at 3 of 3 — one more red suite blocks this milestone"
+    }
+  ],
+  "cursor": 2,
+  "in_flight": [],
+  "debug_return_to": null,
+  "stopped": null
+}

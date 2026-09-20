@@ -1,24 +1,53 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "sdlc-graph-engineering",
-  "description": "Turn any multi-step process into a guarded graph a machine can actually execute — typed nodes, total exit guards, bounded retry loops, durable run state, and a ledger of every step that could not run.",
+  "description": "The SDLC as a guarded graph a machine can actually execute — the graph that drives a feature end to end, the viewer that shows a run as it happens, and the method that turns any other process into a graph of its own.",
   "owner": {
     "name": "Ron Mizrahi",
     "email": "ronmizr@gmail.com"
   },
   "plugins": [
     {
-      "name": "sdlc-graph-engineering",
-      "displayName": "SDLC Graph Engineering",
-      "source": "./plugins/sdlc-graph-engineering",
-      "description": "Installs graph engineering into a project that has none: turns an existing process — skills, a runbook, a CI config, or a description — into a guarded graph with typed nodes, total exit guards, bounded retry loops, a run-state file, a skipped-step ledger, its own auditor, and an executable eval suite. Domain-agnostic; needs no other plugin installed.",
-      "version": "0.6.0",
+      "name": "sdlc-graph",
+      "displayName": "SDLC Graph",
+      "source": "./plugins/sdlc-graph",
+      "description": "The SDLC as a guarded graph, with the milestone loop delegated to a milestone agent per milestone (per worktree under strategy C) whose bundle the orchestrator verifies against git before recording it. A run is one gitignored directory — state, per-milestone journals, and with --trace every state it passed through. Ships a run reviewer that turns a finished run into the evals it should have had. Command-invoked.",
+      "version": "1.0.3",
+      "category": "workflow",
+      "tags": [
+        "sdlc",
+        "orchestration",
+        "state-machine",
+        "workflow",
+        "resumable"
+      ]
+    },
+    {
+      "name": "sdlc-graph-viewer",
+      "displayName": "SDLC Viewer",
+      "source": "./plugins/sdlc-graph-viewer",
+      "description": "The run viewer for sdlc-graph — one zero-dependency page that renders parallel milestone agents, live or as a self-contained snapshot. Reads the run-directory layout: docs/graph-runs/<run-id>/{state.json,journals/}.",
+      "version": "1.0.2",
+      "category": "workflow",
+      "tags": [
+        "sdlc",
+        "viewer",
+        "observability",
+        "dashboard",
+        "live"
+      ]
+    },
+    {
+      "name": "sdlc-graph-engineering-install",
+      "displayName": "Graph Engineering — Install",
+      "source": "./plugins/sdlc-graph-engineering-install",
+      "description": "Installs graph engineering into a project that has none: turns an existing process — skills, a runbook, a CI config, or a description — into a guarded graph with typed nodes, total exit guards, bounded retry loops, a run-state file, a skipped-step ledger, and its own auditor. Domain-agnostic; needs no other plugin installed.",
+      "version": "0.7.0",
       "category": "workflow",
       "tags": [
         "graph",
         "state-machine",
         "workflow",
-        "sdlc",
         "scaffolding",
         "resumable"
       ]

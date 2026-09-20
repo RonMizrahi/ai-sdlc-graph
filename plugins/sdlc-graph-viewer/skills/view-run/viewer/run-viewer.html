@@ -1,0 +1,1783 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run viewer — sdlc-graph</title>
+<!--
+  ONE FILE. No dependencies, no build step, no network at view time.
+
+  That is not minimalism for its own sake: `view-run` injects a run's state into the slot
+  below and hands the result to a human, who opens it from `file://` — on a plane, in a review,
+  a year later. Anything fetched at load time is a page that renders differently for the person
+  you sent it to than it did for you.
+
+  Four sources, in priority order:
+    1. the inline snapshot slot (__STATE__)   — self-contained; never polls
+    2. ?state=<url>                           — polls that URL
+    3. /api/runs                              — the server's run list, with a sidebar
+    4. the embedded demo                      — when there is nothing else
+
+  Plus drag-and-drop / file-pick at any time.
+-->
+<style>
+:root{
+  --bg:#0a0d0f; --rail:#0c1012; --panel:#12171a; --panel-2:#182024; --panel-3:#1e282c;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.05);
+  --fg:#e9efef; --fg-2:#a6b8ba; --fg-3:#85989c;
+  --flow:#34d3c0; --flow-dim:rgba(52,211,192,.13);
+  --guard:#f0a94a; --guard-dim:rgba(240,169,74,.13);
+  --stop:#f2705f; --stop-dim:rgba(242,112,95,.13);
+  --hand:#9b8bf4; --hand-dim:rgba(155,139,244,.13);
+  --ok:#5ecb7a; --ok-dim:rgba(94,203,122,.13);
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Helvetica,sans-serif;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#eef1f1; --rail:#f7f9f9; --panel:#ffffff; --panel-2:#f4f7f7; --panel-3:#e9eeee;
+  --line:rgba(13,21,23,.13); --line-2:rgba(13,21,23,.07);
+  --fg:#0d1517; --fg-2:#445457; --fg-3:#5f7276;
+  --flow:#0d8478; --flow-dim:rgba(13,132,120,.11);
+  --guard:#a9691a; --guard-dim:rgba(169,105,26,.12);
+  --stop:#bc4436; --stop-dim:rgba(188,68,54,.11);
+  --hand:#5d4fc0; --hand-dim:rgba(93,79,192,.11);
+  --ok:#2c8639; --ok-dim:rgba(44,134,57,.11);
+}}
+:root[data-theme="light"]{
+  --bg:#eef1f1; --rail:#f7f9f9; --panel:#ffffff; --panel-2:#f4f7f7; --panel-3:#e9eeee;
+  --line:rgba(13,21,23,.13); --line-2:rgba(13,21,23,.07);
+  --fg:#0d1517; --fg-2:#445457; --fg-3:#5f7276;
+  --flow:#0d8478; --flow-dim:rgba(13,132,120,.11);
+  --guard:#a9691a; --guard-dim:rgba(169,105,26,.12);
+  --stop:#bc4436; --stop-dim:rgba(188,68,54,.11);
+  --hand:#5d4fc0; --hand-dim:rgba(93,79,192,.11);
+  --ok:#2c8639; --ok-dim:rgba(44,134,57,.11);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13.5px;line-height:1.55;
+     -webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left}
+input,select{font:inherit;color:inherit;background:var(--panel-2);border:1px solid var(--line);
+             border-radius:7px;padding:6px 9px}
+a{color:var(--flow);text-decoration:none}
+:focus-visible{outline:2px solid var(--hand);outline-offset:2px;border-radius:4px}
+@keyframes rvpulse{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes rvhalo{0%,100%{box-shadow:0 0 0 0 var(--guard-dim),0 0 22px -6px var(--guard)}
+                  50%{box-shadow:0 0 0 7px transparent,0 0 10px -8px var(--guard)}}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--panel-3);border-radius:9px}
+
+.app{display:flex;align-items:flex-start;min-height:100vh}
+.rail{flex:0 0 244px;width:244px;position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--rail);
+      border-right:1px solid var(--line-2);display:flex;flex-direction:column;padding:18px 0 14px}
+.rail section{padding:0 14px}
+.brand{display:flex;align-items:center;gap:9px;margin:0 0 16px;padding:0 18px;font-weight:600}
+.brand i{width:9px;height:9px;border-radius:3px;background:var(--flow);display:block}
+.brand i.live{animation:rvpulse 2s infinite}
+.micro{font-family:var(--mono);font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:var(--fg-3);
+       margin:16px 0 7px;padding:0 4px}
+.nav button,.runs button{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:8px;
+                         font-size:12.5px;color:var(--fg-2)}
+.nav button.on,.runs button.on{background:var(--panel-2);color:var(--fg)}
+.nav .mark{width:5px;height:5px;border-radius:50%;flex:0 0 5px}
+.nav button.on .mark{background:var(--flow)}
+.nav .count{margin-left:auto;font-family:var(--mono);font-size:9.5px;padding:1px 6px;border-radius:6px;
+            color:var(--fg-3);background:var(--panel-3)}
+.nav .count.warn{color:var(--guard);background:var(--guard-dim)}
+.nav .hk{font-family:var(--mono);font-size:9px;color:var(--fg-3);opacity:.6}
+.runs .dot{width:6px;height:6px;flex:0 0 6px;border-radius:50%}
+.runs .sub{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+.runs .age{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--fg-3)}
+.themes{display:flex;gap:4px;padding:0 14px;margin-top:auto}
+.themes button{flex:1;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+               text-transform:uppercase;padding:6px 0;border-radius:6px;color:var(--fg-3)}
+.themes button.on{background:var(--panel-3);color:var(--fg)}
+.foot{padding:14px 18px 0;font-family:var(--mono);font-size:9.5px;line-height:1.7;color:var(--fg-3)}
+
+main{flex:1;min-width:0;padding:26px 30px 60px;display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px}
+.head h1{margin:0;font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.02em}
+.status{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;font-weight:600;
+        letter-spacing:.13em}
+.status i{width:6px;height:6px;border-radius:50%;display:block}
+.head .src{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--fg-3);text-align:right}
+.banner{display:flex;flex-direction:column;gap:2px;border-radius:11px;padding:12px 16px;font-size:12.5px;
+        margin-bottom:8px}
+.banner b{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.banner.stop{background:var(--stop-dim)} .banner.stop b{color:var(--stop)}
+.banner.hand{background:var(--hand-dim)} .banner.hand b{color:var(--hand)}
+.banner.guard{background:var(--guard-dim)} .banner.guard b{color:var(--guard)}
+.cols{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.col-main{flex:1 1 520px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.col-side{flex:0 0 290px;display:flex;flex-direction:column;gap:14px}
+@media (max-width:1080px){.col-side{flex:1 1 100%}}
+.card{background:var(--panel);border-radius:13px;padding:15px 17px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{display:flex;flex-direction:column;gap:6px;padding:15px 17px;border-radius:13px;background:var(--panel);min-width:0}
+.kpi .v{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.035em;line-height:1.05}
+.kpi .v.long{font-size:14px;letter-spacing:.02em;line-height:1.5}
+.kpi .n{font-size:11.5px;color:var(--fg-3)}
+.pill{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+      padding:3px 8px;border-radius:6px;color:var(--fg-3);background:var(--panel-2);white-space:nowrap}
+.row{display:flex;align-items:center;gap:10px}
+/* Provenance marker. Every number on this page comes from somewhere in the run directory, and a
+   reader who cannot tell `history[]` (verified, written by the orchestrator) from a journal line
+   (what an agent SAID) is reading two very different kinds of claim as one. Pure CSS so it works
+   in a snapshot opened from file://, and focusable so it is not hover-only. */
+.info{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;flex:0 0 auto;
+      border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--fg-3);
+      font-family:var(--mono);font-size:8.5px;font-weight:600;font-style:normal;letter-spacing:0;
+      text-transform:none;vertical-align:middle;margin-left:6px;cursor:help;position:relative}
+.info:hover,.info:focus-visible{color:var(--fg);border-color:var(--flow);outline:none}
+.info::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 7px);z-index:60;
+      width:max-content;max-width:min(380px,72vw);padding:10px 12px;border-radius:9px;
+      background:var(--panel-3);border:1px solid var(--line);color:var(--fg-2);
+      font-family:var(--sans);font-size:11.5px;font-weight:400;line-height:1.55;letter-spacing:0;
+      text-align:left;text-transform:none;white-space:pre-line;box-shadow:0 8px 26px rgba(0,0,0,.3);
+      opacity:0;visibility:hidden;transition:opacity .12s;pointer-events:none}
+.info:hover::after,.info:focus-visible::after{opacity:1;visibility:visible}
+.info.r::after{left:auto;right:0}
+.kv{display:flex;gap:12px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--line-2)}
+.kv span:first-child{flex:0 0 118px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+                     text-transform:uppercase;color:var(--fg-3)}
+.kv span:last-child{font-family:var(--mono);word-break:break-word;min-width:0}
+.bar{flex:1;height:6px;border-radius:4px;background:var(--panel-3);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px}
+.ms{background:var(--panel);border-radius:13px;padding:14px 16px}
+.ms.on{box-shadow:inset 0 0 0 1px var(--guard)}
+.ms .id{font-family:var(--mono);font-size:11.5px;font-weight:600;width:26px;height:26px;flex:0 0 26px;
+        border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--fg-3);background:var(--panel-2)}
+.ms .steps{margin:10px 0 0;padding-left:18px;font-size:12px;color:var(--fg-2)}
+/* The subagent fan-out. A milestone is not one worker — GATE_A alone spawns four agents per group,
+   and on a 38-file diff that is dozens of them. Until this panel there was one sentence for the lot.
+   A spine with one dot per agent, in SPAWN order, because the returns arrive out of order and the
+   launch order is the only one that says anything about the shape of the fan-out. */
+.sa-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:11px 0 5px}
+.sa-node{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--fg-3)}
+.sa-list{position:relative;margin:0;padding:0 0 0 22px;list-style:none}
+.sa-list::before{content:'';position:absolute;left:5px;top:10px;bottom:10px;width:1px;background:var(--line)}
+.sa-item{position:relative;margin:1px 0}
+.sa-item .dot{position:absolute;left:-21px;top:13px;width:9px;height:9px;border-radius:50%;
+      background:var(--panel-3);box-shadow:0 0 0 3px var(--panel)}
+.sa-item.running .dot{background:var(--flow);animation:rvpulse 1.7s ease-in-out infinite}
+.sa-item.returned .dot{background:var(--ok)}
+.sa-item.died .dot{background:var(--stop)}
+.sa-item.absent .dot{background:var(--guard)}
+.sa-item.other .dot{background:var(--stop)}
+@media (prefers-reduced-motion:reduce){.sa-item.running .dot{animation:none}}
+.sa-btn{display:flex;align-items:flex-start;gap:9px;width:100%;text-align:left;padding:7px 9px;
+      border:0;border-radius:9px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.sa-btn:hover{background:var(--panel-2)}
+.sa-btn:focus-visible{outline:1px solid var(--flow);outline-offset:-1px}
+.sa-item.on>.sa-btn{background:var(--panel-2)}
+.sa-n{font-family:var(--mono);font-size:10px;color:var(--fg-3);flex:0 0 22px;text-align:right;padding-top:2px}
+.sa-l{flex:1;min-width:0}
+.sa-l b{font-size:12.5px;font-weight:600;overflow-wrap:anywhere}
+.sa-t{display:block;font-family:var(--mono);font-size:10px;color:var(--fg-3);margin-top:2px;overflow-wrap:anywhere}
+.sa-h{display:block;font-size:11.5px;color:var(--fg-2);margin-top:3px}
+.sa-sum{margin:0 0 7px 31px;padding:9px 12px;border-left:2px solid var(--line);border-radius:0 9px 9px 0;
+      background:var(--panel-2);list-style:none}
+.sa-sum li{font-size:11.5px;color:var(--fg-2);line-height:1.6;margin:0 0 5px}
+.sa-sum li:last-child{margin-bottom:0}
+.sa-sum li.why{color:var(--fg-3);font-style:italic}
+.trace-row{display:flex;flex-wrap:wrap;gap:3px 12px;align-items:flex-start;padding:10px 8px;border-radius:9px;
+           cursor:pointer;width:100%}
+.trace-row.sel{background:var(--hand-dim)} .trace-row.live{background:var(--flow-dim)}
+.trace-row .hop{font-family:var(--mono);font-size:11px;font-weight:600;flex:0 0 176px;white-space:nowrap;padding-top:1px}
+.trace-row .hop.dbg{color:var(--stop)}
+.trace-row .obs{display:block;font-size:11.5px;color:var(--fg-2);margin-top:2px}
+.trace-row .obs.none{color:var(--guard);font-family:var(--mono);font-size:10px}
+.chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;padding:8px 10px;
+      border-radius:7px;background:var(--panel-2);color:var(--fg-3)}
+.chip.on{background:var(--flow-dim);color:var(--flow)}
+.board{position:relative;width:100%;min-width:700px;container-type:inline-size}
+.board svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.node{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:8px;
+      font-family:var(--mono);font-size:clamp(9px,1.03cqw,15px);font-weight:600;z-index:2;padding:0}
+.node .inflight{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);font-family:var(--mono);
+             font-size:clamp(7px,.62cqw,10px);padding:1px 5px;border-radius:5px;background:var(--flow-dim);
+             color:var(--flow);white-space:nowrap}
+.node .h{position:absolute;top:-4px;right:-4px;width:7px;height:7px;border-radius:50%;background:var(--hand)}
+.band{position:absolute;font-family:var(--mono);font-size:clamp(7px,.62cqw,10px);letter-spacing:.19em;
+      text-transform:uppercase;color:var(--fg-3);white-space:nowrap;line-height:1;z-index:1}
+.loopbox{position:absolute;border-radius:12px;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--line)}
+.scrub{display:flex;align-items:center;gap:10px}
+.scrub input[type=range]{flex:1;padding:0;background:none;border:0}
+.drop{position:fixed;inset:0;background:var(--hand-dim);display:none;align-items:center;justify-content:center;
+      font-family:var(--mono);font-size:14px;z-index:99}
+.drop.on{display:flex}
+.hide{display:none !important}
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <p class="brand"><i id="brand-dot"></i><span>run viewer</span></p>
+
+    <section class="runs" id="runs-wrap">
+      <p class="micro">runs</p>
+      <div id="runs"></div>
+    </section>
+
+    <section class="nav">
+      <p class="micro">views</p>
+      <div id="nav"></div>
+    </section>
+
+    <section>
+      <p class="micro">source</p>
+      <button class="chip" id="pick" style="width:100%;text-align:center">open a state file…</button>
+      <input type="file" id="file" accept=".json,application/json" class="hide">
+    </section>
+
+    <p class="micro" style="margin-top:18px">theme</p>
+    <div class="themes" id="themes"></div>
+    <p class="foot" id="cfgline"></p>
+  </aside>
+
+  <main>
+    <div class="head">
+      <h1 id="run-id">—</h1>
+      <span class="status" id="status"><i></i><span></span></span>
+      <span class="src"><span id="src">connecting…</span><br><span id="age"></span></span>
+    </div>
+
+    <div id="banners"></div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="cols">
+      <div class="col-main" id="view"></div>
+      <div class="col-side" id="side"></div>
+    </div>
+  </main>
+</div>
+
+<div class="drop" id="drop">drop a run's <code>state.json</code> to read it</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────────
+   THE GRAPH. Data only — no functions — so `evals/sync/graph_sync.py` can parse this
+   block and compare it against the plugin's own edges.md and nodes.md. That
+   parseability is the whole reason the guard PREDICATES live in APPLIES below
+   rather than here: this file is a copy of the spec, and a copy nothing checks
+   is a copy that drifts. Never hand-edit inside the markers without re-running
+   the checker.
+   ───────────────────────────────────────────────────────────────────────────── */
+/*__GRAPH_BEGIN__*/
+const GRAPH = {
+  "POS": {
+    "INTAKE": [
+      0,
+      0
+    ],
+    "SPEC": [
+      1,
+      0
+    ],
+    "PLAN": [
+      2,
+      0
+    ],
+    "STRATEGY": [
+      3,
+      0
+    ],
+    "HANDOFF": [
+      4,
+      0
+    ],
+    "BRANCH": [
+      0,
+      1
+    ],
+    "IMPLEMENT": [
+      1,
+      1
+    ],
+    "TEST": [
+      2,
+      1
+    ],
+    "GATE_A": [
+      3,
+      1
+    ],
+    "E2E": [
+      4,
+      1
+    ],
+    "GATE_B": [
+      5,
+      1
+    ],
+    "BLOCKED": [
+      3,
+      2
+    ],
+    "CONSOLIDATE": [
+      5,
+      2
+    ],
+    "CLOSE_OUT": [
+      0,
+      3
+    ],
+    "PR": [
+      1,
+      3
+    ],
+    "CI": [
+      3,
+      3
+    ],
+    "QA": [
+      4,
+      3
+    ],
+    "VERDICT": [
+      5,
+      3
+    ],
+    "MERGE": [
+      6,
+      3
+    ],
+    "DONE": [
+      7,
+      3
+    ],
+    "DEBUG": [
+      2,
+      4
+    ],
+    "PR_FINAL_REVIEW": [
+      2,
+      3
+    ]
+  },
+  "BANDS": [
+    {
+      "row": 0,
+      "label": "setup",
+      "from": 0,
+      "to": 4
+    },
+    {
+      "row": 1,
+      "label": "milestone loop — one milestone agent per milestone",
+      "from": 0,
+      "to": 5,
+      "box": true
+    },
+    {
+      "row": 2,
+      "label": "strategy C only · terminal stop",
+      "from": 3,
+      "to": 5
+    },
+    {
+      "row": 3,
+      "label": "the shared tail",
+      "from": 0,
+      "to": 6
+    },
+    {
+      "row": 4,
+      "label": "debug — re-entrant from six callers",
+      "from": 2,
+      "to": 2
+    }
+  ],
+  "GEO": {
+    "NW": 118,
+    "NH": 32,
+    "PX": 152,
+    "PY": 88,
+    "OX": 16,
+    "OY": 52
+  },
+  "HUMAN": {
+    "SPEC": "approval-after",
+    "PLAN": "approval-after",
+    "STRATEGY": "choice-after",
+    "PR": "confirm-before",
+    "MERGE": "await-external",
+    "VERDICT": "escalation"
+  },
+  "BOUNDS": {
+    "TEST": 3,
+    "GATE_A": 2,
+    "E2E": 3,
+    "GATE_B": 2,
+    "CONSOLIDATE": 3,
+    "CI": "15m",
+    "GATE_A-dispatch": 1,
+    "MILESTONE-dispatch": 1,
+    "QA": 2
+  },
+  "DESC": {
+    "INTAKE": "Resolve the run context: stack, host, main branch, and whether there is a UI.",
+    "SPEC": "Write the design doc and get it approved before any planning happens.",
+    "PLAN": "Break the spec into milestones with steps and dependencies; get it approved.",
+    "STRATEGY": "Pick the branching strategy and settle the standards handshake.",
+    "HANDOFF": "Strategy D — the work leaves this graph and goes to /batch.",
+    "BRANCH": "Create or check out this milestone's branch — and, under C, its worktree.",
+    "IMPLEMENT": "Commit every step of the milestone. Run by its agent.",
+    "TEST": "Run unit + integration. Red routes to DEBUG, bounded ×3.",
+    "GATE_A": "Per-file review of this milestone's slice: reviewer, simplifier, security.",
+    "E2E": "Author and run the journey specs against the real stack, no mocking.",
+    "GATE_B": "Holistic review of the whole accumulated diff before advancing.",
+    "BLOCKED": "A guard could not be resolved. The run stops and says which ones it tested.",
+    "CONSOLIDATE": "Strategy C only: merge the per-milestone branches, run the integrated suite.",
+    "CLOSE_OUT": "Update the plan, complete qa_env, write the close-out record.",
+    "PR": "Open (or update) the pull request. Idempotent.",
+    "CI": "Watch the configured checks. No checks configured is ledgered, not passed.",
+    "QA": "Independent live pass over the assembled app: green paths and break-it attacks.",
+    "VERDICT": "Turn the QA findings into PASS / PASS-WITH-ISSUES / BLOCK.",
+    "MERGE": "Wait for a human (or configured auto-merge) to land the PR.",
+    "DONE": "Terminal. The file can still gain a resumed transition.",
+    "DEBUG": "Find the root cause, fix it, return to whichever node called.",
+    "PR_FINAL_REVIEW": "Review the OPEN pull request with code-review:code-review and post the findings as inline comments. Reports; never routes."
+  },
+  "RANK": {
+    "BLOCKED": -2,
+    "DEBUG": -1,
+    "INTAKE": 0,
+    "SPEC": 1,
+    "PLAN": 2,
+    "STRATEGY": 3,
+    "BRANCH": 4,
+    "IMPLEMENT": 5,
+    "TEST": 6,
+    "GATE_A": 7,
+    "E2E": 8,
+    "GATE_B": 9,
+    "CONSOLIDATE": 10,
+    "CONSOLIDATED": 10,
+    "MERGED": 10,
+    "CLOSE_OUT": 11,
+    "PR": 12,
+    "CI": 14,
+    "QA": 15,
+    "VERDICT": 16,
+    "MERGE": 17,
+    "DONE": 18,
+    "HANDOFF": 19,
+    "PR_FINAL_REVIEW": 13
+  },
+  "EDGES": {
+    "INTAKE": [
+      [
+        "1",
+        "SPEC",
+        "spec_path == null"
+      ],
+      [
+        "2",
+        "PLAN",
+        "spec_path != null"
+      ]
+    ],
+    "SPEC": [
+      [
+        "3",
+        "PLAN",
+        "spec file on disk and user approved"
+      ]
+    ],
+    "PLAN": [
+      [
+        "4",
+        "PLAN",
+        "user requested revisions — rewrite the file in place"
+      ],
+      [
+        "5",
+        "STRATEGY",
+        "plan_path on disk and every milestone has its required steps and user approved"
+      ]
+    ],
+    "STRATEGY": [
+      [
+        "6",
+        "BRANCH",
+        "branching ∈ {A,B,C} and milestone deps acyclic and context.has_ui is a boolean"
+      ],
+      [
+        "7",
+        "HANDOFF",
+        "branching == D"
+      ]
+    ],
+    "BRANCH": [
+      [
+        "8",
+        "IMPLEMENT",
+        "branch checked out"
+      ]
+    ],
+    "IMPLEMENT": [
+      [
+        "9",
+        "TEST",
+        "every step this node owns is committed — a step whose deliverable is a test belongs to TEST and is owed at 10, never here"
+      ]
+    ],
+    "TEST": [
+      [
+        "10",
+        "GATE_A",
+        "every step TEST owns is committed and unit and integration not red — an absent suite is recorded to skipped_gates[] and never counted as passed"
+      ],
+      [
+        "19·TEST",
+        "DEBUG",
+        "that node's result is red"
+      ]
+    ],
+    "GATE_A": [
+      [
+        "11",
+        "GATE_A",
+        "step 4 found a real bug/security/regression and attempts < 2"
+      ],
+      [
+        "12",
+        "E2E",
+        "tests green and (no rerun-worthy finding or re-run budget spent) and context.has_ui == true"
+      ],
+      [
+        "13",
+        "GATE_B",
+        "tests green and (no rerun-worthy finding or re-run budget spent) and context.has_ui == false"
+      ],
+      [
+        "19·GATE_A",
+        "DEBUG",
+        "that node's result is red"
+      ]
+    ],
+    "E2E": [
+      [
+        "14",
+        "GATE_B",
+        "journeys not red — an app that genuinely cannot be brought up while has_ui is recorded to skipped_gates[] and never counted as passed. Playwright merely uninstalled is NOT that case — install it (nodes.md § E2E)"
+      ],
+      [
+        "19·E2E",
+        "DEBUG",
+        "that node's result is red"
+      ]
+    ],
+    "GATE_B": [
+      [
+        "15",
+        "BRANCH",
+        "tests green after review-and-fixes and a milestone remains and integration.branch == null"
+      ],
+      [
+        "16",
+        "CONSOLIDATE",
+        "tests green after review-and-fixes and branching == C and no milestone remains and integration.branch == null"
+      ],
+      [
+        "17",
+        "CLOSE_OUT",
+        "tests green after review-and-fixes and ((branching ∈ {A,B} and no milestone remains) or (branching == C and integration.branch != null — the integration pass))"
+      ],
+      [
+        "19·GATE_B",
+        "DEBUG",
+        "that node's result is red"
+      ]
+    ],
+    "CONSOLIDATE": [
+      [
+        "18",
+        "GATE_B",
+        "every milestone branch merged into integration.branch and the integrated suite is green"
+      ],
+      [
+        "19·CONSOLIDATE",
+        "DEBUG",
+        "that node's result is red"
+      ]
+    ],
+    "CI": [
+      [
+        "19·CI",
+        "DEBUG",
+        "that node's result is red"
+      ],
+      [
+        "23",
+        "QA",
+        "checks passing (or context.host ∈ {gitlab, none} — CI out of scope or no remote, logged to skipped_gates[]) and the app is assembled and runnable"
+      ],
+      [
+        "24",
+        "MERGE",
+        "checks passing and the plan produced nothing runnable"
+      ]
+    ],
+    "DEBUG": [
+      [
+        "20·TEST",
+        "TEST",
+        "root cause fixed"
+      ],
+      [
+        "20·E2E",
+        "E2E",
+        "root cause fixed"
+      ],
+      [
+        "20·GATE_A",
+        "GATE_A",
+        "root cause fixed"
+      ],
+      [
+        "20·GATE_B",
+        "GATE_B",
+        "root cause fixed"
+      ],
+      [
+        "20·CI",
+        "CI",
+        "root cause fixed"
+      ],
+      [
+        "20·CONSOLIDATE",
+        "CONSOLIDATE",
+        "root cause fixed"
+      ]
+    ],
+    "CLOSE_OUT": [
+      [
+        "21",
+        "PR",
+        "— unconditional, every strategy; the work still has to be merged"
+      ]
+    ],
+    "PR": [
+      [
+        "22",
+        "PR_FINAL_REVIEW",
+        "PR/MR open — or context.host == none, nothing to open, ledgered"
+      ]
+    ],
+    "QA": [
+      [
+        "25",
+        "VERDICT",
+        "verdict returned"
+      ]
+    ],
+    "VERDICT": [
+      [
+        "26",
+        "MERGE",
+        "verdict == PASS"
+      ],
+      [
+        "27",
+        "MERGE",
+        "verdict == PASS-WITH-ISSUES and no S1/S2"
+      ],
+      [
+        "28",
+        "BRANCH",
+        "verdict == BLOCK or any S1/S2 present"
+      ]
+    ],
+    "MERGE": [
+      [
+        "29",
+        "DONE",
+        "PR confirmed merged"
+      ]
+    ],
+    "PR_FINAL_REVIEW": [
+      [
+        "30",
+        "CI",
+        "review posted — or the reviewer could not run and the ledger says so. Unconditional: this node has one exit"
+      ]
+    ]
+  }
+};
+/*__GRAPH_END__*/
+
+/* ── display labels ──────────────────────────────────────────────────────────
+   A node's ID is schema. `state.node`, both endpoints of every `history[]` entry,
+   `stopped.at_node`, `skipped_gates[].node` and the `attempts["GATE_B:<id>"]` keys
+   are all written with it, in every state file already on disk. Renaming one is a
+   migration; this map is the other option — the name a HUMAN reads, applied at the
+   moment of rendering and never compared, matched, or written back.
+
+   `GATE_B` is the milestone's final review: the whole accumulated diff of the
+   branch, reviewed before it leaves the loop. Since 0.22.0 there is a second final
+   review, `PR_FINAL_REVIEW`, on the open PR. Named `GATE_A`/`GATE_B` they read as a
+   pair of numbered checkpoints; what a reader needs is which of the two reviews
+   this is, and what it is reviewing. Hence `ms-final-review` — the milestone one.
+
+   DELIBERATELY NOT APPLIED in three places, all for one reason — they exist to show
+   what the FILE says, and a label there would be a lie about the bytes on disk:
+     · `run facts` → the `state.node` row, which is captioned as the raw field
+     · edge ids — `19·GATE_B` is an identifier from edges.md, not a name
+     · `data-node` / `A.selNode` / every lookup key — ids index GRAPH, always
+   Anywhere a reader parses a string as "which node is this", it goes through
+   nlabel(). `evals/viewer/node_labels.py` holds that line. */
+const NODE_LABEL = { GATE_B: 'ms-final-review' };
+const nlabel = id => (id != null && NODE_LABEL[id]) || (id == null ? '' : String(id));
+/* For titles and tooltips, where the id is worth carrying alongside the label. */
+const nboth = id => (id != null && NODE_LABEL[id]) ? NODE_LABEL[id] + ' (' + id + ')' : nlabel(id);
+/* An attempts key is "<NODE>:<milestone>" — label the node half, keep the shape. */
+const klabel = k => { const i = String(k).indexOf(':'); return i < 0 ? nlabel(k)
+  : nlabel(String(k).slice(0, i)) + String(k).slice(i); };
+
+/* Guard predicates, keyed by edge id. They answer "could this edge fire from the
+   state as it stands?" — used to dim the next-step candidates, and for nothing
+   else. The graph itself evaluates guards in edges.md order; this is a reading
+   aid and says so.
+
+   THIS MAP SITS OUTSIDE THE GRAPH MARKERS ON PURPOSE — predicates are functions
+   and the block above must stay parseable data. The cost is that `sync_graph.py
+   --write` does not touch it, and this map spent a release keyed on the edge ids
+   of the graph this viewer was FORKED from: seven keys named edges that no longer
+   existed, and `'2'` and `'13'` dimmed the exact inverse of their own guard. It
+   read as a working feature the whole time, because a wrong predicate and a
+   missing one both just draw a next-step button a slightly different grey.
+   `evals/viewer/guard_predicates.py` is what now notices — it reads each guard
+   cell out of GRAPH.EDGES, runs the predicate below under node, and fails when
+   the two disagree. */
+const ctx = s => (s && s.context) || {};
+const remaining = s => ((s && s.milestones) || []).filter(m => !m.delivered).length;
+const integ = s => (s && s.integration && s.integration.branch) || null;
+const verdict = s => (s.qa || {}).verdict;
+const APPLIES = {
+  '1':  s => !s.spec_path,
+  '2':  s => !!s.spec_path,
+  '6':  s => ['A', 'B', 'C'].indexOf(ctx(s).branching) >= 0,
+  '7':  s => ctx(s).branching === 'D',
+  '12': s => ctx(s).has_ui === true,
+  '13': s => ctx(s).has_ui === false,
+  '15': s => remaining(s) > 0 && !integ(s),
+  '16': s => ctx(s).branching === 'C' && remaining(s) === 0 && !integ(s),
+  '17': s => (['A', 'B'].indexOf(ctx(s).branching) >= 0 && remaining(s) === 0)
+          || (ctx(s).branching === 'C' && !!integ(s)),
+  '26': s => verdict(s) === 'PASS',
+  '27': s => verdict(s) === 'PASS-WITH-ISSUES',
+  '28': s => verdict(s) === 'BLOCK'
+};
+
+/* Nodes this run can never reach, given its own context. */
+function offPath(s) {
+  const b = ctx(s).branching, off = new Set();
+  if (b !== 'C') off.add('CONSOLIDATE');
+  if (b !== 'D') off.add('HANDOFF');
+  if (ctx(s).has_ui === false) off.add('E2E');
+  if (s.status !== 'BLOCKED') off.add('BLOCKED');
+  if (b === 'D') ['BRANCH','IMPLEMENT','TEST','GATE_A','E2E','GATE_B','CONSOLIDATE','CLOSE_OUT','PR','CI','QA','VERDICT','MERGE','DONE','DEBUG'].forEach(x => off.add(x));
+  return off;
+}
+
+/* Inbound edges are DERIVED, never hand-kept — a hand-maintained reverse index
+   is a second copy of the same table, with its own drift. */
+const INBOUND = {};
+Object.entries(GRAPH.EDGES).forEach(([from, list]) => list.forEach(([id, to, guard]) => {
+  (INBOUND[to] = INBOUND[to] || []).push([id, from, guard]);
+}));
+
+/* ── the snapshot slot ────────────────────────────────────────────────────────
+   `view-run` replaces the null between the markers with a state object.
+   When it is non-null this page is a self-contained snapshot: no polling, no
+   fetching, no server.
+
+   CONTRACT FOR WHOEVER WRITES HERE — this slot sits inside a script block, and
+   HTML ends that block at the first literal closing script tag anywhere inside
+   it, JS string literals and comments included. So the injected JSON must have
+   its  <  >  and  &  characters replaced by their \u003c \u003e \u0026 escapes
+   before it lands. Those are legal in a JS string and JSON.parse back to the
+   identical text, and without them a single observation containing a closing tag
+   truncates the script, stops boot() from ever running, and renders the rest of
+   the run as live markup. SKILL.md's injector does this; anything else that
+   fills this slot must too. */
+const INLINE = /*__STATE__*/null/*__END__*/;
+
+/* A small demo, so opening the template directly shows something honest rather
+   than an empty page. Strategy C with two milestones in flight — the shape a
+   single-cursor viewer could not draw at all. */
+const DEMO = {
+  run_id: 'demo-run', plan_path: 'docs/plans/demo-plan.md', spec_path: 'docs/specs/demo-design.md',
+  node: 'GATE_A', status: 'RUNNING', schema_version: 5,
+  context: { stack: 'both', has_ui: true, main_branch: 'main', unborn_main: false, host: 'github',
+             standards_handshake: null, branching: 'C', auto_open_mr: true, run_mode: 'continuous', qa_env: null },
+  milestones: [
+    { id: 1, name: 'api scaffold', branch: 'DEMO-1/api', worktree: '../.worktrees/DEMO-1', deps: [], steps: ['routes', 'tests'], pr: null, is_fix: false, touches_ui: false,
+      delivered: 'Fastify app with /health and /v1/items; Zod schemas exported from src/contracts.ts for the web shell to import.' },
+    { id: 2, name: 'web shell', branch: 'DEMO-2/web', worktree: '../.worktrees/DEMO-2', deps: [], steps: ['layout', 'specs'], pr: null, is_fix: false, touches_ui: true, delivered: null,
+      base_sha: 'a1b2c3d', spawned_at_history_len: 6, main_sha_at_spawn: '0f1e2d3', journal: 'docs/graph-runs/demo-run/journals/milestone-2.jsonl', agent_id: 'ag_demo2', gate_a_run_id: 'wf_demo',
+      progress: { at_node: 'GATE_A', headline: 'Gate A: 6 files, 4 simplifications applied, 1 re-run, clean', seen_at: null } },
+    { id: 3, name: 'checkout', branch: 'DEMO-3/checkout', worktree: '../.worktrees/DEMO-3', deps: [], steps: ['cart', 'pay'], pr: null, is_fix: false, touches_ui: true, delivered: null,
+      base_sha: 'b2c3d4e', spawned_at_history_len: 6, main_sha_at_spawn: '0f1e2d3', journal: 'docs/graph-runs/demo-run/journals/milestone-3.jsonl', agent_id: 'ag_demo3', gate_a_run_id: null,
+      progress: { at_node: 'TEST', headline: 'Unit suite red on the 1st attempt — a fixture, not the code', seen_at: null } }
+  ],
+  cursor: 2, in_flight: [2, 3],
+  integration: { branch: null, merged: [] },
+  stopped: null, attempts: { 'TEST:3': 1, 'GATE_A:2': 1 },
+  debug_return_to: null, qa: { verdict: null, qa_plan_path: null, bugs: [] },
+  skipped_gates: [{ node: 'GATE_A.step2', reason: 'code-simplifier is not installed here', at_milestone: 1 }],
+  history: [
+    { from: 'INTAKE', to: 'SPEC', guard: 'spec_path == null', milestone: null, observation: 'Demo run — no spec supplied.' },
+    { from: 'SPEC', to: 'PLAN', guard: 'spec file on disk and user approved', milestone: null, observation: 'Design approved on the first pass.' },
+    { from: 'PLAN', to: 'STRATEGY', guard: 'plan_path on disk and every milestone has its required steps and user approved', milestone: null, observation: '3 milestones, all deps empty — real parallelism to exploit.' },
+    { from: 'STRATEGY', to: 'BRANCH', guard: 'branching ∈ {A,B,C} and milestone deps acyclic', milestone: 1, observation: 'Strategy C: three worktrees, spawned together.' },
+    { from: 'BRANCH', to: 'IMPLEMENT', guard: 'branch checked out', milestone: 1, observation: 'Worktree created off main.', evidence: null, verified: 'branch descends from base_sha' },
+    { from: 'IMPLEMENT', to: 'TEST', guard: 'every step this node owns is committed — a step whose deliverable is a test belongs to TEST and is owed at 10, never here', milestone: 1, observation: 'Both steps committed; nothing left uncommitted in the worktree.', evidence: { commits: ['a1b2c3d'], run_id: null }, verified: '1 commit confirmed on DEMO-1/api' },
+    { from: 'TEST', to: 'GATE_A', guard: 'unit and integration not red — an absent suite is recorded to skipped_gates[] and never counted as passed', milestone: 1, observation: '18 unit, 4 integration, green first time.', evidence: null, verified: 're-ran the suite myself, exit 0' },
+    { from: 'GATE_A', to: 'GATE_B', guard: 'tests green and (no rerun-worthy finding or re-run budget spent) and context.has_ui == false', milestone: 1, observation: 'Gate A clean, but code-simplifier is absent here so step 2 never ran — ledgered, not passed.', evidence: { commits: [], run_id: 'wf_demo' }, verified: 'runId wf_demo in the journal, 4/4 groups' }
+  ]
+};
+
+/* The journal half of the demo — the same shape `/api/runs/:id/progress` returns, so the subagent
+   panel demonstrates itself on a page opened with no server at all. One group mid-flight, one agent
+   still running and one absent tool, because a demo where everything succeeded teaches the reader
+   nothing about how the panel shows the cases that matter. */
+const DEMO_JOURNAL = {
+  '2': { unreadable: 0, dropped: 0, error: null, lines: [
+    { seq: 9, ts: null, event: 'agent_spawn', node: 'GATE_A', agent: { n: 1, type: 'pr-review-toolkit:code-reviewer', label: 'gate A · src/cart · step 1 review', purpose: 'first pass over the cart module, write-capable so it applies its own fixes' } },
+    { seq: 10, ts: null, event: 'agent_done', node: 'GATE_A', elapsed_s: 214, agent: { n: 1, outcome: 'returned' },
+      headline: '2 findings applied in cart.ts: a missing await, and a total computed from the client payload',
+      detail: { summary: ['Applied both fixes and re-read the module afterwards.', 'The client-payload total was the real one — it let a caller name its own price.', 'Left the duplicated formatter alone; step 2 owns that.'] } },
+    { seq: 11, ts: null, event: 'agent_spawn', node: 'GATE_A', agent: { n: 2, type: 'code-simplifier:code-simplifier', label: 'gate A · src/cart · step 2 simplify', purpose: 'collapse the duplication the reviewer left behind' } },
+    { seq: 12, ts: null, event: 'agent_done', node: 'GATE_A', elapsed_s: 96, agent: { n: 2, outcome: 'returned' },
+      headline: '4 simplifications, no behaviour change; unit suite green before and after',
+      detail: { summary: ['Merged three near-identical price formatters into one.', 'Deleted a helper nothing imported since the milestone-1 refactor.'] } },
+    { seq: 13, ts: null, event: 'agent_spawn', node: 'GATE_A', agent: { n: 3, type: 'security-review', label: 'gate A · src/cart · step 3 security', purpose: 'the money path, and the session cookie it reads' } },
+    { seq: 14, ts: null, event: 'agent_done', node: 'GATE_A', elapsed_s: 0, agent: { n: 3, outcome: 'absent' },
+      headline: 'security-review is not installed here — step skipped and ledgered, not passed',
+      detail: { summary: ['Recorded in skipped_gates[]; the other three steps ran.'] } },
+    { seq: 15, ts: null, event: 'agent_spawn', node: 'GATE_A', agent: { n: 4, type: 'pr-review-toolkit:code-reviewer', label: 'gate A · src/cart · step 4 final', purpose: 'read the module again now that three agents have edited it' } }
+  ] }
+};
+
+/* ── state ─────────────────────────────────────────────────────────────────── */
+const A = {
+  runs: [], runId: '—', S: null, cfg: null, err: '', updatedAt: null, srcLabel: 'connecting…',
+  view: 'milestones', theme: 'auto', external: false, snapshot: false, demo: false, journal: {},
+  open: {}, openAgent: {}, saFilter: {}, selNode: null, selIdx: null, q: '', kind: 'all', msFilter: 'all', newest: true, copied: false
+};
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const tone = x => ({ RUNNING: 'flow', BLOCKED: 'stop', HANDOFF: 'hand', DONE: 'ok', PASS: 'ok', 'PASS-WITH-ISSUES': 'guard', BLOCK: 'stop' }[x] || null);
+/* Where a panel's numbers come from. `tip` is plain text; newlines survive via white-space:pre-line. */
+const info = (tip, cls = '') => `<i class="info ${cls}" tabindex="0" role="note"
+  aria-label="${esc(tip)}" data-tip="${esc(tip)}">i</i>`;
+const rel = iso => {
+  if (!iso) return '';
+  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.round(s / 60) + 'm ago';
+  if (s < 86400) return Math.round(s / 3600) + 'h ago';
+  return Math.round(s / 86400) + 'd ago';
+};
+
+/* ── the data seam — four sources, one shape ─────────────────────────────────
+   The server already serves exactly these shapes:
+     GET /api/runs           -> [{runId,node,status,updatedAt,unreadable,error}]
+     GET /api/runs/:id/state -> the state JSON
+     GET /api/config         -> {pollMs,projectDir,runsDir,host,envFile} */
+const api = {
+  async listRuns() { const r = await fetch('/api/runs', { cache: 'no-store' }); return r.ok ? r.json() : []; },
+  /* The milestone journals. This is the ONLY true liveness signal: `milestones[].progress.seen_at` in the state file
+     advances at node boundaries only, because the orchestrator's monitor filters heartbeats out of
+     its notification stream on purpose. A GATE_A that legitimately takes 7 minutes would look dead
+     for 4 of them if the card trusted seen_at alone. */
+  async getProgress(id, tail) {
+    const r = await fetch('/api/runs/' + encodeURIComponent(id) + '/progress?tail=' + (tail || 3), { cache: 'no-store' });
+    return r.ok ? r.json() : {};
+  },
+  async getState(id) {
+    const r = await fetch('/api/runs/' + encodeURIComponent(id) + '/state', { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+    return JSON.parse(await r.text());   // parse here, so a corrupt file reads as unreadable rather than as {}
+  },
+  async getConfig() { const r = await fetch('/api/config'); return r.ok ? r.json() : { pollMs: 1000 }; }
+};
+
+async function boot() {
+  setTheme(localStorage.getItem('rv.theme') || 'auto');
+  wire();
+  if (INLINE) {                                    /* 1. snapshot */
+    A.S = INLINE; A.snapshot = true; A.runId = INLINE.run_id || 'snapshot';
+    A.srcLabel = 'snapshot — self-contained';
+    A.runs = [{ runId: A.runId, node: INLINE.node, status: INLINE.status, updatedAt: null }];
+    return render();
+  }
+  const url = new URLSearchParams(location.search).get('state');
+  if (url) {                                       /* 2. ?state=<url> */
+    A.srcLabel = url;
+    await pollUrl(url);
+    const ms = await pollMs();
+    setInterval(() => pollUrl(url), ms);
+    return;
+  }
+  let served = false;
+  try {                                            /* 3. the server's run list */
+    const cfg = await api.getConfig();
+    /* Config answered, so there IS a server. From here a failure is the server's, not its absence,
+       and the demo is the wrong answer to it: a made-up run rendered under a real server's URL reads
+       as that server's data. Separated from listRuns() for exactly that reason. */
+    served = true;
+    const runs = await api.listRuns();
+    if (Array.isArray(runs) && runs.length) {
+      A.cfg = cfg; A.runs = runs;
+      await select((runs.find(r => !r.unreadable) || runs[0]).runId);
+      setInterval(poll, Math.max(250, (cfg && cfg.pollMs) || 1000));
+      return;
+    }
+    /* A server with genuinely zero runs IS the pre-first-run state, and the demo is an honest answer
+       to it — it says "demo — no run supplied" on its face. That case falls through on purpose. */
+  } catch (e) {
+    if (served) {                                  /* the server is up and cannot list its runs */
+      A.S = null; A.err = String(e.message || e); A.srcLabel = '/api/runs';
+      return render();
+    }
+    /* no server at all — fall through to the demo */
+  }
+  A.S = DEMO; A.demo = true; A.runId = DEMO.run_id; A.srcLabel = 'demo — no run supplied';
+  A.journal = DEMO_JOURNAL;
+  A.runs = [{ runId: DEMO.run_id, node: DEMO.node, status: DEMO.status, updatedAt: new Date().toISOString() }];
+  render();
+}
+const pollMs = async () => { try { return Math.max(250, (await api.getConfig()).pollMs || 1000); } catch (e) { return 1000; } };
+
+async function pollUrl(url) {
+  /* A dropped file wins over the polled URL, exactly as it does in `poll()`. Without this the two
+     sources fought: the drop rendered, the next tick overwrote it with the ?state= run while the
+     source label still named the dropped file, and it flipped back every second forever. */
+  if (A.external) return;
+  try {
+    const r = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+    const s = JSON.parse(await r.text());
+    A.S = s; A.err = ''; A.runId = s.run_id || url; A.updatedAt = new Date().toISOString();
+    A.runs = [{ runId: A.runId, node: s.node, status: s.status, updatedAt: A.updatedAt }];
+    /* The live URL the orchestrator hands out is this mode, so it is the mode most people watch a
+       run in. It used to fetch no journals at all — which meant the one view built for watching was
+       the one view with no subagents and no heartbeat liveness in it. */
+    const jid = runIdFromStateUrl(url) || s.run_id;
+    if (jid) await refreshJournals(jid);
+  } catch (e) {
+    /* Drop the stale state, the way `select()` and `poll()` both do. Keeping it showed the last good
+       run with no banner while the file was unreadable — and because `updatedAt` then stopped
+       advancing, the page went on to accuse the run of stalling. Mid-write is the COMMON case here;
+       an unreadable file is a fact to show, never a reason to keep asserting the previous one. */
+    A.S = null; A.err = String(e.message || e);
+  }
+  render();
+}
+
+async function select(id) {
+  const meta = A.runs.find(r => r.runId === id);
+  Object.assign(A, { runId: id, selIdx: null, selNode: null, open: {}, q: '', kind: 'all', msFilter: 'all' });
+  A.srcLabel = '/api/runs/' + id + '/state';
+  try { A.S = await api.getState(id); A.err = ''; }
+  catch (e) { A.S = null; A.err = String(e.message || e); }
+  A.updatedAt = meta ? meta.updatedAt : new Date().toISOString();
+  render();
+}
+
+async function poll() {
+  if (A.external) return;
+  try { A.runs = await api.listRuns(); } catch (e) { /* keep the last list */ }
+  const meta = A.runs.find(r => r.runId === A.runId);
+  try { A.S = await api.getState(A.runId); A.err = ''; }
+  catch (e) { A.S = null; A.err = String(e.message || e); }
+  if (meta) A.updatedAt = meta.updatedAt;
+  await refreshJournals(A.runId);
+  render();
+}
+
+/* Heartbeat-sourced liveness AND the subagent fan-out, both from the same journals. Best-effort: no
+   server, no journals, or an older server without the route all leave it empty, and the card falls
+   back to node-boundary timing and says which one it is using.
+
+   The tail is small until a milestone card is OPEN, and large once one is. Liveness needs the last
+   line; the subagent list needs all of them, and a Gate A that spawns forty agents writes eighty
+   lines for that node alone. Polling 2000 lines a second to render a timestamp would be a cost
+   nobody asked for, so it is paid only while someone is looking. */
+async function refreshJournals(id, force) {
+  const anyOpen = Object.values(A.open || {}).some(Boolean);
+  /* Gate A can spawn dozens of agents, which is two journal lines each on top of every node and
+     heartbeat line — a milestone that ran a wide fan-out is thousands of lines, refetched whole on
+     every tick. The state file is what has to be current every second; the fan-out is not, so the
+     big fetch runs at most every 4th tick (~4s). A click always forces it. */
+  A._jTick = (A._jTick || 0) + 1;
+  if (anyOpen && !force && A._jTick % 4 !== 1) return;
+  try {
+    const j = await api.getProgress(id, anyOpen ? 2000 : 3);
+    A.journal = j || {};
+    A.progressLive = {};
+    for (const [mid, entry] of Object.entries(A.journal)) {
+      const last = (entry.lines || []).filter(l => l && l.ts).pop();
+      if (last) A.progressLive[mid] = last.ts;
+    }
+  } catch (e) { /* the journals are optional — never a reason to stop rendering the run */ }
+}
+/* `?state=…` mode has no run id of its own, but the URL the orchestrator prints contains one. Only
+   the server's own shape is accepted; anything else yields null and the panel says so. */
+const runIdFromStateUrl = u => (String(u).match(/\/api\/runs\/([A-Za-z0-9._-]+)\/state(?:$|[?#])/) || [])[1] || null;
+
+function loadFile(f) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const s = JSON.parse(rd.result);
+      Object.assign(A, { S: s, err: '', external: true, srcLabel: f.name, runId: s.run_id || f.name,
+                         updatedAt: new Date().toISOString(), selIdx: null, selNode: null });
+      A.runs = [{ runId: A.runId, node: s.node, status: s.status, updatedAt: A.updatedAt }];
+    } catch (e) {
+      Object.assign(A, { S: null, err: f.name + ' — parse error: ' + e.message, external: true, srcLabel: f.name });
+    }
+    render();
+  };
+  rd.readAsText(f);
+}
+
+function setTheme(t) {
+  const el = document.documentElement;
+  if (t === 'auto') el.removeAttribute('data-theme'); else el.setAttribute('data-theme', t);
+  try { localStorage.setItem('rv.theme', t); } catch (e) { /* private mode */ }
+  A.theme = t;
+  if (A.S || A.err) render(); else paintThemes();
+}
+
+function wire() {
+  $('pick').onclick = () => $('file').click();
+  $('file').onchange = e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); };
+  addEventListener('dragover', e => { e.preventDefault(); $('drop').classList.add('on'); });
+  addEventListener('dragleave', e => { if (e.relatedTarget === null) $('drop').classList.remove('on'); });
+  addEventListener('drop', e => {
+    e.preventDefault(); $('drop').classList.remove('on');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f);
+  });
+  addEventListener('keydown', hotkey);
+  setInterval(() => { if (A.S) paintAge(); }, 1000);
+}
+
+const VIEWS = ['milestones', 'graph', 'trace', 'ledger', 'qa', 'facts'];
+function hotkey(e) {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target && e.target.tagName) || '')) return;
+  if (e.key >= '1' && e.key <= '6') { A.view = VIEWS[+e.key - 1]; return render(); }
+  if (e.key === 't' || e.key === 'T') return setTheme(A.theme === 'auto' ? 'light' : A.theme === 'light' ? 'dark' : 'auto');
+  if (e.key === 'Escape') { A.selIdx = null; A.selNode = null; return render(); }
+  const H = (A.S && A.S.history) || []; if (!H.length) return;
+  const cur = A.selIdx == null ? H.length : A.selIdx;
+  if (e.key === '[') { e.preventDefault(); A.selIdx = Math.max(1, cur - 1); render(); }
+  if (e.key === ']') { e.preventDefault(); const n = Math.min(H.length, cur + 1); A.selIdx = n === H.length ? null : n; render(); }
+}
+
+/* ── derive everything the views need, from one state object ───────────────── */
+function derive() {
+  const s = A.S || {}, c = s.context || {}, H = s.history || [];
+  const upTo = A.selIdx == null ? H.length : A.selIdx;
+  const travel = A.selIdx != null && A.selIdx !== H.length;
+
+  /* Parallel inflight. Under strategy C several milestones are open at once, and a run is only as
+     far along as its LEAST advanced agent — so that is what the board highlights.
+
+     `in_flight` is the run's single statement about what is running, and `progress.at_node` is
+     where each of those agents CLAIMS to be. Both are read straight; there is no derivation and no
+     fallback chain. There used to be one — it reconstructed the in-flight set from a
+     `milestones[].node` field, excluding two sentinel values and special-casing GATE_B — and that
+     field was written by ten nodes, read by nothing else, and once held the invented value
+     `GATE_B_PASSED`. It is gone from the schema, and this is what it was standing in for. */
+  let inflight = Array.isArray(s.in_flight) ? s.in_flight.slice() : [];
+  const msOf = id => (s.milestones || []).find(m => m.id === id) || {};
+  const rank = n => (GRAPH.RANK[n] != null ? GRAPH.RANK[n] : 99);
+  const inflightNodes = inflight.map(id => (msOf(id).progress || {}).at_node).filter(Boolean);
+  let cur = s.node;
+  if (inflight.length > 1 && inflightNodes.length) cur = inflightNodes.slice().sort((a, b) => rank(a) - rank(b))[0];
+  if (travel) cur = (H[upTo - 1] || {}).to || s.node;
+
+  const inflightAt = {};
+  if (inflight.length > 1 && !travel) inflight.forEach(id => { const n = msOf(id).node; if (n) (inflightAt[n] = inflightAt[n] || []).push(id); });
+
+  const visited = new Set(); H.slice(0, upTo).forEach(e => { visited.add(e.from); visited.add(e.to); });
+  const outs = (GRAPH.EDGES[cur] || []).map(([id, to, guard]) => ({ id, to, guard, ok: APPLIES[id] ? !!APPLIES[id](s) : true }));
+  const ledger = s.skipped_gates || [];
+  const attempts = Object.entries(s.attempts || {});
+  const atBudget = attempts.filter(([k, v]) => { const b = GRAPH.BOUNDS[k.split(':')[0]]; return typeof b === 'number' && v >= b; });
+  const stallSecs = A.updatedAt ? Math.round((Date.now() - new Date(A.updatedAt).getTime()) / 1000) : 0;
+  return { s, c, H, upTo, travel, inflight, msOf, cur, inflightAt, visited, outs, ledger, attempts, atBudget,
+           stallSecs, multi: inflight.length > 1 };
+}
+
+/* ── render ────────────────────────────────────────────────────────────────── */
+function render() {
+  const d = derive();
+  paintThemes(); paintRuns(); paintNav(d); paintHead(d); paintBanners(d);
+  paintKpis(d); paintView(d); paintSide(d);
+  $('cfgline').innerHTML = (A.cfg && A.cfg.envFile ? 'config · ' + esc(A.cfg.envFile) : 'defaults — no env file')
+    + '<br>' + (A.snapshot ? 'snapshot — does not poll'
+                           : 'polls every ' + (((A.cfg && A.cfg.pollMs) || 1000) / 1000) + 's — forever, including after DONE');
+}
+
+function paintThemes() {
+  $('themes').innerHTML = ['auto', 'light', 'dark'].map(t =>
+    `<button data-t="${t}" class="${A.theme === t ? 'on' : ''}">${t}</button>`).join('');
+  [...$('themes').children].forEach(b => b.onclick = () => setTheme(b.dataset.t));
+}
+
+function paintRuns() {
+  $('runs-wrap').classList.toggle('hide', !A.runs.length);
+  $('runs').innerHTML = A.runs.map(r => {
+    const t = r.unreadable ? 'stop' : tone(r.status);
+    return `<button data-id="${esc(r.runId)}" class="${r.runId === A.runId ? 'on' : ''}"
+      title="${esc(r.unreadable ? (r.error || 'unreadable') : (r.status || '') + ' at ' + nboth(r.node))}">
+      <i class="dot" style="background:var(--${t || 'fg-3'})"></i>
+      <span style="min-width:0"><span style="display:block;font-family:var(--mono);font-size:11px;overflow:hidden;
+        text-overflow:ellipsis">${esc(r.runId)}</span>
+      <span class="sub" style="color:var(--${t || 'fg-3'})">${esc(r.unreadable ? 'unreadable' : nlabel(r.node))}</span></span>
+      <span class="age">${esc(rel(r.updatedAt))}</span></button>`;
+  }).join('');
+  [...$('runs').children].forEach(b => b.onclick = () => { if (!A.snapshot && !A.external) select(b.dataset.id); });
+}
+
+function paintNav(d) {
+  const defs = [['milestones', 'milestones', (d.s.milestones || []).length], ['graph', 'graph', null],
+                ['trace', 'trace', d.H.length], ['ledger', 'ledger', d.ledger.length],
+                ['qa', 'qa &amp; env', ((d.s.qa || {}).bugs || []).length], ['facts', 'run facts', null]];
+  $('nav').innerHTML = defs.map(([id, label, n], i) => {
+    const warn = id === 'ledger' && n > 0;
+    return `<button data-v="${id}" class="${A.view === id ? 'on' : ''}"><i class="mark"></i>${label}
+      ${n != null ? `<span class="count ${warn ? 'warn' : ''}">${n}</span>`
+                  : '<span class="count" style="background:none"></span>'}
+      <span class="hk">${i + 1}</span></button>`;
+  }).join('');
+  [...$('nav').children].forEach(b => b.onclick = () => { A.view = b.dataset.v; render(); });
+}
+
+function paintHead(d) {
+  const has = !!A.S, t = has ? (tone(d.s.status) || 'fg-3') : 'stop';
+  $('run-id').textContent = A.runId;
+  const st = $('status');
+  st.children[0].style.background = `var(--${t})`;
+  st.children[0].style.animation = d.s.status === 'RUNNING' ? 'rvpulse 2s infinite' : 'none';
+  st.children[1].textContent = has ? (d.s.status || '?') : 'UNREADABLE';
+  st.children[1].style.color = `var(--${t})`;
+  $('brand-dot').className = d.s.status === 'RUNNING' ? 'live' : '';
+  $('src').textContent = A.srcLabel;
+  paintAge();
+}
+function paintAge() {
+  $('age').textContent = A.updatedAt ? 'state file ' + rel(A.updatedAt)
+                                     : (A.snapshot ? 'a moment, not a feed' : 'no source');
+}
+
+function paintBanners(d) {
+  const out = [];
+  if (!A.S && A.err)
+    out.push(banner('stop', 'unreadable',
+      esc(A.err) + ' — the run is listed rather than hidden, because a file you cannot read is itself a fact about the run.'));
+  /* `stopped` answers one question — why is this run not moving — with a `kind` that says which
+     sort. It was two nullable objects, `paused` and `blocked`, which forced a rule about which one
+     wins when a stop is ALSO a halt (VERDICT's escalation on the spent 2nd reopen). */
+  const st = A.S ? d.s.stopped : null;
+  if (st && st.kind === 'blocked')
+    out.push(banner('stop', 'blocked at ' + esc(nlabel(st.at_node)),
+      'guards tested — ' + esc((st.guards_tested || []).join(' · ') || '—') +
+      '<br>tried — ' + esc((st.tried || []).join(' · ') || '—')));
+  else if (st)
+    out.push(banner('hand', (st.kind === 'handoff' ? 'handed off at ' : 'paused at ') + esc(nlabel(st.at_node || d.cur)),
+      esc(st.reason || '') + ' — a declared wait, which is what makes it distinguishable from a stall.'));
+  if (A.S && !A.snapshot && !A.external && d.s.status === 'RUNNING' && !d.s.stopped && d.stallSecs > 120)
+    out.push(banner('guard', 'possible stall',
+      `status RUNNING, <code>paused: null</code>, and no state change for ${d.stallSecs}s — the signature of an invented stop. If the run paused on purpose, the orchestrator should have written <code>paused</code>.`));
+  $('banners').innerHTML = out.join('');
+}
+const banner = (kind, label, html) => `<div class="banner ${kind}"><b>${label}</b><span>${html}</span></div>`;
+
+function paintKpis(d) {
+  if (A.view === 'graph') { $('kpis').classList.add('hide'); return; }
+  $('kpis').classList.remove('hide');
+  const qa = d.s.qa || {}, ms = d.s.milestones || [];
+  const done = ms.filter(m => m.delivered).length;
+  const K = [
+    ['milestones', done + '/' + ms.length, 'through their last gate', null, 'milestones'],
+    ['transitions', String(d.H.length), 'append-only, replayable', null, 'trace'],
+    ['gates skipped', String(d.ledger.length), d.ledger.length ? 'never counted as passed' : 'every gate ran',
+     d.ledger.length ? 'guard' : 'ok', 'ledger'],
+    ['qa verdict', qa.verdict || 'not yet',
+     (qa.bugs || []).length ? (qa.bugs || []).length + ' finding' + ((qa.bugs || []).length > 1 ? 's' : '') : 'no findings',
+     tone(qa.verdict), 'qa'],
+    ['at budget', String(d.atBudget.length),
+     d.atBudget.length ? d.atBudget.map(([k]) => klabel(k)).join(' · ') : 'no loop is at its bound',
+     d.atBudget.length ? 'stop' : null, 'facts']
+  ];
+  $('kpis').innerHTML = K.map(([label, v, note, tn, view]) =>
+    `<button class="kpi" data-v="${view}"><span class="micro" style="margin:0">${label}</span>
+     <span class="v ${String(v).length > 9 ? 'long' : ''}" style="color:var(--${tn || 'fg'})">${esc(v)}</span>
+     <span class="n">${esc(note)}</span></button>`).join('');
+  [...$('kpis').children].forEach(b => b.onclick = () => { A.view = b.dataset.v; render(); });
+}
+
+function paintView(d) {
+  const V = $('view');
+  if (A.view === 'milestones') { V.innerHTML = viewMilestones(d); return bindMilestones(); }
+  if (A.view === 'graph') { V.innerHTML = viewGraph(d); return bindGraph(); }
+  if (A.view === 'trace') { V.innerHTML = viewTrace(d); return bindTrace(); }
+  if (A.view === 'ledger') { V.innerHTML = viewLedger(d); return; }
+  if (A.view === 'qa') { V.innerHTML = viewQa(d); return bindQa(d); }
+  V.innerHTML = viewFacts(d);
+}
+
+function attemptRow(k, v) {
+  const b = GRAPH.BOUNDS[k.split(':')[0]], num = typeof b === 'number' ? b : null;
+  /* `v` comes from the state file's `attempts` map, and everything in there is run data — it reached
+     innerHTML raw, so a non-numeric value was markup. It also made `pct` NaN and printed
+     `width:NaN%`. A counter that is not a number is not a counter: say so instead of drawing it. */
+  const n = typeof v === 'number' && isFinite(v) ? v : null;
+  const pct = (num && n !== null) ? Math.min(100, (n / num) * 100) : 24;
+  const t = (num && n !== null) ? (n >= num ? 'stop' : n >= num - 1 ? 'guard' : 'flow') : 'fg-3';
+  return `<div class="row" style="gap:9px;margin:7px 0"><span style="font-family:var(--mono);font-size:10.5px;
+    flex:0 0 150px;overflow:hidden;text-overflow:ellipsis" title="${esc(k)}">${esc(klabel(k))}</span>
+    <span class="bar"><i style="width:${pct}%;background:var(--${t})"></i></span>
+    <span style="font-family:var(--mono);font-size:10.5px;width:42px;text-align:right;
+      color:var(--${num && n !== null && n >= num ? 'stop' : 'fg-3'})">${esc(v)}${num ? '/' + num : (b ? '/' + esc(b) : '')}</span></div>`;
+}
+
+/* ── the subagent fan-out ────────────────────────────────────────────────────
+   Source: this milestone's journal — `agent_spawn` when the milestone agent launches a subagent,
+   `agent_done` when it returns (workflow-dispatch.md § Every subagent you spawn gets two lines).
+
+   Pairs the two events by the writer's own spawn ordinal `n`, NOT by arrival: groups run
+   concurrently, so returns interleave, and the launch order is the only one that describes the
+   shape of the fan-out. An `n` the journal omitted falls back to first-seen order — a worse answer
+   than the writer's, and a much better one than dropping the agent off the list. */
+function agentsOf(mid) {
+  const entry = (A.journal || {})[String(mid)];
+  if (!entry) return null;
+  const byKey = new Map();
+  let seen = 0;
+  for (const l of entry.lines || []) {
+    if (!l || (l.event !== 'agent_spawn' && l.event !== 'agent_done')) continue;
+    const a = l.agent || {};
+    const key = a.n != null ? 'n' + a.n : 'seq' + l.seq;
+    let it = byKey.get(key);
+    if (!it) byKey.set(key, it = { n: a.n != null ? a.n : null, ord: ++seen, node: l.node || null,
+      label: '', type: '', purpose: '', status: 'running', headline: '', summary: [], secs: null });
+    if (l.node) it.node = l.node;
+    it.label = a.label || it.label;
+    it.type = a.type || it.type;
+    it.purpose = a.purpose || it.purpose;
+    if (l.event === 'agent_done') {
+      /* An outcome this page has never heard of is NOT quietly rendered as success. Same rule the
+         run list already follows for an unknown `status`: show the word, in the tone that says
+         "unclassified", rather than picking the cheerful branch by default. */
+      it.status = ['returned', 'died', 'absent'].includes(a.outcome) ? a.outcome : 'other';
+      it.outcome = a.outcome || 'unstated';
+      it.headline = l.headline || it.headline;
+      if (l.elapsed_s != null) it.secs = l.elapsed_s;
+      const sum = (l.detail || {}).summary;
+      it.summary = Array.isArray(sum) ? sum : (sum ? [sum] : []);
+    } else if (!it.headline) {
+      it.headline = l.headline || '';
+    }
+  }
+  const list = [...byKey.values()].sort((x, y) =>
+    (x.n == null ? Infinity : x.n) - (y.n == null ? Infinity : y.n) || x.ord - y.ord);
+  return { list, dropped: entry.dropped || 0, unreadable: entry.unreadable || 0, error: entry.error || null };
+}
+
+const dur = s => s == null ? '' : s < 60 ? s + 's' : Math.floor(s / 60) + 'm' + (s % 60 ? ' ' + (s % 60) + 's' : '');
+
+function viewAgents(m) {
+  const tip = 'From this milestone\'s journal — journals/milestone-' + m.id + '.jsonl.\n\n'
+    + 'One line when the milestone agent spawns a subagent, one when it returns. This is what the '
+    + 'agent SAID while it ran: telemetry, never evidence. history[] records transitions, and no '
+    + 'subagent ever appears there.\n\n'
+    + 'A dot still pulsing is an agent that has not reported back — running, or gone without saying so.';
+  const head = t => `<p class="micro">subagents ${info(tip)}</p><p style="font-size:12px;color:var(--fg-3);margin:6px 0 0">${t}</p>`;
+  const r = agentsOf(m.id);
+  if (!r) return head(A.snapshot
+    ? 'A snapshot inlines the state file only — the journals stay in the run directory, so the fan-out is not travelling with this page.'
+    : 'No journal for this milestone yet. It appears once its agent is spawned and starts writing.');
+  if (r.error) return head('Journal unreadable: ' + esc(r.error));
+  if (!r.list.length) return head(A.demo ? 'This demo milestone spawned nothing.'
+    : 'The journal is being written, but it carries no agent_spawn lines yet — either nothing has been '
+      + 'spawned, or the agent is an older one that did not journal its fan-out.');
+
+  const n = { running: 0, returned: 0, died: 0, absent: 0, other: 0 };
+  r.list.forEach(a => n[a.status]++);
+  const attention = n.died + n.absent + n.other;
+  const f = A.saFilter[m.id] || 'all';
+  const shown = r.list.filter(a => f === 'all' || (f === 'running' ? a.status === 'running' : a.status !== 'running' && a.status !== 'returned'));
+  const chip = (id, label, on) => `<button class="chip ${f === id ? 'on' : ''}" data-safilter="${esc(m.id)}:${id}">${esc(label)}</button>`;
+  const allOpen = shown.every(a => A.openAgent[m.id + ':' + (a.n == null ? 'o' + a.ord : a.n)]);
+
+  let out = `<p class="micro">subagents ${info(tip)}</p>
+    <div class="sa-head">
+      <span style="font-size:12px;color:var(--fg-2)"><b>${r.list.length}</b> spawned${
+        n.returned ? ' · <span style="color:var(--ok)">' + n.returned + ' returned</span>' : ''}${
+        n.running ? ' · <span style="color:var(--flow)">' + n.running + ' still out</span>' : ''}${
+        attention ? ' · <span style="color:var(--stop)">' + attention + ' died or absent</span>' : ''}</span>
+      <span style="flex:1"></span>
+      ${chip('all', 'all')}${n.running ? chip('running', 'running') : ''}${attention ? chip('attention', 'attention') : ''}
+      <button class="chip" data-saall="${esc(m.id)}:${allOpen ? 'close' : 'open'}">${allOpen ? 'collapse' : 'expand'} all</button>
+    </div>
+    ${r.dropped ? `<p style="font-size:11.5px;color:var(--guard);margin:0 0 6px">The journal was longer than
+      this page asked for — <b>${r.dropped}</b> earlier line${r.dropped === 1 ? '' : 's'} not fetched, so the
+      list starts partway in.</p>` : ''}`;
+
+  let node = null, open = false;
+  for (const a of shown) {
+    if (a.node !== node) {
+      if (open) out += '</ul>';
+      node = a.node; open = true;
+      out += `<div class="sa-node" style="margin:10px 0 4px">${esc(node ? nlabel(node) : 'no node recorded')}</div><ul class="sa-list">`;
+    }
+    const key = m.id + ':' + (a.n == null ? 'o' + a.ord : a.n);
+    const isOpen = !!A.openAgent[key];
+    const badge = a.status === 'running' ? 'running'
+      : a.status === 'returned' ? dur(a.secs) || 'returned'
+      : a.status === 'other' ? esc(a.outcome) : a.status;
+    const col = { running: 'flow', returned: 'ok', died: 'stop', absent: 'guard', other: 'stop' }[a.status];
+    out += `<li class="sa-item ${a.status} ${isOpen ? 'on' : ''}"><i class="dot"></i>
+      <button class="sa-btn" data-agent="${esc(key)}" aria-expanded="${isOpen}">
+        <span class="sa-n">${a.n == null ? '·' : esc(a.n)}</span>
+        <span class="sa-l"><b>${esc(a.label || a.type || 'unlabelled agent')}</b>
+          ${a.headline ? `<span class="sa-h">${esc(a.headline)}</span>` : ''}</span>
+        <span class="pill" style="color:var(--${col});background:var(--${col}-dim)">${esc(badge)}</span>
+      </button>
+      ${isOpen ? `<ul class="sa-sum">
+        <li class="sa-t" style="margin-bottom:5px">${esc(a.type || 'agent type not recorded')}</li>
+        ${a.purpose ? `<li class="why">spawned to: ${esc(a.purpose)}</li>` : ''}
+        ${a.summary.length ? a.summary.map(s => `<li>${esc(s)}</li>`).join('')
+          : `<li class="why">${a.status === 'running'
+              ? 'Still out — nothing reported back yet.'
+              : 'Returned without a summary; the journal line carried no detail.summary.'}</li>`}
+      </ul>` : ''}</li>`;
+  }
+  return out + (open ? '</ul>' : '');
+}
+
+function viewMilestones(d) {
+  const ms = d.s.milestones || [];
+  if (!ms.length) return `<div class="card"><p class="micro" style="margin:0">milestones</p>
+    <p style="color:var(--fg-3);margin:10px 0 0">No milestones yet — the plan has not been written, or this run never reached <code>PLAN</code>.</p></div>`;
+  return ms.map(m => {
+    const active = d.inflight.includes(m.id);
+    const isDone = !!m.delivered && !active;
+    const t = isDone ? 'ok' : active ? 'guard' : null;
+    const at = d.attempts.filter(([k]) => k.split(':')[1] === String(m.id));
+    const skipped = d.ledger.filter(g => g.at_milestone === m.id);
+    const open = !!A.open[m.id];
+    /* An agent in flight has said something more recent than anything in history[] — that is the
+       whole point of the journal. `at_node` is where it CLAIMS to be, so it is shown as the
+       agent's word; the pill beside it reads the run's RECORDED position, which is the last
+       history[] entry for this milestone. Provisional and recorded, never mixed. */
+    const prog = m.progress || null;
+    /* Liveness, and every part of this is a defect a reviewer found in the first version:
+       - Prefer the JOURNAL's last timestamp (any event, heartbeats included). `seen_at` only moves at
+         node boundaries, because the orchestrator's monitor filters heartbeats out — so judging a
+         7-minute GATE_A against a 2-heartbeat window painted healthy milestones dead for most of their life.
+       - Only judge liveness at all in LIVE mode. `Date.now()` in a snapshot is the VIEWING time, so a
+         shared snapshot reported every milestone agent dead three minutes after capture. Same guards the stall
+         banner already uses, `paused` included: a declared wait is not a stall.
+       - An absent or unparseable `seen_at` is UNKNOWN, not fresh. `NaN > threshold` is false, so the
+         one input that most suggests a milestone agent died mid-write rendered as the healthiest thing on screen. */
+    const liveAt = prog ? ((A.progressLive || {})[String(m.id)] || prog.seen_at) : null;
+    const beats = prog ? !!(A.progressLive || {})[String(m.id)] : false;
+    const judge = !!prog && !A.snapshot && !A.external && d.s.status === 'RUNNING' && !d.s.stopped;
+    const ms = liveAt ? Date.parse(liveAt) : NaN;
+    const age = isFinite(ms) ? (Date.now() - ms) / 1000 : null;
+    // 3 min against real heartbeats (90s cadence); 20 min when all we have is node boundaries.
+    const stale = judge && age != null && age > (beats ? 180 : 1200);
+    const unknown = judge && age == null;
+    return `<div class="ms ${active ? 'on' : ''}">
+      <div class="row">
+        <span class="id" style="color:var(--${t || 'fg-3'});background:var(--${t ? t + '-dim' : 'panel-2'})">${esc(m.id)}</span>
+        <span style="flex:1;min-width:0"><b>${esc(m.name)}</b>
+          <span style="display:block;font-size:11.5px;color:var(--fg-3)">${esc(m.branch || 'no branch')}${m.worktree ? ' · ' + esc(m.worktree) : ''}${m.is_fix ? ' · FIX' : ''}</span>
+          ${prog ? `<span style="display:block;font-size:11.5px;margin-top:3px;
+            color:var(--${stale || unknown ? 'stop' : 'guard'})">▸ ${esc(prog.at_node ? nlabel(prog.at_node) : 'spawned, nothing reported yet')}${
+              stale ? ' · silent ' + esc(rel(liveAt)) + (beats ? '' : ' (last node boundary)')
+                    : unknown ? ' · no timestamp — cannot tell live from dead' : ''}
+            <span style="color:var(--fg-2)">${esc(prog.headline || '')}</span></span>` : ''}
+          ${m.delivered ? `<span style="display:block;font-size:11.5px;margin-top:3px;color:var(--fg-2)">
+            <span style="color:var(--ok)">✓ delivered</span> ${esc(m.delivered)}</span>` : ''}</span>
+        <span class="pill" style="color:var(--${t || 'fg-3'});background:var(--${t ? t + '-dim' : 'panel-2'})">${
+          esc(m.delivered ? 'delivered' : nlabel((d.H.filter(e => e.milestone === m.id).slice(-1)[0] || {}).to)
+            || (prog || (d.inflight || []).includes(m.id) ? 'in flight' : 'not started'))}</span>
+        <button class="chip" data-toggle="${esc(m.id)}">${open ? 'less' : 'detail'}</button>
+        <button class="chip" data-filter="${esc(m.id)}">trace</button>
+      </div>
+      <div class="${open ? '' : 'hide'}">
+        <div class="row" style="gap:14px;margin-top:10px;font-size:11.5px;color:var(--fg-3)">
+          <span>deps ${esc((m.deps || []).length ? m.deps.join(', ') : 'none')}</span>
+          <span>${esc(m.pr ? 'PR #' + m.pr : 'no pr')}</span>
+          <span>${m.touches_ui ? 'touches ui' : 'no ui'}</span>
+          <span>${d.H.filter(e => e.milestone === m.id).length} transitions</span>
+        </div>
+        <ol class="steps">${(m.steps || []).map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+        ${viewAgents(m)}
+        ${at.length ? `<p class="micro">retry budgets</p>${at.map(([k, v]) => attemptRow(k, v)).join('')}` : ''}
+        ${skipped.length ? `<p class="micro">skipped here</p>${skipped.map(g =>
+          `<p style="font-size:12px;margin:4px 0"><span class="pill" style="color:var(--guard);background:var(--guard-dim)" title="${esc(g.node)}">${esc(nlabel(g.node))}</span> ${esc(g.reason)}</p>`).join('')}` : ''}
+      </div></div>`;
+  }).join('');
+}
+function bindMilestones() {
+  document.querySelectorAll('[data-toggle]').forEach(b => b.onclick = async () => {
+    const id = b.dataset.toggle; A.open[id] = !A.open[id]; render();
+    /* Opening a card raises the journal tail from 3 lines to all of them. Waiting for the next poll
+       to notice would show an empty fan-out for up to a second on the one click that asked for it. */
+    if (A.open[id] && !A.demo && !A.snapshot && !A.external) {
+      const jid = runIdFromStateUrl(A.srcLabel) || A.runId;
+      if (jid) { await refreshJournals(jid, true); render(); }
+    }
+  });
+  document.querySelectorAll('[data-agent]').forEach(b => b.onclick = () => {
+    const k = b.dataset.agent; A.openAgent[k] = !A.openAgent[k]; render();
+  });
+  document.querySelectorAll('[data-safilter]').forEach(b => b.onclick = () => {
+    const [mid, f] = b.dataset.safilter.split(':'); A.saFilter[mid] = f; render();
+  });
+  document.querySelectorAll('[data-saall]').forEach(b => b.onclick = () => {
+    const [mid, what] = b.dataset.saall.split(':');
+    const r = agentsOf(mid) || { list: [] };
+    r.list.forEach(a => { A.openAgent[mid + ':' + (a.n == null ? 'o' + a.ord : a.n)] = what === 'open'; });
+    render();
+  });
+  document.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => {
+    Object.assign(A, { view: 'trace', msFilter: b.dataset.filter, kind: 'all', q: '' }); render();
+  });
+}
+
+/* The board is pure arithmetic over GRAPH.POS — no layout reads, no resize
+   listener. A snapshot printed to PDF, or opened in a background tab, draws
+   correctly; a getBoundingClientRect-based board does not guarantee that. */
+function edgePath(a, b) {
+  const G = GRAPH.GEO, NW = G.NW, NH = G.NH;
+  const P = { cx: a.x + NW / 2, cy: a.y + NH / 2, t: a.y, b: a.y + NH, l: a.x, r: a.x + NW };
+  const Q = { cx: b.x + NW / 2, cy: b.y + NH / 2, t: b.y, b: b.y + NH, l: b.x, r: b.x + NW };
+  if (a.x === b.x && a.y === b.y)
+    return { d: `M${P.cx - 20},${P.t} C${P.cx - 26},${P.t - 30} ${P.cx + 26},${P.t - 30} ${P.cx + 20},${P.t}`,
+             ex: P.cx + 20, ey: P.t };
+  if (P.cy === Q.cy) {
+    const dist = Math.abs(Q.cx - P.cx);
+    if (Q.cx > P.cx && dist <= G.PX + 1) return { d: `M${P.r + 3},${P.cy} L${Q.l - 5},${Q.cy}`, ex: Q.l - 5, ey: Q.cy };
+    const dep = Math.min(38, 18 + dist / 26);
+    return { d: `M${P.cx},${P.b} C${P.cx},${P.b + dep} ${Q.cx},${Q.b + dep} ${Q.cx},${Q.b}`, ex: Q.cx, ey: Q.b };
+  }
+  const down = Q.cy > P.cy, y1 = down ? P.b : P.t, y2 = down ? Q.t - 4 : Q.b + 4, m = (y1 + y2) / 2;
+  return { d: `M${P.cx},${y1} C${P.cx},${m} ${Q.cx},${m} ${Q.cx},${y2}`, ex: Q.cx, ey: y2 };
+}
+
+function viewGraph(d) {
+  const G = GRAPH.GEO, POS = GRAPH.POS;
+  const cols = Math.max(...Object.values(POS).map(p => p[0])), rows = Math.max(...Object.values(POS).map(p => p[1]));
+  const W = G.OX * 2 + cols * G.PX + G.NW, Hh = G.OY + rows * G.PY + G.NH + 22;
+  const xy = id => { const p = POS[id]; return p ? { x: G.OX + p[0] * G.PX, y: G.OY + p[1] * G.PY } : null; };
+  const pc = (v, tot) => (v / tot * 100) + '%';
+  const off = offPath(d.s);
+  const cands = new Set(d.outs.filter(e => e.ok && e.to !== '[end]' && e.to !== '(debug.return_to)').map(e => e.to));
+
+  let paths = '', dots = '';
+  Object.entries(GRAPH.EDGES).forEach(([from, list]) => list.forEach(([id, to]) => {
+    const a = xy(from), b = xy(to); if (!a || !b) return;
+    paths += `<path d="${edgePath(a, b).d}" fill="none" stroke="var(--fg-3)" stroke-width="1" opacity=".2"/>`;
+  }));
+  const seen = new Set();
+  d.H.slice(0, d.upTo).forEach(e => {
+    const k = e.from + '>' + e.to; if (seen.has(k)) return; seen.add(k);
+    const a = xy(e.from), b = xy(e.to); if (!a || !b) return;
+    paths += `<path d="${edgePath(a, b).d}" fill="none" stroke="var(--flow)" stroke-width="1.7" opacity=".65"/>`;
+  });
+  d.outs.filter(e => e.ok && xy(e.to) && xy(d.cur)).forEach(e => {
+    const r = edgePath(xy(d.cur), xy(e.to));
+    paths += `<path d="${r.d}" fill="none" stroke="var(--hand)" stroke-width="2.1" stroke-dasharray="5 4" opacity=".95"/>`;
+    dots += `<circle cx="${r.ex}" cy="${r.ey}" r="3.5" fill="var(--hand)"/>`;
+  });
+
+  const boxes = GRAPH.BANDS.filter(b => b.box).map(b =>
+    `<div class="loopbox" style="left:${pc(G.OX - 11, W)};top:${pc(G.OY + b.row * G.PY - 22, Hh)};
+      width:${pc((b.to - b.from) * G.PX + G.NW + 22, W)};height:${pc(G.NH + 34, Hh)}"></div>`).join('');
+  const bands = GRAPH.BANDS.map(b =>
+    `<div class="band" style="left:${pc(G.OX - (b.box ? 1 : 0), W)};top:${pc(G.OY + b.row * G.PY - (b.box ? 16 : 26), Hh)}">${esc(b.label)}</div>`).join('');
+
+  const nodes = Object.keys(POS).map(id => {
+    const p = xy(id), isCur = id === d.cur, isOff = off.has(id) && !isCur, isCand = cands.has(id),
+          wasSeen = d.visited.has(id), sel = A.selNode === id;
+    let fg = 'var(--fg-3)', bg = 'var(--panel-2)', ring = 'var(--line)', dash = false, op = 1;
+    if (isOff) op = .34;
+    else if (isCur) { fg = 'var(--guard)'; bg = 'var(--guard-dim)'; ring = 'var(--guard)'; }
+    else if (isCand) { fg = 'var(--hand)'; bg = 'var(--hand-dim)'; ring = 'var(--hand)'; dash = true; }
+    else if (wasSeen) { fg = 'var(--flow)'; bg = 'var(--flow-dim)'; ring = 'var(--flow)'; }
+    const here = d.inflightAt[id] || [];
+    return `<button class="node" data-node="${id}" title="${esc(nboth(id) + (GRAPH.DESC[id] ? ' — ' + GRAPH.DESC[id] : ''))}"
+      style="left:${pc(p.x, W)};top:${pc(p.y, Hh)};width:${pc(G.NW, W)};height:${pc(G.NH, Hh)};
+      background:${bg};color:${fg};opacity:${op};box-shadow:inset 0 0 0 ${sel ? 2.5 : 1.5}px ${sel ? 'var(--fg)' : ring};
+      ${dash ? 'outline:1px dashed ' + ring + ';outline-offset:3px;' : ''}
+      ${isCur && d.s.status === 'RUNNING' && !d.s.stopped ? 'animation:rvhalo 2.4s ease-in-out infinite;' : ''}">
+      ${esc(nlabel(id))}${GRAPH.HUMAN[id] ? '<i class="h"></i>' : ''}
+      ${here.length ? `<span class="inflight">${here.map(x => 'm' + esc(x)).join(' ')}</span>` : ''}</button>`;
+  }).join('');
+
+  const sel = A.selNode;
+  const panel = sel ? `<div class="card">
+      <div class="row"><b style="font-family:var(--mono);font-size:15px">${esc(nlabel(sel))}</b>
+        ${NODE_LABEL[sel] ? `<span class="pill" title="the id in state.json, history[] and attempts[]">id · ${esc(sel)}</span>` : ''}
+        <span class="pill">${esc(GRAPH.BOUNDS[sel] ? 'bound ' + GRAPH.BOUNDS[sel] : 'unbounded')}</span>
+        <span class="pill">${esc(GRAPH.HUMAN[sel] ? 'human · ' + GRAPH.HUMAN[sel] : 'no human step')}</span>
+        <button class="chip" data-clear style="margin-left:auto">close</button></div>
+      <p style="margin:9px 0 0;color:var(--fg-2)">${esc(GRAPH.DESC[sel] || '')}</p>
+      <p style="margin:6px 0 0;font-size:11.5px;color:var(--fg-3)">${d.H.filter(e => e.to === sel).length} entries this run</p>
+      <p class="micro">outgoing</p>
+      ${(GRAPH.EDGES[sel] || []).map(([id, to, g]) =>
+        `<p style="font-size:12px;margin:5px 0"><span class="pill">edge ${esc(id)}</span> → <b style="font-family:var(--mono)">${esc(nlabel(to))}</b><br><span style="color:var(--fg-3)">${esc(g)}</span></p>`).join('')
+        || '<p style="color:var(--fg-3)">terminal — no outgoing edges. The viewer keeps polling anyway.</p>'}
+      <p class="micro">inbound</p>
+      ${(INBOUND[sel] || []).map(([id, from]) => `<span class="pill" style="margin-right:5px">${esc(nlabel(from))} · ${esc(id)}</span>`).join('')
+        || '<span style="color:var(--fg-3)">entry point</span>'}
+    </div>` : '';
+
+  return `<div class="card">
+      <div class="row"><p class="micro" style="margin:0">the graph</p>
+        <span class="pill" style="margin-left:auto">${d.travel ? 'replaying #' + d.upTo + ' of ' + d.H.length : 'live'}</span></div>
+      <p style="margin:6px 0 14px;font-size:11.5px;color:var(--fg-3)">${d.multi
+        ? esc(d.inflight.length + ' milestones open — the board shows the least advanced (' + nlabel(d.cur) + ')')
+        : 'click a node for its guards'}</p>
+      <div class="board" style="aspect-ratio:${W} / ${Hh}">
+        <svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none">${paths}${dots}</svg>
+        ${boxes}${bands}${nodes}
+      </div>
+      <p style="margin:14px 0 0;font-size:11px;color:var(--fg-3)">
+        <span style="color:var(--guard)">■</span> now &nbsp;
+        <span style="color:var(--hand)">■</span> next-step candidate &nbsp;
+        <span style="color:var(--flow)">■</span> visited &nbsp;
+        <span style="opacity:.4">■</span> off-path for this run</p>
+    </div>${panel}`;
+}
+function bindGraph() {
+  document.querySelectorAll('[data-node]').forEach(b => b.onclick = () => { A.selNode = b.dataset.node; render(); });
+  const c = document.querySelector('[data-clear]'); if (c) c.onclick = () => { A.selNode = null; render(); };
+}
+
+function viewTrace(d) {
+  const gates = ['TEST', 'GATE_A', 'GATE_B', 'E2E', 'CI', 'QA', 'CONSOLIDATE'];
+  const q = A.q.trim().toLowerCase();
+  let rows = d.H.map((e, i) => ({ e, n: i + 1 })).filter(({ e }) => {
+    if (A.kind === 'debug' && e.from !== 'DEBUG' && e.to !== 'DEBUG') return false;
+    if (A.kind === 'gates' && !gates.includes(e.to) && !gates.includes(e.from)) return false;
+    if (A.kind === 'human' && !GRAPH.HUMAN[e.to] && !GRAPH.HUMAN[e.from]) return false;
+    if (A.kind === 'stops' && !['BLOCKED', 'HANDOFF', 'DONE'].includes(e.to)) return false;
+    if (A.msFilter !== 'all' && String(e.milestone) !== A.msFilter) return false;
+    /* Searched against BOTH names. The rows read `ms-final-review`, so typing that has to find
+       them; the guards and every other surface still say GATE_B, so typing that must too. */
+    if (q && !((e.from + ' ' + e.to + ' ' + nlabel(e.from) + ' ' + nlabel(e.to) + ' '
+                + (e.guard || '') + ' ' + (e.observation || '')).toLowerCase().includes(q))) return false;
+    return true;
+  });
+  if (A.newest) rows = rows.reverse();
+  const msIds = [...new Set(d.H.map(e => e.milestone).filter(m => m != null))].sort((a, b) => a - b);
+  return `<div class="card">
+    <div class="row" style="flex-wrap:wrap;gap:8px">
+      <input id="q" placeholder="search guards and observations" value="${esc(A.q)}" style="flex:1 1 200px">
+      ${['all', 'gates', 'debug', 'human', 'stops'].map(k =>
+        `<button class="chip ${A.kind === k ? 'on' : ''}" data-kind="${k}">${k}</button>`).join('')}
+      <select id="msf"><option value="all">every milestone</option>${msIds.map(m =>
+        `<option value="${esc(m)}" ${A.msFilter === String(m) ? 'selected' : ''}>milestone ${esc(m)}</option>`).join('')}</select>
+      <button class="chip" id="order">${A.newest ? 'newest ↓' : 'oldest ↑'}</button>
+    </div>
+    <div class="scrub" style="margin:12px 0">
+      <input type="range" id="scrub" min="1" max="${Math.max(1, d.H.length)}" value="${d.upTo}">
+      <span style="font-family:var(--mono);font-size:10px;white-space:nowrap;color:var(--${d.travel ? 'hand' : 'flow'})">${d.travel ? '#' + d.upTo + ' of ' + d.H.length : 'live · ' + d.H.length}</span>
+      <button class="chip ${d.travel ? '' : 'hide'}" id="live">go live</button>
+    </div>
+    <p class="micro" style="margin:0 0 6px">${rows.length} of ${d.H.length} transitions${info(
+      'Source: state.json → history[], in the run directory docs/graph-runs/<run-id>/.\n\n'
+      + 'Append-only, one entry per transition, written by the ORCHESTRATOR before the next node starts — '
+      + 'and for a delegated milestone, only after the return gate passed. Nothing here is recorded on an agent\'s word.\n\n'
+      + 'guard is quoted verbatim from edges.md. observation is written by whoever was there (the milestone agent '
+      + 'for loop nodes, the orchestrator otherwise). verified is the orchestrator\'s own check — what it re-ran and found.\n\n'
+      + 'Not the same as the milestone journals (docs/graph-runs/<run-id>/journals/milestone-N.jsonl): those are what an '
+      + 'agent SAID while it ran, are unverified, and nothing routes on them.')}</p>
+    ${rows.map(({ e, n }) => {
+      const dbg = e.from === 'DEBUG' || e.to === 'DEBUG', live = n === d.H.length && !d.travel;
+      return `<button class="trace-row ${A.selIdx === n ? 'sel' : ''} ${live ? 'live' : ''}" data-idx="${n}" data-to="${esc(e.to)}">
+        <span class="hop ${dbg ? 'dbg' : ''}" title="${esc(e.from + ' → ' + e.to)}">${String(n).padStart(2, '0')} ${esc(nlabel(e.from))} → ${esc(nlabel(e.to))}</span>
+        <span style="flex:1;min-width:0">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--fg-3)">${esc(e.guard || '')}</span>
+          <span class="obs ${e.observation ? '' : 'none'}">${esc(e.observation || 'no observation — and the trail is the only per-node record there is')}</span>
+          ${e.verified ? `<span class="obs" style="color:var(--flow)">verified — ${esc(e.verified)}</span>` : ''}
+        </span>
+        <span class="pill">${e.milestone != null ? 'm' + esc(e.milestone) : '—'}</span></button>`;
+    }).join('') || '<p style="color:var(--fg-3)">Nothing matches those filters.</p>'}</div>`;
+}
+function bindTrace() {
+  $('q').oninput = e => { A.q = e.target.value; render(); const el = $('q'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); };
+  $('msf').onchange = e => { A.msFilter = e.target.value; render(); };
+  $('order').onclick = () => { A.newest = !A.newest; render(); };
+  $('scrub').oninput = e => {
+    const v = +e.target.value, H = (A.S && A.S.history) || [];
+    A.selIdx = v === H.length ? null : v; render();
+  };
+  const l = $('live'); if (l) l.onclick = () => { A.selIdx = null; render(); };
+  document.querySelectorAll('[data-kind]').forEach(b => b.onclick = () => { A.kind = b.dataset.kind; render(); });
+  document.querySelectorAll('[data-idx]').forEach(b => b.onclick = () => { A.selIdx = +b.dataset.idx; A.selNode = b.dataset.to; render(); });
+}
+
+function viewLedger(d) {
+  const counts = d.ledger.reduce((a, g) => (a[g.node] = (a[g.node] || 0) + 1, a), {});
+  const summary = d.ledger.length
+    /* Escaped once, below, where it is interpolated — escaping the node names here as well double-
+       encoded them, so a node containing `&` or `<` displayed its entity rather than its name. */
+    ? `${d.ledger.length} gate${d.ledger.length > 1 ? 's were' : ' was'} skipped — ${Object.entries(counts).map(([k, v]) => v + '× ' + nlabel(k)).join(', ')}. None counted as passed. A run with a non-empty ledger is not a clean run; the reasons below are verbatim as the graph wrote them.`
+    : 'Nothing was skipped. Every gate this run reached actually ran.';
+  return `<div class="card"><p class="micro" style="margin:0">skipped-gate ledger</p>
+    <p style="margin:9px 0 0;color:var(--fg-2)">${esc(summary)}</p>
+    ${d.ledger.map(g => `<div class="row" style="margin-top:12px;align-items:flex-start">
+      <span class="pill" style="color:var(--guard);background:var(--guard-dim)" title="${esc(g.node)}">${esc(nlabel(g.node))}</span>
+      <span style="flex:1"><b style="font-size:12px">${esc(g.at_milestone != null ? 'milestone ' + g.at_milestone : 'run-level')}</b>
+      <span style="display:block;font-size:12px;color:var(--fg-2)">${esc(g.reason)}</span></span></div>`).join('')}</div>`;
+}
+
+function viewQa(d) {
+  const qa = d.s.qa || {}, env = d.c.qa_env || {}, sh = d.c.standards_handshake || {};
+  const sev = s => ({ S1: 'stop', S2: 'stop', S3: 'guard' }[s] || null);
+  return `<div class="card">
+      <div class="row"><p class="micro" style="margin:0">qa verdict</p>
+        <span class="pill" style="margin-left:auto;font-size:13px;padding:7px 13px;
+          color:var(--${tone(qa.verdict) || 'fg-3'});background:var(--${tone(qa.verdict) ? tone(qa.verdict) + '-dim' : 'panel-2'})">${esc(qa.verdict || 'not yet')}</span></div>
+      <p style="margin:9px 0 0;color:var(--fg-3);font-size:12px">${esc(qa.qa_plan_path || 'no qa plan on disk')}</p>
+      ${(qa.bugs || []).map(b => `<div class="row" style="margin-top:9px">
+        <span class="pill" style="color:var(--${sev(b.severity) || 'fg-3'});background:var(--${sev(b.severity) ? sev(b.severity) + '-dim' : 'panel-2'})">${esc(b.severity)}</span>
+        <span style="flex:1">${esc(b.title || b.id || '')}</span></div>`).join('')
+        || '<p style="margin:9px 0 0;color:var(--fg-3)">No findings recorded.</p>'}
+    </div>
+    <div class="card"><p class="micro" style="margin:0">how to run it</p>
+      <div class="row" style="margin-top:8px"><code style="flex:1;font-size:12px">${esc(env.run_instructions || 'qa_env.run_instructions is empty — CLOSE_OUT fills it in.')}</code>
+        <button class="chip" id="copy">${A.copied ? 'copied' : 'copy'}</button></div>
+      ${[['api base', env.api_base_url], ['web base', env.web_base_url], ['api docs', env.api_docs],
+         ['identities', (env.identities || []).join(' · ')], ['seed', env.seed]]
+        .map(([k, v]) => `<div class="kv"><span>${k}</span><span>${esc(v || '—')}</span></div>`).join('')}
+    </div>
+    <div class="card"><p class="micro" style="margin:0">standards handshake</p>
+      <p style="margin:8px 0 0">${esc(sh.stack || 'no handshake recorded')}</p>
+      <p style="margin:6px 0 0;font-family:var(--mono);font-size:10.5px;color:var(--${sh.approved ? 'ok' : 'guard'})">${sh.approved ? 'approved — IMPLEMENT will not re-ask' : 'not approved — IMPLEMENT may re-ask the user'}</p>
+    </div>`;
+}
+function bindQa(d) {
+  const c = $('copy'); if (!c) return;
+  c.onclick = () => {
+    const txt = ((d.c.qa_env || {}).run_instructions) || '';
+    if (navigator.clipboard) navigator.clipboard.writeText(txt);
+    A.copied = true; render(); setTimeout(() => { A.copied = false; render(); }, 1400);
+  };
+}
+
+function viewFacts(d) {
+  const s = d.s, c = d.c;
+  const rows = [
+    ['run id', s.run_id], ['schema', String(s.schema_version ?? '—')], ['state.node', s.node], ['status', s.status],
+    ['stack', String(c.stack)], ['has_ui', String(c.has_ui)], ['host', String(c.host)],
+    ['main branch', String(c.main_branch)], ['unborn main', String(c.unborn_main)], ['branching', String(c.branching)],
+    ['auto open mr', String(c.auto_open_mr)], ['run mode', String(c.run_mode)],
+    /* `cursor` is the milestone the LOOP is executing; `in_flight` is which milestones have a live
+       agent. They are different fields answering different questions, and this row used to read
+       `d.inflight[0]` — so it duplicated the row below and showed "—" for every run between a
+       replay finishing and the next spawn, which is exactly when someone asks where the run is. */
+    ['cursor', s.cursor != null ? 'milestone ' + s.cursor : '—'],
+    ['milestones in flight', (d.inflight || []).length
+      ? d.inflight.join(', ') + (d.multi ? ' — parallel agents' : '') : 'none'],
+    ['integration', (s.integration || {}).branch
+      ? s.integration.branch + ' · merged ' + ((s.integration.merged || []).join(', ') || 'none') : 'none'],
+    ['spec', s.spec_path || '—'], ['plan', s.plan_path || '—'], ['debug return_to', (s.debug || {}).return_to || 'none']
+  ];
+  return `<div class="card"><p class="micro" style="margin:0">run facts${info(
+      'Source: state.json, read straight — this panel is the raw field values, which is why it is the '
+      + 'one place node IDS are printed rather than their display names.\n\n'
+      + Object.entries(NODE_LABEL).map(([id, l]) => `The board, trace and ledger show "${l}" for the node whose id is ${id}.`).join('\n')
+      + '\n\nThe id is what state.node, both endpoints of every history[] entry, and the attempts["<NODE>:<id>"] '
+      + 'keys are written with. Renaming it would be a migration of every state file on disk; the display name is not.')}</p>
+      ${rows.map(([k, v]) => `<div class="kv"><span>${k}</span><span>${esc(v)}</span></div>`).join('')}</div>
+    <div class="card"><p class="micro" style="margin:0">retry budgets${info(
+      'Source: state.json → attempts, keyed "<NODE>:<milestone-id>". Bounds come from the graph spec (edges.md § Loop bounds).\n\n'
+      + 'Reads used / bound, where "used" counts how many times the node has been ENTERED — so a clean first pass shows 1, '
+      + 'not 0, and 1/3 means one entry spent with two left.\n\n'
+      + 'Colour is arithmetic on that ratio, not a health verdict:\n'
+      + '• green — more than one attempt still left\n'
+      + '• amber — exactly one left, so the next failure is the last one allowed\n'
+      + '• red — bound reached; the node BLOCKs (except GATE_A, which proceeds with findings documented)\n\n'
+      + 'GATE_A and GATE_B have a bound of 2, so they show amber on a first pass that never retried. '
+      + 'Amber here is budget, not trouble — a retry that actually happened appears as a DEBUG round-trip in the trace.')}</p>
+      ${d.attempts.length ? d.attempts.map(([k, v]) => attemptRow(k, v)).join('')
+        : '<p style="color:var(--fg-3)">No node entered yet.</p>'}</div>
+    <div class="card"><p class="micro" style="margin:0">gate A dispatch${info(
+      'Source: state.json → milestones[].gate_a_run_id, recorded at dispatch and confirmed against the milestone journal (R7).\n\n'
+      + 'A run id appears only when Gate A ran as a Workflow script. When the Workflow tool is unavailable — which it is '
+      + 'inside a subagent session — Gate A runs its four steps directly as agents instead. That is a legal dispatch, not a '
+      + 'skipped gate, and it correctly has no run id.')}</p>
+      ${(s.milestones || []).filter(m => m.gate_a_run_id).map(m =>
+        `<div class="kv"><span>milestone ${esc(m.id)}</span><span>${esc(m.gate_a_run_id)}</span></div>`).join('')
+        || '<p style="color:var(--fg-3)">No workflow-dispatched Gate A — direct dispatch leaves no run id.</p>'}</div>
+    ${A.cfg ? `<div class="card"><p class="micro" style="margin:0">server config</p>
+      ${Object.entries(A.cfg).map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><span>${esc(String(v))}</span></div>`).join('')}</div>` : ''}`;
+}
+
+function paintSide(d) {
+  if (A.view === 'graph') { $('side').classList.add('hide'); return; }
+  $('side').classList.remove('hide');
+  const s = d.s, last = d.H[d.upTo - 1] || {};
+  const stopped = s.stopped || null;
+  const kind = stopped && stopped.kind === 'blocked' ? ['stop', 'blocked — a guard could not be resolved']
+    : stopped ? ['hand', stopped.kind === 'handoff' ? 'handed off — the work leaves this graph'
+                                                   : 'waiting on a human, deliberately']
+    : s.status === 'DONE' ? ['ok', 'done — still watching the file']
+    : d.travel ? ['hand', 'replaying transition ' + d.upTo]
+    : d.multi ? ['flow', 'running · least advanced of ' + d.inflight.length + ' milestones']
+    : ['flow', 'running'];
+  const inflightRows = d.multi ? d.inflight.map(id => {
+    const at = (m => (m.progress || {}).at_node)(d.msOf(id));
+    const m = d.msOf(id), isMin = at === d.cur;
+    return `<div class="row" style="margin-top:6px">
+      <span class="pill" style="color:var(--${isMin ? 'guard' : 'fg-3'});background:var(--${isMin ? 'guard-dim' : 'panel-2'})">m${esc(id)}</span>
+      <span style="flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis">${esc(m.name || 'unknown')}</span>
+      <span style="font-family:var(--mono);font-size:9.5px;color:var(--${isMin ? 'guard' : 'fg-3'})">${esc(at ? nlabel(at) : 'spawned, nothing reported yet')}</span></div>`;
+  }).join('') : '';
+
+  $('side').innerHTML = `
+    <div class="card" style="box-shadow:inset 0 0 0 1px var(--guard-dim)">
+      <p class="micro" style="margin:0">now · strategy ${esc(d.c.branching || '?')} ${esc(d.c.run_mode || '')}</p>
+      <p style="margin:12px 0 0;font-family:var(--mono);font-size:${
+        /* 290px column: 30px mono fits ~11 characters. `ms-final-review` is 15 and
+           `PR_FINAL_REVIEW` was already 15 before it — step down rather than overflow. */
+        (nlabel(d.cur) || '—').length > 11 ? 19 : 30}px;font-weight:600;letter-spacing:-.035em;
+        line-height:1.05;color:var(--guard);word-break:break-word" title="${esc(d.cur || '')}">${esc(nlabel(d.cur) || '—')}</p>
+      <p style="margin:8px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+        color:var(--${kind[0]})">${esc(kind[1])}</p>
+      <p style="margin:10px 0 0;font-size:12px;color:var(--fg-2)">${esc(GRAPH.DESC[d.cur] || '')}</p>
+      ${GRAPH.HUMAN[d.cur] ? `<p style="margin:9px 0 0"><span class="pill" style="color:var(--hand);background:var(--hand-dim)">human · ${esc(GRAPH.HUMAN[d.cur])}</span></p>` : ''}
+      ${d.multi ? `<p class="micro">milestones in flight · the board shows the least advanced</p>${inflightRows}` : ''}
+    </div>
+    <div class="card"><p class="micro" style="margin:0">next step</p>
+      ${d.outs.length ? d.outs.map(e => `<button class="chip" data-goto="${esc(e.to)}" style="display:block;width:100%;
+        margin-top:7px;background:${e.ok ? 'var(--hand-dim)' : 'transparent'};opacity:${e.ok ? 1 : .48};
+        text-transform:none;letter-spacing:0">
+        <b style="font-family:var(--mono);color:var(--${e.ok ? 'hand' : 'fg-3'})">edge ${esc(e.id)} → ${esc(nlabel(e.to))}</b>
+        <span style="display:block;font-size:11px;color:var(--fg-3);white-space:normal">${esc(e.guard)}${e.ok ? '' : ' — not applicable under the current state'}</span></button>`).join('')
+        : '<p style="color:var(--fg-3);margin:9px 0 0">terminal — no outgoing edges. The viewer keeps polling anyway.</p>'}
+    </div>
+    <div class="card"><p class="micro" style="margin:0">last transition · ${d.upTo} of ${d.H.length}</p>
+      <p style="margin:8px 0 0;font-family:var(--mono);font-size:12px" title="${esc((last.from || '') + ' → ' + (last.to || ''))}">${esc(nlabel(last.from) || '—')} → ${esc(nlabel(last.to) || '—')}</p>
+      <p style="margin:4px 0 0;font-size:11px;color:var(--fg-3)">${esc(last.guard || '')}</p>
+      <p style="margin:6px 0 0;font-size:12px;color:var(--fg-2)">${esc(last.observation || 'no observation')}</p>
+    </div>`;
+  document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => { A.view = 'graph'; A.selNode = b.dataset.goto; render(); });
+}
+
+boot();
+</script>

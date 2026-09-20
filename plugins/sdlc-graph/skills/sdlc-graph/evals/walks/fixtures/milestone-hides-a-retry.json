@@ -1,0 +1,225 @@
+{
+  "name": "NEGATIVE CONTROL — a bundle that dropped its DEBUG round-trip",
+  "why": "The failure R15 exists for, and the only one the journal can see that the bundle cannot hide. The milestone agent hit a red suite, went to DEBUG, fixed it and came back green — and wrote all of that down as it happened, because a journal line is appended on every node exit. Then the bundle came back describing one clean pass through TEST. Every other check is satisfied: the shas are real, the suite is green NOW, the branch is right, the observations are non-empty. Only the journal disagrees, and only in one direction: it saw work the trace does not contain. Without R15 this run records a milestone that never struggled, spends none of its TEST budget on a retry it actually took, and leaves the ledger and the auditor with nothing to notice.",
+  "expect": {
+    "rejected": true,
+    "because": [
+      "the journal recorded DEBUG finishing, and the trace never leaves it",
+      "a retry the counter never charged"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-milestone-death-06-08-2026",
+    "plan_path": "docs/plans/graph-milestone-death-06-08-2026-plan.md",
+    "spec_path": "docs/specs/graph-milestone-death-06-08-2026-design.md",
+    "node": "BRANCH",
+    "status": "RUNNING",
+    "context": {
+      "stack": "backend",
+      "has_ui": false,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": null,
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "continuous",
+      "qa_env": null
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "simulated milestone one",
+        "branch": "PROJ-1/simulated",
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked 1a"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": false,
+        "base_sha": "a1b2c3d",
+        "spawned_at_history_len": 5,
+        "main_sha_at_spawn": "0f1e2d3c4b5a",
+        "progress": null
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": 1,
+    "in_flight": [
+      1
+    ],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "The first milestone agent for this milestone never returned a bundle. milestone agents['1'] was open with no history entries after it — the death signature — so before…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "The first milestone agent for this milestone never returned a bundle. milestone agents['1'] was open with no history entries after it — the death signature — so before re-spawning I ran git log a1b2c3d..PROJ-1/simulated: no commits, the milestone agent died before it wrote anything. Re-spawned once; the branch already existed and was reused.",
+      "set": {
+        "attempts.MILESTONE-dispatch:1": 1
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Second milestone agent committed the one step. Checked the sha exists on the branch and that the diff carries no .skip, no || true and no continue-on-error."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "a1b2c3d"
+        ],
+        "run_id": null
+      },
+      "observation": "Second milestone agent committed the one step. Checked the sha exists on the branch and that the diff carries no .skip, no || true and no continue-on-error."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "unit red — 2 failures in the token refresh fixture"
+          },
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "DEBUG",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "root cause: fixture seeded an expired refresh token; corrected the seed"
+          },
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 2,
+            "headline": "green on the 2nd attempt after the DEBUG fix"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Re-ran yarn test:unit and test:int myself rather than reading the bundle's word for it — exit 0 both. attempts.TEST:1 is still absent, which is the point: the dead milestone agent spent nothing here.",
+      "set": {
+        "attempts.TEST:1": 1
+      }
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "edge": "13",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Gate A clean, 3 files, no findings"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_a1b2"
+      },
+      "observation": "Gate A dispatched by the milestone agent: runId wf_a1b2 found in the journal, 3 of 3 groups completed, tools asserted, applied matched git diff --name-only exactly. No findings worth a re-run.",
+      "set": {
+        "attempts.GATE_A:1": 1
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 7,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "holistic review clean; suite green after"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Holistic pass clean, suite re-run by me green. Milestone agent 1's replay is finished, so its entry is cleared — a milestone agents key with no transitions and no blocked is the halt signature, and leaving it set would fake one.",
+      "set": {
+        "attempts.GATE_B:1": 1,
+        "in_flight": []
+      }
+    }
+  ]
+}

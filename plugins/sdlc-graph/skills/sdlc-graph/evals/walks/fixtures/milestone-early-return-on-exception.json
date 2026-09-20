@@ -1,0 +1,222 @@
+{
+  "name": "on-exception — the milestone agent returns early on a skipped gate, and the orchestrator serves the stop",
+  "why": "A milestone agent cannot ask the user anything, so `on-exception` is the one run mode that has to cross the boundary. The rule is split: the milestone agent returns IMMEDIATELY with outcome stop_requested when it hits a skipped gate or an exhausted bound — so the human sees the trouble before more budget burns — and the orchestrator serves the stop at the boundary, writing paused. Nothing else covers the mode-stop-inside-a-milestone path: strategy-b proves the stops that must NOT fire, verdict-escalation exercises on-exception in the shared tail where no milestone agent exists, and neither one has an agent that had to hand a question back. It also fixes the ledger direction under delegation: the milestone agent PROPOSES a skipped_gates entry and the orchestrator APPENDS it, so the recorded ledger is never smaller than what the milestone agent reported.",
+  "expect": {
+    "final_status": "RUNNING",
+    "reaches": [
+      "IMPLEMENT",
+      "TEST",
+      "GATE_A",
+      "GATE_B"
+    ],
+    "stops": [
+      "GATE_A:on-exception"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-milestone-exception-06-08-2026",
+    "plan_path": "docs/plans/graph-milestone-exception-06-08-2026-plan.md",
+    "spec_path": "docs/specs/graph-milestone-exception-06-08-2026-design.md",
+    "node": "BRANCH",
+    "status": "RUNNING",
+    "context": {
+      "stack": "backend",
+      "has_ui": false,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": null,
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "on-exception",
+      "qa_env": null
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "simulated milestone one",
+        "branch": "PROJ-1/simulated",
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked 1a"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": false,
+        "base_sha": "a1b2c3d",
+        "spawned_at_history_len": 5,
+        "main_sha_at_spawn": "0f1e2d3c4b5a",
+        "progress": null
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": 1,
+    "in_flight": [
+      1
+    ],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Milestone agent spawned with return_early_on_exception true — the one thing it is told about run_mode, collapsed to a boolean because a milestone agent has no business…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Milestone agent spawned with return_early_on_exception true — the one thing it is told about run_mode, collapsed to a boolean because a milestone agent has no business reading the mode."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "One step, one commit, confirmed on the branch."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "a1b2c3d"
+        ],
+        "run_id": null
+      },
+      "observation": "One step, one commit, confirmed on the branch."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Suite re-run by me: exit 0."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Suite re-run by me: exit 0."
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "edge": "13",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "The milestone agent returned stop_requested the moment its preflight came back absent, rather than finishing the milestone and mentioning it later. Gate A…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_c001"
+      },
+      "skipped_gates": [
+        {
+          "node": "GATE_A.step2",
+          "reason": "code-simplifier is not installed here — preflight asserted absent by the milestone agent, appended by me",
+          "at_milestone": 1
+        }
+      ],
+      "stops": [
+        {
+          "type": "on-exception",
+          "answer": "acknowledged — continue without the simplifier step"
+        }
+      ],
+      "observation": "The milestone agent returned stop_requested the moment its preflight came back absent, rather than finishing the milestone and mentioning it later. Gate A itself ran: 4 of 4 groups, runId wf_c001 in the journal — but step 2 never ran, so this is not recorded as a clean gate. The ledger entry is the milestone agent's proposal, appended verbatim.",
+      "set": {
+        "attempts.GATE_A:1": 1
+      },
+      "agent_stop": "on-exception"
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Re-spawned for the remainder of the itinerary after the stop was answered; Gate B clean, suite green. Milestone agent cleared — and the ledger still carries the…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Re-spawned for the remainder of the itinerary after the stop was answered; Gate B clean, suite green. Milestone agent cleared — and the ledger still carries the Gate A entry, because installing the simplifier later would not retroactively pass a gate that did not run.",
+      "set": {
+        "attempts.GATE_B:1": 1,
+        "in_flight": []
+      }
+    }
+  ]
+}

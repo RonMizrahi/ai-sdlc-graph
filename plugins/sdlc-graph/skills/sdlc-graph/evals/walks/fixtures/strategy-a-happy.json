@@ -1,0 +1,754 @@
+{
+  "name": "strategy A — every milestone, then the shared tail, stopping at exactly five places",
+  "why": "The shape a user should be able to draw from the diagram: three milestones round the loop on one branch, then CLOSE_OUT -> PR -> PR_FINAL_REVIEW -> CI -> QA -> VERDICT -> MERGE -> DONE. Nothing fails, so every stop this walk takes is a HUMAN stop and every one it does not take is the graph correctly continuing. auto_open_mr is false so PR's conditional confirm-before fires; the QA verdict is PASS so VERDICT's escalation correctly does not.",
+  "expect": {
+    "final_status": "DONE",
+    "reaches": [
+      "BRANCH",
+      "IMPLEMENT",
+      "TEST",
+      "GATE_A",
+      "E2E",
+      "GATE_B",
+      "CLOSE_OUT",
+      "PR",
+      "CI",
+      "QA",
+      "VERDICT",
+      "MERGE",
+      "DONE"
+    ],
+    "stops": [
+      "SPEC:approval-after",
+      "PLAN:approval-after",
+      "STRATEGY:choice-after",
+      "PR:confirm-before",
+      "MERGE:await-external"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-strategy-a-31-07-2026",
+    "plan_path": null,
+    "spec_path": null,
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "both",
+      "has_ui": true,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": null,
+      "branching": null,
+      "auto_open_mr": null,
+      "run_mode": null,
+      "qa_env": null
+    },
+    "milestones": [],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": null,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "edge": "1",
+      "milestone": null,
+      "observation": "No spec supplied, so the design dialogue runs. INTAKE itself declares no human stop — the stop belongs to SPEC, on the way out."
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "edge": "3",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved — the spec reads right"
+        }
+      ],
+      "observation": "STOP 1. approval-after: the artifact exists, the approval does not until given.",
+      "set": {
+        "spec_path": "docs/specs/graph-strategy-a-31-07-2026-design.md"
+      }
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "edge": "5",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved — three milestones, no revisions"
+        }
+      ],
+      "observation": "STOP 2. Three milestones seeded, each with is_fix false and touches_ui true — the whole plan is UI work, so every E2E pass will owe component specs.",
+      "set": {
+        "plan_path": "docs/plans/graph-strategy-a-31-07-2026-plan.md",
+        "milestones.0": {
+          "id": 1,
+          "name": "simulated milestone one",
+          "branch": null,
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "mocked 1a",
+            "mocked 1b"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": true
+        },
+        "milestones.1": {
+          "id": 2,
+          "name": "simulated milestone two",
+          "branch": null,
+          "worktree": null,
+          "deps": [
+            1
+          ],
+          "steps": [
+            "mocked 2a"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": true
+        },
+        "milestones.2": {
+          "id": 3,
+          "name": "simulated milestone three",
+          "branch": null,
+          "worktree": null,
+          "deps": [
+            2
+          ],
+          "steps": [
+            "mocked 3a"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": true
+        }
+      }
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "edge": "6",
+      "milestone": 1,
+      "stops": [
+        {
+          "type": "choice-after",
+          "answer": "A / continuous / auto_open_mr false / handshake approved"
+        }
+      ],
+      "observation": "STOP 3. auto_open_mr answered FALSE here, which is what arms the PR stop later — settled once, so the loop is never interrupted to decide it.",
+      "set": {
+        "in_flight": [
+          1
+        ],
+        "context.branching": "A",
+        "context.auto_open_mr": false,
+        "context.run_mode": "continuous",
+        "context.standards_handshake": {
+          "approved_at": "STRATEGY",
+          "note": "simulated"
+        },
+        "cursor": 1
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Run branch created on first entry under A."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Run branch created on first entry under A.",
+      "set": {
+        "milestones.0.branch": "selftest/run"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "commit-and-record: the transition is written in the same turn as the final commit. IMPLEMENT declares human 'none' and this walk asserts it — three…"
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "a1b2c3d"
+        ],
+        "run_id": null
+      },
+      "observation": "commit-and-record: the transition is written in the same turn as the final commit. IMPLEMENT declares human 'none' and this walk asserts it — three real runs stopped here anyway."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Green first pass."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Green first pass."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "has_ui is a real boolean, so 12d does not fire and 13 is reachable."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_a1b2"
+      },
+      "observation": "has_ui is a real boolean, so 12d does not fire and 13 is reachable.",
+      "set": {
+        "attempts.GATE_A:1": 1
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "touches_ui true, so component specs were AUTHORED for what this milestone built, driving the real front and back locally. Not a judgement call."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "authored",
+      "observation": "touches_ui true, so component specs were AUTHORED for what this milestone built, driving the real front and back locally. Not a judgement call.",
+      "set": {
+        "attempts.E2E:1": 1
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "edge": "15",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Edge 18. run_mode is continuous, so NO checkpoint stop here — the graph continues."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18. run_mode is continuous, so NO checkpoint stop here — the graph continues.",
+      "set": {
+        "in_flight": [
+          1
+        ],
+        "attempts.GATE_B:1": 1,
+        "cursor": 2
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "No-op under A — milestone 2 reuses the run branch."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "No-op under A — milestone 2 reuses the run branch.",
+      "set": {
+        "milestones.1.branch": "selftest/run"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "b2c3d4e"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Fresh counter — milestone 1's budget does not carry over."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Fresh counter — milestone 1's budget does not carry over."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "SIMULATED clean."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_b2c3"
+      },
+      "observation": "SIMULATED clean.",
+      "set": {
+        "attempts.GATE_A:2": 1
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Second milestone, second set of component specs. The journey set did not grow; the component set did."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "authored",
+      "observation": "Second milestone, second set of component specs. The journey set did not grow; the component set did.",
+      "set": {
+        "attempts.E2E:2": 1
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "edge": "15",
+      "milestone": 2,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 2,
+            "attempt": 1,
+            "headline": "Edge 18 again — one milestone still remains."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18 again — one milestone still remains.",
+      "set": {
+        "in_flight": [
+          2
+        ],
+        "attempts.GATE_B:2": 1,
+        "cursor": 3
+      }
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "No-op under A."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "No-op under A.",
+      "set": {
+        "milestones.2.branch": "selftest/run"
+      }
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 2,
+            "event": "node_done",
+            "node": "IMPLEMENT",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "SIMULATED."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4",
+          "R5"
+        ]
+      },
+      "evidence": {
+        "commits": [
+          "c3d4e5f"
+        ],
+        "run_id": null
+      },
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "edge": "10",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 3,
+            "event": "node_done",
+            "node": "TEST",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "SIMULATED green."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "SIMULATED green."
+    },
+    {
+      "from": "GATE_A",
+      "to": "E2E",
+      "edge": "12",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 4,
+            "event": "node_done",
+            "node": "GATE_A",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "SIMULATED clean."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R7"
+        ]
+      },
+      "evidence": {
+        "commits": [],
+        "run_id": "wf_c3d4"
+      },
+      "observation": "SIMULATED clean.",
+      "set": {
+        "attempts.GATE_A:3": 1
+      }
+    },
+    {
+      "from": "E2E",
+      "to": "GATE_B",
+      "edge": "14",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 5,
+            "event": "node_done",
+            "node": "E2E",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "Third set. Three UI milestones, three sets of component specs, zero ledger entries — which is what a run that did its e2e job looks like."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R8"
+        ]
+      },
+      "e2e_specs": "authored",
+      "observation": "Third set. Three UI milestones, three sets of component specs, zero ledger entries — which is what a run that did its e2e job looks like.",
+      "set": {
+        "attempts.E2E:3": 1
+      }
+    },
+    {
+      "from": "GATE_B",
+      "to": "CLOSE_OUT",
+      "edge": "17",
+      "milestone": 3,
+      "agent": {
+        "journal": [
+          {
+            "seq": 6,
+            "event": "node_done",
+            "node": "GATE_B",
+            "milestone": 3,
+            "attempt": 1,
+            "headline": "Edge 18c: last milestone under A, so the shared tail begins. Still no checkpoint stop — continuous."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R6"
+        ]
+      },
+      "observation": "Edge 18c: last milestone under A, so the shared tail begins. Still no checkpoint stop — continuous.",
+      "set": {
+        "in_flight": [],
+        "attempts.GATE_B:3": 1
+      }
+    },
+    {
+      "from": "CLOSE_OUT",
+      "to": "PR",
+      "edge": "21",
+      "milestone": 3,
+      "observation": "Plan file closed out, CLAUDE.md updated, qa_env completed so QA never depends on conversation.",
+      "set": {
+        "context.qa_env": {
+          "run_instructions": "simulated",
+          "api_base_url": "http://localhost:3001",
+          "web_base_url": "http://localhost:5173",
+          "api_docs": "/api-json",
+          "identities": [
+            "selftest-a",
+            "selftest-b"
+          ],
+          "seed": "simulated"
+        }
+      }
+    },
+    {
+      "from": "PR",
+      "to": "PR_FINAL_REVIEW",
+      "edge": "22",
+      "milestone": 3,
+      "stops": [
+        {
+          "type": "confirm-before",
+          "answer": "confirmed — open it"
+        }
+      ],
+      "observation": "STOP 4, and the only CONDITIONAL one taken here: auto_open_mr is false, so PR asks BEFORE acting. Ask first, act once — a node that opened the PR and then paused would open a second on resume.",
+      "set": {
+        "milestones.2.pr": 42
+      }
+    },
+    {
+      "from": "PR_FINAL_REVIEW",
+      "to": "CI",
+      "edge": "30",
+      "milestone": 3,
+      "observation": "code-review:code-review runs HERE and nowhere else: a PR finally exists for it to read and comment on. Findings become inline PR comments; this node reports and never routes."
+    },
+    {
+      "from": "CI",
+      "to": "QA",
+      "edge": "23",
+      "milestone": 3,
+      "observation": "Edge 22a. The app is runnable, so QA is not skipped — 22b is the only legitimate QA skip and this is not it."
+    },
+    {
+      "from": "QA",
+      "to": "VERDICT",
+      "edge": "25",
+      "milestone": 3,
+      "observation": "SIMULATED PASS against the unmerged branch with the PR open.",
+      "set": {
+        "qa.verdict": "PASS",
+        "qa.qa_plan_path": "docs/qa/graph-strategy-a-simulated.md",
+        "qa.bugs": []
+      }
+    },
+    {
+      "from": "VERDICT",
+      "to": "MERGE",
+      "edge": "26",
+      "milestone": 3,
+      "observation": "Edge 30a. VERDICT declares an 'escalation' stop but it is conditional on the reopen budget being spent — attempts.QA is 0, so the graph correctly does NOT stop. This is the continue-when-not-expected half of the assertion."
+    },
+    {
+      "from": "MERGE",
+      "to": "DONE",
+      "edge": "29",
+      "milestone": 3,
+      "stops": [
+        {
+          "type": "await-external",
+          "answer": "merged by a human"
+        }
+      ],
+      "observation": "STOP 5. await-external is not a question — the graph never merges its own work, it waits to be told. On resume it re-polls rather than re-asking."
+    }
+  ]
+}

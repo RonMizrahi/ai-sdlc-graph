@@ -1,0 +1,160 @@
+{
+  "name": "NEGATIVE CONTROL — six deliberate violations the harness must catch",
+  "why": "Proves the checker can fail. Every violation below is one a real run either committed or came close to: an undeclared transition, a paraphrased guard, a bound blown past, a ledger entry with no reason, an invented milestone node value, and an E2E ledger entry blaming an uninstalled Playwright — the last one quoted verbatim from the run that prompted the rule, because a tool the run can install is not a tool the run cannot obtain. If this fixture ever passes, the harness has stopped checking.",
+  "expect": {
+    "rejected": true,
+    "because": [
+      "is not a declared edge",
+      "is not one of its declared edges",
+      "bound exceeded",
+      "missing a reason",
+      "carries a `node` field",
+      "blames an uninstalled Playwright",
+      "sits inside a milestone block"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-selftest-31-07-2026",
+    "plan_path": "docs/plans/graph-selftest-31-07-2026-plan.md",
+    "spec_path": "docs/specs/graph-selftest-31-07-2026-design.md",
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "both",
+      "has_ui": true,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "none",
+      "standards_handshake": {
+        "approved_at": "STRATEGY",
+        "note": "simulated"
+      },
+      "branching": "A",
+      "auto_open_mr": true,
+      "run_mode": "continuous",
+      "qa_env": null
+    },
+    "milestones": [
+      {
+        "id": 1,
+        "name": "simulated milestone one",
+        "branch": null,
+        "worktree": null,
+        "deps": [],
+        "steps": [
+          "mocked step 1a",
+          "mocked step 1b"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": false,
+        "node": "GATE_B_PASSED"
+      },
+      {
+        "id": 2,
+        "name": "simulated milestone two",
+        "branch": null,
+        "worktree": null,
+        "deps": [
+          1
+        ],
+        "steps": [
+          "mocked step 2a"
+        ],
+        "pr": null,
+        "is_fix": false,
+        "touches_ui": false
+      }
+    ],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": 1,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "MERGE",
+      "milestone": null,
+      "observation": "VIOLATION 1: INTAKE -> MERGE is not an edge. This is the improvised transition rule 3 forbids."
+    },
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "edge": "99",
+      "milestone": null,
+      "observation": "VIOLATION 2: guard paraphrased rather than quoted verbatim from edges.md — the drift that makes a trail unmatchable."
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "edge": "3",
+      "milestone": null,
+      "observation": "A legal transition carrying VIOLATIONS 3-6 in its payload: a blown bound, an invented milestone node value, a ledger entry with no reason, and VIOLATION 6 — a second E2E entry whose reason blames an uninstalled Playwright. That last one is the real run's own wording. Both halves of it were true and the conclusion was still wrong: Playwright is two commands, so it is work to do, never a gate to skip.",
+      "set": {
+        "attempts.TEST:1": 9
+      },
+      "skipped_gates": [
+        {
+          "node": "E2E",
+          "at_milestone": 1
+        },
+        {
+          "node": "E2E",
+          "reason": "Playwright is not installed and there is no runnable front-end yet",
+          "at_milestone": 1
+        }
+      ],
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved"
+        }
+      ]
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "edge": "8",
+      "milestone": 1,
+      "agent": {
+        "journal": [
+          {
+            "seq": 1,
+            "event": "node_done",
+            "node": "BRANCH",
+            "milestone": 1,
+            "attempt": 1,
+            "headline": "Legal: opens a milestone block at BRANCH, exactly as a spawn does."
+          }
+        ],
+        "bundle": true,
+        "verified": [
+          "R4"
+        ]
+      },
+      "observation": "Legal: opens a milestone block at BRANCH, exactly as a spawn does."
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "edge": "9",
+      "milestone": 1,
+      "violation": "an unmarked step sitting inside an open milestone block. The replay is serial — the orchestrator writes the milestone agent's transitions in order, so one of its own cannot appear among transitions that have not been written yet. This is the shape of a run interleaving its own work with a milestone agent still in flight.",
+      "observation": "VIOLATION — not marked milestone-sourced, inside the block opened above."
+    }
+  ]
+}

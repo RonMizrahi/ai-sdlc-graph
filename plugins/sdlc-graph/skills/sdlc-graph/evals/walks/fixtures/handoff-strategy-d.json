@@ -1,0 +1,140 @@
+{
+  "name": "strategy D — the graph writes the plan and parks, because /batch is a user command",
+  "why": "Edge 6b, and the only walk that ends HANDOFF. The distinction being asserted is that HANDOFF is not BLOCKED: nothing failed, no bound was hit, every guard was satisfied. Filing it under BLOCKED would send a reader hunting for a failure that never happened. `paused` must survive to the end here — a park is a deliberate stop that is still parked, and the file has to say so rather than reading as a stall.",
+  "expect": {
+    "final_status": "HANDOFF",
+    "reaches": [
+      "SPEC",
+      "PLAN",
+      "STRATEGY",
+      "HANDOFF"
+    ],
+    "stops": [
+      "SPEC:approval-after",
+      "PLAN:approval-after",
+      "STRATEGY:choice-after"
+    ]
+  },
+  "initial_state": {
+    "run_id": "graph-batch-handoff-31-07-2026",
+    "plan_path": null,
+    "spec_path": null,
+    "node": "INTAKE",
+    "status": "RUNNING",
+    "context": {
+      "stack": "backend",
+      "has_ui": false,
+      "main_branch": "main",
+      "unborn_main": false,
+      "host": "github",
+      "standards_handshake": null,
+      "branching": null,
+      "auto_open_mr": null,
+      "run_mode": null,
+      "qa_env": null
+    },
+    "milestones": [],
+    "integration": {
+      "branch": null,
+      "merged": []
+    },
+    "schema_version": 5,
+    "attempts": {},
+    "qa": {
+      "verdict": null,
+      "qa_plan_path": null,
+      "bugs": []
+    },
+    "skipped_gates": [],
+    "history": [],
+    "cursor": null,
+    "in_flight": [],
+    "debug_return_to": null,
+    "stopped": null
+  },
+  "steps": [
+    {
+      "from": "INTAKE",
+      "to": "SPEC",
+      "edge": "1",
+      "milestone": null,
+      "observation": "SIMULATED."
+    },
+    {
+      "from": "SPEC",
+      "to": "PLAN",
+      "edge": "3",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved"
+        }
+      ],
+      "observation": "SIMULATED.",
+      "set": {
+        "spec_path": "docs/specs/batch-handoff-31-07-2026-design.md"
+      }
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "edge": "5",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "approval-after",
+          "answer": "approved"
+        }
+      ],
+      "observation": "Six small independent milestones — the shape that makes /batch attractive. The plan file is written and durable BEFORE the hand-off, which is what makes the hand-off usable.",
+      "set": {
+        "plan_path": "docs/plans/batch-handoff-31-07-2026-plan.md",
+        "milestones.0": {
+          "id": 1,
+          "name": "milestone one",
+          "branch": null,
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "mocked"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": false
+        },
+        "milestones.1": {
+          "id": 2,
+          "name": "milestone two",
+          "branch": null,
+          "worktree": null,
+          "deps": [],
+          "steps": [
+            "mocked"
+          ],
+          "pr": null,
+          "is_fix": false,
+          "touches_ui": false
+        }
+      }
+    },
+    {
+      "from": "STRATEGY",
+      "to": "HANDOFF",
+      "edge": "7",
+      "milestone": null,
+      "stops": [
+        {
+          "type": "choice-after",
+          "answer": "D — delegate to /batch"
+        }
+      ],
+      "observation": "Edge 6b. The graph does NOT pretend to drive a loop it cannot start: /batch is a user command and a skill cannot invoke it. It records the choice, points the user at the plan file, and parks. status HANDOFF, blocked null, paused set — a stop that needs action, not diagnosis.",
+      "set": {
+        "context.branching": "D",
+        "context.run_mode": "continuous",
+        "context.auto_open_mr": true
+      }
+    }
+  ]
+}

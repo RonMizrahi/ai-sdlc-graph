@@ -1,0 +1,293 @@
+{
+  "run_id": "parallel-live-07-08-2026",
+  "plan_path": "docs/plans/search-rerank-05-08-2026-plan.md",
+  "spec_path": "docs/specs/search-rerank-05-08-2026-design.md",
+  "node": "BRANCH",
+  "status": "RUNNING",
+  "schema_version": 5,
+  "context": {
+    "stack": "both",
+    "has_ui": true,
+    "main_branch": "main",
+    "unborn_main": false,
+    "host": "github",
+    "standards_handshake": {
+      "stack": "Python 3.12 + FastAPI, React + Vite for the console",
+      "specialist_skills": [
+        "fastapi-standards",
+        "react-best-practices"
+      ],
+      "approved": true
+    },
+    "branching": "C",
+    "auto_open_mr": true,
+    "run_mode": "continuous",
+    "qa_env": {
+      "run_instructions": "make up  # api :8000, console :5174, opensearch :9200",
+      "api_base_url": "http://localhost:8000",
+      "web_base_url": "http://localhost:5174",
+      "api_docs": "/docs",
+      "identities": [
+        "analyst@acme.test / analyst",
+        "admin@acme.test / admin"
+      ],
+      "seed": "make seed — indexes 12k fixture documents"
+    }
+  },
+  "milestones": [
+    {
+      "id": 1,
+      "name": "Feature store + embedding cache",
+      "branch": "rr/m1",
+      "deps": [],
+      "pr": 140,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Redis-backed embedding cache",
+        "Feature extraction pipeline",
+        "Unit: cache eviction, extraction shapes"
+      ],
+      "delivered": "Feature store + embedding cache: FeatureStore.get(entityId) and EmbeddingCache.warm(ids). Milestone 3 should call warm() before ranking."
+    },
+    {
+      "id": 2,
+      "name": "Cross-encoder reranker service",
+      "branch": "rr/m2",
+      "deps": [
+        1
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "Model loader with warm pool",
+        "POST /rerank batching",
+        "Latency budget guard",
+        "Unit: batching, truncation",
+        "Integration: /rerank contract"
+      ],
+      "delivered": null,
+      "base_sha": "1111111111111111111111111111111111111111",
+      "spawned_at_history_len": 18,
+      "main_sha_at_spawn": "2222222222222222222222222222222222222222",
+      "journal": "docs/graph-runs/parallel-live-07-08-2026/journals/milestone-2.jsonl",
+      "agent_id": "agent-2",
+      "progress": {
+        "at_node": "GATE_A",
+        "headline": "Gate A: 6 files, 4 simplifications + 2 security findings applied, 1 re-run",
+        "seen_at": "2026-08-07T09:14:22Z"
+      },
+      "worktree": null
+    },
+    {
+      "id": 3,
+      "name": "Query rewriting + fusion ranking",
+      "branch": "rr/m3",
+      "deps": [
+        1
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": false,
+      "steps": [
+        "LLM query rewriter with cache",
+        "Reciprocal rank fusion",
+        "Unit: fusion weights, rewrite cache",
+        "Integration: end-to-end ranking order"
+      ],
+      "delivered": null,
+      "base_sha": "1111111111111111111111111111111111111111",
+      "spawned_at_history_len": 18,
+      "main_sha_at_spawn": "2222222222222222222222222222222222222222",
+      "journal": "docs/graph-runs/parallel-live-07-08-2026/journals/milestone-3.jsonl",
+      "agent_id": "agent-3",
+      "progress": {
+        "at_node": "TEST",
+        "headline": "unit red — 2 failures in the reranker fixture; routing to DEBUG",
+        "seen_at": "2026-08-07T09:14:22Z"
+      },
+      "worktree": null
+    },
+    {
+      "id": 4,
+      "name": "Relevance console (UI)",
+      "branch": "rr/m4",
+      "deps": [
+        1
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": true,
+      "steps": [
+        "Side-by-side ranking diff view",
+        "Judgement capture form",
+        "Unit: diff reducer",
+        "Playwright: judge a query pair"
+      ],
+      "delivered": null,
+      "base_sha": "1111111111111111111111111111111111111111",
+      "spawned_at_history_len": 18,
+      "main_sha_at_spawn": "2222222222222222222222222222222222222222",
+      "journal": "docs/graph-runs/parallel-live-07-08-2026/journals/milestone-4.jsonl",
+      "agent_id": "agent-4",
+      "progress": {
+        "at_node": "IMPLEMENT",
+        "headline": "3 of 5 steps committed",
+        "seen_at": "2026-08-07T04:02:00Z"
+      },
+      "worktree": null
+    },
+    {
+      "id": 5,
+      "name": "Online eval + rollout flags",
+      "branch": null,
+      "deps": [
+        2,
+        3,
+        4
+      ],
+      "pr": null,
+      "is_fix": false,
+      "touches_ui": true,
+      "steps": [
+        "Interleaving experiment runner",
+        "Flag-gated rollout",
+        "Dashboards"
+      ],
+      "delivered": null
+    }
+  ],
+  "integration": {
+    "branch": null,
+    "merged": [
+      1
+    ]
+  },
+  "attempts": {
+    "TEST:1": 1,
+    "GATE_A:1": 1,
+    "GATE_B:1": 1,
+    "TEST:2": 2,
+    "TEST:3": 1,
+    "GATE_A:3": 1,
+    "E2E:4": 0
+  },
+  "qa": {
+    "verdict": null,
+    "qa_plan_path": null,
+    "bugs": []
+  },
+  "monitor": {
+    "spawned": true,
+    "verified_at_history_len": 16,
+    "respawns": 0
+  },
+  "skipped_gates": [
+    {
+      "node": "E2E",
+      "reason": "milestone 2 is service-only (touches_ui=false) and the console it would drive lands in milestone 4 — no journeys exist to run yet. Recorded, never counted as passed",
+      "at_milestone": 2
+    }
+  ],
+  "history": [
+    {
+      "from": "[start]",
+      "to": "INTAKE",
+      "guard": "run created",
+      "milestone": null,
+      "observation": "existing search service, 2.1k commits"
+    },
+    {
+      "from": "INTAKE",
+      "to": "PLAN",
+      "guard": "spec supplied",
+      "milestone": null,
+      "observation": "design doc handed in with the request; stack both, has_ui true"
+    },
+    {
+      "from": "PLAN",
+      "to": "STRATEGY",
+      "guard": "plan_path on disk and every milestone has its required steps and user approved",
+      "milestone": null,
+      "observation": "5 milestones; 2, 3 and 4 all depend only on 1 — three independent branches once the feature store lands"
+    },
+    {
+      "from": "STRATEGY",
+      "to": "BRANCH",
+      "guard": "branching in {A,B,C} and deps acyclic",
+      "milestone": null,
+      "observation": "strategy C chosen for the fan-out: rr/m2, rr/m3 and rr/m4 run concurrently off main after m1 merges"
+    },
+    {
+      "from": "BRANCH",
+      "to": "IMPLEMENT",
+      "guard": "branch checked out",
+      "milestone": 1,
+      "observation": "rr/m1 cut from main at 4d19aa2"
+    },
+    {
+      "from": "IMPLEMENT",
+      "to": "TEST",
+      "guard": "all milestone steps committed",
+      "milestone": 1,
+      "observation": "embedding cache + extraction pipeline, 4 commits"
+    },
+    {
+      "from": "TEST",
+      "to": "GATE_A",
+      "guard": "unit and integration not red",
+      "milestone": 1,
+      "observation": "54/54 green on the 1st attempt"
+    },
+    {
+      "from": "GATE_A",
+      "to": "GATE_B",
+      "guard": "…the same AND has_ui == false",
+      "milestone": 1,
+      "observation": "clean; 1 nit on cache key naming, applied"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes AND a milestone remains AND integration.branch == null",
+      "milestone": 1,
+      "observation": "milestone 1 done and merged — 2, 3 and 4 all unblocked at once; three branches opened"
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes and a milestone remains and integration.branch == null",
+      "milestone": 2,
+      "observation": "Milestone 1 gated clean; reserving the branch for 2 and writing its spawn record before the Agent call.",
+      "evidence": null,
+      "verified": null
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes and a milestone remains and integration.branch == null",
+      "milestone": 3,
+      "observation": "Milestone 2 gated clean; reserving the branch for 3 and writing its spawn record before the Agent call.",
+      "evidence": null,
+      "verified": null
+    },
+    {
+      "from": "GATE_B",
+      "to": "BRANCH",
+      "guard": "tests green after review-and-fixes and a milestone remains and integration.branch == null",
+      "milestone": 4,
+      "observation": "Milestone 3 gated clean; reserving the branch for 4 and writing its spawn record before the Agent call.",
+      "evidence": null,
+      "verified": null
+    }
+  ],
+  "cursor": 3,
+  "in_flight": [
+    2,
+    3,
+    4
+  ],
+  "debug_return_to": null,
+  "stopped": null
+}
