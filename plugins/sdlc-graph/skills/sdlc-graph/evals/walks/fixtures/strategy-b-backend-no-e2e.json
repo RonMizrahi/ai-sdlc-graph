@@ -140,7 +140,7 @@
           "answer": "B / continuous / auto_open_mr true"
         }
       ],
-      "observation": "auto_open_mr answered TRUE, which is what disarms the PR stop later. No standards handshake — backend stack, so front-react-development is never dispatched.",
+      "observation": "auto_open_mr answered TRUE, which is what disarms the PR stop later. No standards handshake — backend stack, so no frontend standards skill is ever dispatched.",
       "set": {
         "in_flight": [
           1

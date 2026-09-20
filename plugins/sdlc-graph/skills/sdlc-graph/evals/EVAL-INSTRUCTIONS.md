@@ -84,8 +84,21 @@ def _(spec):
   retired rather than fixed: a rewrite of the paragraph explaining a removal reads, to a regex,
   exactly like the removal coming back.
 
-`spec` holds `nodes`, `edges`, `state`, `skill`, `e2e`, and `published` (every countable surface in
-the plugin, keyed by relative path).
+`spec` holds `nodes`, `edges`, `state`, `skill`, `e2e`, `published` (every countable surface in
+the plugin, keyed by relative path) and **`plugin_files`** (every readable file in the plugin, same
+keying).
+
+**Pick the narrower one that answers your question.** `published` is a curated glob and is right for
+a *claim* — only a published surface can publish a stale count. `plugin_files` is right for a
+question about what the plugin may **contain**, and it exists because `published` reaches neither
+`evals/walks/fixtures/*.json` nor most of `nodes/`, which is where two of the eight unpublished
+plugin names survived a hand sweep that had found the other six.
+
+> **A check over `plugin_files` matches its own explanation.** `no-unpublished-plugin-name-ships-in-this-plugin`
+> scans the file it is written in, so its patterns spell the forbidden names with a bracketed hyphen
+> — `nestjs-backend[-]standards` — and its controls build them by concatenation. If you ever explain
+> that removal in prose, describe it; do not spell it. The same goes for a commit message a reader
+> will grep.
 
 ---
 

@@ -365,6 +365,7 @@ two nodes still leaves a file that says exactly where the run was.
 |---|---|
 | `sdlc-graph` (skill) | `sdlc-graph:sdlc-graph` — command only |
 | `graph-run-reviewer` (skill) | `sdlc-graph:graph-run-reviewer` — reviews a FINISHED run and writes the evals it should have had |
+| `onboarding` (skill) | `sdlc-graph:onboarding` — the tooling checklist: which of the third-party tools in [`docs/DEPENDENCIES.md`](docs/DEPENDENCIES.md) this session can invoke, the install line for each it cannot, and what a run does without each one. **`INTAKE` invokes it on every run.** Advisory: it installs nothing, emits nothing, and can never stop or delay a run |
 | `sdlc-graph-milestone` (agent) | never invoked by hand — the orchestrator spawns one per milestone |
 
 **There is no live auditor.** Up to 0.11.1 this plugin spawned a read-only monitor agent alongside every run.
@@ -396,7 +397,7 @@ Two different relationships, deliberately:
 
 | | Plugin / skill | Why |
 |---|---|---|
-| **Live dispatch** — always the current installed version | `nestjs-backend-standards` · `front-react-development` | `IMPLEMENT` writes code against them. A **copied coding standard that drifts is worse than the coupling** — you'd review code against a stale rulebook. **These two are the author's own private plugins and are not installable from this repository**; absent, `IMPLEMENT` writes code against the project's own conventions and the absence is recorded. |
+| **Live dispatch** — always the current installed version | **the project's own installed coding-standards skill** — backend, frontend, or both | `IMPLEMENT` writes code against it. A **copied coding standard that drifts is worse than the coupling** — you'd review code against a stale rulebook. **This plugin names no particular standards skill and bundles none**: it dispatches whatever the project has installed for its stack. Absent, `IMPLEMENT` writes code against the project's own conventions and the absence is recorded in `skipped_gates[]`. |
 | **Live dispatch** — external | `claude-md-improver` (claude-md-management, **not in this bundle**) | `CLOSE_OUT` validates the CLAUDE.md update. Absent → recorded, update done by hand. |
 | **Quality-gate tools** | `pr-review-toolkit:code-reviewer` · `code-simplifier` · `security-review` | `GATE_A`. Each absent one is its own `skipped_gates[]` entry. |
 | **Whole-diff reviewer** | the built-in `code-review`, as `code-review <main>..<branch> high` | `GATE_B`. Takes a **branch range** and needs **no open PR** — which is the point, since `GATE_B` always runs before `PR`. |
@@ -411,6 +412,12 @@ Two different relationships, deliberately:
 > identical" is the wrong default.
 
 Anything absent is **recorded**, never skipped quietly.
+
+**The roster — every tool, the node that dispatches it, what a run does without it, and how to
+install it — is [`docs/DEPENDENCIES.md`](docs/DEPENDENCIES.md), and it is the only such list in this
+plugin.** `/sdlc-graph:onboarding` walks it and reports what this session can actually invoke;
+`INTAKE` invokes that on every run. It is advisory — nothing routes on it, nothing waits for it, and
+it can never stop a run.
 
 ## Related
 

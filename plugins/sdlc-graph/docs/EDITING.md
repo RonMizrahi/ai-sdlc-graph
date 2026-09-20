@@ -16,8 +16,11 @@ The tree is grouped by kind: `graph/` (the model) · `nodes/` (the eight procedu
 `evals/lib/paths.py`** — nothing counts `../` for itself, because the restructure invalidated every
 such count and three of them broke silently, globbing a directory that no longer existed.
 
-The plugin ships **two** skills now: `sdlc-graph` drives a run, `graph-run-reviewer` reviews a
-finished one and writes the evals it should have had. And it ships **its own hook** —
+The plugin ships **three** skills now: `sdlc-graph` drives a run, `graph-run-reviewer` reviews a
+finished one and writes the evals it should have had, and `onboarding` reports which optional tools
+this session can invoke and what a run loses without each. `INTAKE` invokes that one on **every**
+run; it is advisory, emits nothing, and cannot stop a run. **Its roster is `docs/DEPENDENCIES.md`
+and that file is the only copy** — a second list in the skill is a check failure, not a style note. And it ships **its own hook** —
 `hooks/hooks.json` — which snapshots every state a `--trace` run passes through.
 
 ## 1. The deterministic evals run on every edit — the rest are yours

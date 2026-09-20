@@ -156,7 +156,7 @@ before the shared tail begins.**
 |---|---|
 | **owner** | inline |
 | **inputs** | user request; repo working tree |
-| **action** | Classify the request. Detect stack from `package.json` and workspace layout, `has_ui` from UI framework presence, `main_branch` from the repo default, **`unborn_main` from whether that branch has any commits** (`git rev-parse --verify <main_branch>` failing means unborn — normal for a fresh `git init`), and `host` from the `origin` remote — **`none` when there is no remote.** Then, **in this order**: append `docs/graph-runs/` to the project's `.gitignore` (create it if absent; no-op if already present), mint `run_id` as `<subject>-<DD>-<MM>-<YYYY>` with **`<subject>` at most five words from the opening request**, and create `docs/graph-runs/<run-id>/state.json`. |
+| **action** | Classify the request. Detect stack from `package.json` and workspace layout, `has_ui` from UI framework presence, `main_branch` from the repo default, **`unborn_main` from whether that branch has any commits** (`git rev-parse --verify <main_branch>` failing means unborn — normal for a fresh `git init`), and `host` from the `origin` remote — **`none` when there is no remote.** Then, **in this order**: append `docs/graph-runs/` to the project's `.gitignore` (create it if absent; no-op if already present), mint `run_id` as `<subject>-<DD>-<MM>-<YYYY>` with **`<subject>` at most five words from the opening request**, and create `docs/graph-runs/<run-id>/state.json`. **Then invoke `/sdlc-graph:onboarding`** and relay its checklist — advisory, on every run, and neither waited on nor recorded. |
 | **emits** | `run_id`, `schema_version`, `trace` (from `--trace`; **`false` when absent**), `context.{stack,has_ui,main_branch,unborn_main,host}`, `context.qa_env` (where discoverable), `spec_path` (if supplied), `status: RUNNING` |
 | **exits** | `no spec` → `SPEC` (1) · `spec supplied` → `PLAN` (2) · *not a git repo* → on failure |
 | **on failure** | **not a git repo → `BLOCKED`.** An undetectable stack is **NOT** a failure — see below. |
@@ -171,6 +171,35 @@ before the shared tail begins.**
 > `has_ui` decides whether the `E2E` node exists for the whole run, so **state it explicitly in the
 > intake summary**. If it is still `null` by `STRATEGY`, that node resolves it and edge 6 will not
 > fire until it has.
+
+> **`/sdlc-graph:onboarding` is invoked here, on every run.** Preflight resolves each node's
+> `requires` as that node comes up, which tells you a tool was missing *after* the gate it would
+> have run in. The checklist answers the same question for the whole roster before the run starts —
+> every tool on it third-party and optional, none of it a dependency of this graph. Relay it and
+> keep going.
+>
+> **The check is automatic; installing never is.** The checklist is read-only: it installs nothing,
+> downloads nothing, enables nothing and changes no configuration. When a row comes back missing it
+> says so, prints the install line, says what the run loses without it, and **hands the decision
+> back to the human** — who may run it now, later, or never. Neither this node nor any other may
+> install a tool, offer to install one, or treat a missing row as licence to "just set it up".
+> A run proceeds identically either way, and the absence is recorded where absences are recorded.
+>
+> **It is advisory, and every word of that is load-bearing.** It emits nothing, so nothing in this
+> contract's `emits` row comes from it. `INTAKE` does not wait on its result, does not route on it,
+> and records nothing from it: a missing tool is still recorded exactly as it always was — at the
+> node that needed it, by preflight, in `skipped_gates[]`. A run whose checklist is entirely red is
+> not degraded by the checklist; it is a run that will ledger more.
+>
+> **It does not stop, block, delay or halt a run, and it is not a human stop.** There are six and
+> this is not one of them. It asks nothing and waits for no answer; if it fails, is unavailable, or
+> returns nothing, **say so in one line and continue to the exit guard in the same turn** — an
+> advisory that can fail a run is not an advisory. *"Runs every time"* never means *"may stop the
+> run"*.
+>
+> **It is cheap on purpose** — one shell call, no network, no per-tool probing — because it is paid
+> on every run. Its roster lives in `docs/DEPENDENCIES.md`, which is the only list of these tools
+> in the plugin.
 
 ### `SPEC`
 
@@ -272,7 +301,7 @@ asking is the same defect as inferring it instead of asking.
 > | `branching` | — the loop's shape |
 > | `auto_open_mr` | `plan-guidelines` says *ask before creating the MR*; `pr-mr-prepare` says *open it automatically, don't pause*. Two source skills, one conflict, settled once |
 > | `run_mode` | `continuous` (the six stops only) · `checkpoint` (**plus a stop after every milestone's `GATE_B`**) · `on-exception` (plus a stop whenever a gate is skipped, a bound is exhausted, or a bundle was rejected). **Declared stops, not invented ones** |
-> | `standards_handshake` | `front-react-development` runs its own handshake ending in *"NEVER start the actual task work until the user has approved"* — a fifth interactive gate injected inside a node the graph declares non-interactive. The graph does not get to ignore another skill's approval rule; it gets to satisfy it early |
+> | `standards_handshake` | a coding-standards skill may run its own handshake, ending in *"NEVER start the actual task work until the user has approved"* — a fifth interactive gate injected inside a node the graph declares non-interactive. The graph does not get to ignore another skill's approval rule; it gets to satisfy it early |
 > | **`has_ui`, when `null`** | the tri-state would reach `GATE_A`, where `NOT null` is true and the run would **erase `E2E` structurally with no ledger entry**. Resolving it here costs one question; routing around it cost an edge, an itinerary and four surfaces |
 
 > **`checkpoint` used to say "after every `MERGE`", and that stopped being a checkpoint.** It was
@@ -309,7 +338,7 @@ asking is the same defect as inferring it instead of asking.
 
 | | |
 |---|---|
-| **owner** | **milestone agent** → **live dispatch** `nestjs-backend-standards` (backend) / `front-react-development` (frontend); both for `stack == both`. The agent dispatches the standards skill itself, so it is still the *installed* version and never a copy. |
+| **owner** | **milestone agent** → **live dispatch** of the project's own installed coding-standards skill for `context.stack` — the backend one, the frontend one, or both when `stack == both`. The agent dispatches it itself, so it is still the *installed* version and never a copy. **The graph names no standards skill and bundles none**; what gets dispatched is whatever the project has. |
 | **inputs** | `cursor`, `milestones[cursor].steps`, `context.stack`, `context.standards_handshake` |
 | **action** | Implement every step **this node owns** (see below) on the milestone's branch, committing as it goes. **The final commit and the `IMPLEMENT → TEST` state write are one act, in one turn** — see *The commit-and-record rule*. No scout pass, no forced standards reload. |
 | **emits** | the `IMPLEMENT → TEST` transition, as part of the same node rather than a later decision |

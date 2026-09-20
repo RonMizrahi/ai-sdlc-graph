@@ -1,8 +1,8 @@
 {
   "name": "sdlc-graph",
   "displayName": "SDLC Graph",
-  "version": "1.0.3",
-  "description": "The SDLC as a guarded graph, with the milestone loop delegated to a milestone agent per milestone (per worktree under strategy C) whose bundle the orchestrator verifies against git before recording it. A run is one gitignored directory — state, per-milestone journals, and with --trace every state it passed through. Ships a run reviewer that turns a finished run into the evals it should have had. Command-invoked.",
+  "version": "1.1.0",
+  "description": "The SDLC as a guarded graph, with the milestone loop delegated to a milestone agent per milestone (per worktree under strategy C) whose bundle the orchestrator verifies against git before recording it. A run is one gitignored directory — state, per-milestone journals, and with --trace every state it passed through. Ships a run reviewer that turns a finished run into the evals it should have had, and an advisory onboarding skill that reports which optional tools this session can invoke and what a run does without each. Command-invoked.",
   "author": {
     "name": "Ron Mizrahi",
     "email": "ronmizr@gmail.com"

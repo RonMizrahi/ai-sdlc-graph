@@ -78,6 +78,23 @@ GW = f"{SK}/evals/walks/graph_walk.py"
 # only in workflow-dispatch.md is a contract nobody is instructed to follow.
 MA = "agents/sdlc-graph-milestone.md"
 
+# The third skill in this plugin — advisory, named at INTAKE, and invoked by nobody during a run.
+OB = "skills/onboarding/SKILL.md"
+# ...and the roster it derives from. The doc is the single source of truth; the skill walks it.
+DEP = "docs/DEPENDENCIES.md"
+# The QA node's bring-up step, and one walk fixture: two surfaces the `published` glob never
+# reached, which is exactly where two of the eight unpublished-plugin mentions were hiding.
+QN = f"{SK}/nodes/qa-engineer-node.md"
+FX = f"{SK}/{paths.REL_DIRS['fixtures']}/strategy-b-backend-no-e2e.json"
+
+# The three names `no-unpublished-plugin-name-ships-in-this-plugin` forbids, assembled at runtime
+# from fragments. THIS FILE IS INSIDE THE CORPUS THAT CHECK SCANS, so a literal here would redden a
+# clean tree; and `grep -rn "<name>" .` over the repository — the check a human actually runs — has
+# to come back empty too. Concatenation satisfies both and still plants the real string in the copy.
+NAME_A = "nestjs-backend" + "-standards"
+NAME_B = "front-react" + "-development"
+NAME_C = "developer-experience:local" + "-deploy"
+
 
 def swap_gate_a_has_ui_predicates(root):
     """Move `has_ui == false` from its row to the other GATE_A exit, leaving the prose citing the
@@ -711,6 +728,104 @@ CONTROLS += [
      "the journal stops declaring itself telemetry — a per-agent record is exactly the artefact "
      "that starts being cited as proof a gate ran",
      sub(W, "telemetry, not evidence", "the second record", -1)),
+
+    # ── the unpublished plugin names, and the advisory that replaced the discovery gap ──────────
+    ("no-unpublished-plugin-name-ships-in-this-plugin",
+     "the IMPLEMENT owner row names an unpublished standards plugin again — the mention that read "
+     "as a dependency, in the contract that dispatches it",
+     sub(N, "**live dispatch** of the project's own installed coding-standards skill",
+            "**live dispatch** `" + NAME_A + "`")),
+    ("no-unpublished-plugin-name-ships-in-this-plugin",
+     "a WALK FIXTURE's observation names one — the surface `published` never reached, and one of "
+     "the two places the names actually survived the first sweep",
+     sub(FX, "so no frontend standards skill is ever dispatched",
+             "so " + NAME_B + " is never dispatched")),
+    ("no-unpublished-plugin-name-ships-in-this-plugin",
+     "the QA node's bring-up step names one as the way to start the stack — a node procedure, "
+     "which `published` does reach but which no check had ever read for this",
+     sub(QN, "(or whatever local-stack / deployment skill this project has installed)",
+             "(or the `" + NAME_C + "` skill if installed)")),
+
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the skill is renamed on one side only, so SKILL.md's run start invokes a command that "
+     "resolves to nothing",
+     sub(K, "/sdlc-graph:onboarding", "/sdlc-graph:setup", -1)),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the INTAKE contract stops naming it, so the roster is only ever discovered one ledger entry "
+     "at a time — the gap the checklist exists to close",
+     sub(N, "/sdlc-graph:onboarding", "/sdlc-graph:tools", -1)),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the invocation is trimmed out of INTAKE's `action` row while the note beside it still "
+     "explains the checklist — the section still names it, so every mention-scoped assertion "
+     "stays green, and the row an orchestrator actually executes no longer invokes anything. "
+     "This is the silent direction: the docs say every run, the graph runs it never",
+     sub(N, " **Then invoke `/sdlc-graph:onboarding`** and relay its checklist — advisory, on "
+            "every run, and neither waited on nor recorded.", "")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the INTAKE note drops the sentence saying the checklist installs nothing. It still runs every "
+     "run and still reports missing tools — and nothing in the contract now stands between that "
+     "report and an agent that decides to be helpful and install them",
+     sub(N, "it installs nothing,\n> downloads nothing, enables nothing and changes no configuration.",
+            "it reports what is missing.")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the hand-back goes: the note no longer says the decision belongs to the human, so a missing "
+     "row reads as a task the graph should close rather than a choice it should present",
+     sub(N, "**hands the decision\n> back to the human**", "moves on")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "`disable-model-invocation: true` is copied over from the graph's own frontmatter — the "
+     "checklist then reads as wired at INTAKE and can be invoked by nobody",
+     sub(OB, "disable-model-invocation: false", "disable-model-invocation: true")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "`user-invocable` goes false — a human can no longer reach it outside a run",
+     sub(OB, "user-invocable: true", "user-invocable: false")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the skill stops saying it installs nothing, and a report of missing tools starts reading as "
+     "a promise to fetch them",
+     sub(OB, "installs nothing", "installs little", -1)),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "INTAKE keeps invoking it every run and drops the sentence saying it cannot stop, block or "
+     "delay one — 'runs every time' read as 'may stop the run', which is the seventh human stop",
+     sub(N, "**It does not stop, block, delay or halt a run, and it is not a human stop.** ", "")),
+    ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+     "the note survives and INTAKE's `requires` row gains the skill — preflight then resolves it "
+     "and a miss is ledgered, which is a gate, the one thing it may never become",
+     sub(N, "| **requires** | `git` |", "| **requires** | `git`, the `onboarding` skill |")),
+
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "a tool the graph dispatches by BARE name — `code-simplifier`, Gate A step 2 — is dropped "
+     "from the roster. The qualified ids still all resolve, so a check that only reads "
+     "`plugin:skill` stays green while the doc quietly stops covering a third of the dispatch "
+     "targets, and the checklist derived from it stops asking about them",
+     sub(DEP, "code-simplifier", "code-simplifer-typo", -1)),
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "the skill re-grows a roster row the doc already owns — two copies of one list, and the one a "
+     "human opens is the doc",
+     sub(OB, "| Source | What it settles |",
+             "| `code-simplifier` | Gate A step 2 |\n| Source | What it settles |")),
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "the skill lists a tool no row of the doc has — the two disagree, in the direction where the "
+     "checklist reports on something the roster has never heard of",
+     sub(OB, "| Source | What it settles |",
+             "| `some-other:reviewer` | Gate A step 9 |\n| Source | What it settles |")),
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "an install line moves into the skill, where it can drift from the roster's",
+     sub(OB, "```bash\nclaude plugin list --json",
+             "```bash\n/plugin install code-simplifier@claude-plugins-official\nclaude plugin list --json")),
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "the skill stops naming the doc, so whatever it reports is a list of its own",
+     sub(OB, "docs/DEPENDENCIES.md", "the dependency notes", -1)),
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "a roster row loses the column the whole file exists for — what a run does without that tool",
+     sub(DEP, "| The simplification pass is ledgered. |", "|  |")),
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "a tool the node contracts dispatch is dropped from the roster entirely — the reverse "
+     "direction: present in the graph, absent from the file a human reads",
+     sub(DEP, "`claude-md-management:claude-md-improver`", "`the CLAUDE.md improver`", -1)),
+    ("onboarding-checklist-derives-from-the-dependency-doc",
+     "the roster section is renamed, so the parser reads an empty table and every row-level check "
+     "in here goes quiet — a glob that matches nothing, arriving through a heading",
+     sub(DEP, "## The roster", "## Tools")),
+
 ]
 
 

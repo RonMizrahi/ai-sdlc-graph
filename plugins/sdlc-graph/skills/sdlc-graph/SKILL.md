@@ -151,6 +151,13 @@ state schema. Do not work from memory of this file's summary; the reference file
   tracked file every later `git status` has to explain away. That one `.gitignore` edit is committed
   with the spec on the first branch `BRANCH` creates. **State `has_ui` explicitly in the intake
   summary** — it decides whether the `E2E` node exists for the entire run.
+  **Then invoke `/sdlc-graph:onboarding` — every run, no exceptions — and relay its checklist.**
+  It reports, tool by tool, what this session can actually invoke and the install line for each gap.
+  Every tool on that roster is **third-party and optional**; the graph requires `git` and nothing
+  else. **It is advisory: it emits nothing, you do not wait on it, you do not route on it, and it
+  can never stop, delay or block the run — it is not a seventh human stop.** If it fails or returns
+  nothing, say so in one line and continue in the same turn. Preflight (§ 2) still ledgers every
+  absence at the node that needed the tool; the checklist only says so earlier.
 - **`resume` / `status`** → **check `schema_version` first**, then read the state file and
   **re-derive the current node's progress from the world** — was the branch created? are the tests
   green? is the PR open? has it merged? The filesystem, git, and the host are the truth; the state
@@ -239,12 +246,16 @@ Dispatch per its `owner`:
   **If the copy is absent**, see *If a node file is missing* below. The four twins the agent loads —
   `plan-guidelines` § BRANCH, `testing-standards`, `code-quality-pipeline`, `systematic-debugging` —
   are loaded **by the agent, not by you**; loading them yourself is how a milestone gets driven twice.
-- **live dispatch** — invoke the named installed skill (`nestjs-backend-standards`,
-  `code-simplifier`, `security-review`, `claude-md-improver`, …). **Coding standards and external
-  tools are always the current installed version, never a copy** — reviewing code against a stale
-  rulebook is worse than the coupling a copy would remove. **If a dispatched skill runs its own
-  approval handshake** — `front-react-development` does — supply `context.standards_handshake`,
-  settled once at `STRATEGY`. Satisfy the other skill's rule early; never silently override it.
+- **live dispatch** — invoke the installed skill by name (**the project's own coding-standards
+  skill** for the detected stack, `code-simplifier`, `security-review`, `claude-md-improver`, …).
+  **Coding standards and external tools are always the current installed version, never a copy** —
+  reviewing code against a stale rulebook is worse than the coupling a copy would remove. This
+  plugin bundles no coding standard and names none: whatever the project has installed for its
+  stack is what `IMPLEMENT` dispatches, and nothing installed is a `skipped_gates[]` entry.
+  **If a dispatched skill runs its own approval handshake** — a coding-standards skill may end one
+  with *"never start the actual work until the user has approved"* — supply
+  `context.standards_handshake`, settled once at `STRATEGY`. The graph does not get to ignore
+  another skill's approval rule: satisfy it early, never silently override it.
 - **workflow script** — `GATE_A` fans out via `workflows/gate-a.workflow.js`; see
   `subagents/workflow-dispatch.md`.
 - **`inline`** — `INTAKE`, `CONSOLIDATE`, `MERGE`, `VERDICT`, `DONE`: this skill performs them.
@@ -471,13 +482,14 @@ skipped, a bound is exhausted, or a bundle was rejected. All three are settled a
 | `BLOCKED` | Something failed. `stopped` holds the node, guards tested, and what was tried. Resumable. |
 | `HANDOFF` | A deliberate stop, nothing wrong — strategy D only. Needs action, not diagnosis. |
 
-## Companions — the viewer and the evals
+## Companions — the viewer, the tooling check, and the evals
 
-Two things sit alongside the graph. **Neither is a node, and neither may gate a run.**
+Three things sit alongside the graph. **None is a node, and none may gate a run.**
 
 | | What it is | When |
 |---|---|---|
 | **`sdlc-graph-viewer`** — a separate, optional plugin | Live and snapshot HTML views of the run; one server per project. | Offer at run start when installed; one line and carry on when not. Never a gate. |
+| **`/sdlc-graph:onboarding`** — a skill in this plugin | The tooling checklist: which of the roster in `docs/DEPENDENCIES.md` this session can invoke, the install line for each gap, and what a run does without it. **All of it third-party and optional.** | **Invoked at `INTAKE`, on every run**, and by a human any time. **It installs nothing, emits nothing and gates nothing** — it cannot stop or delay a run. |
 | **`evals/`** — the graph checked against itself | The spec files agreeing, scripted runs covering every node and every transition, the offline auditor's own self-tests, and the Gate A script's runtime harness. | `python3 evals/run_all.py`, and before changing anything in this plugin. |
 
 **There is no live auditor.** This graph used to spawn one alongside every run; it does not any more,

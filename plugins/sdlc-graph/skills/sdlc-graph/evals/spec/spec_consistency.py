@@ -2363,6 +2363,298 @@ def _(spec):
     return bad and "; ".join(bad)
 
 
+# ======================================================================================
+# What this plugin may say out loud, and what it must still point at.
+# ======================================================================================
+
+# The plugins this graph used to name at `IMPLEMENT` and `QA` are unpublished — they exist on their
+# author's machine and nowhere anyone reading this repository can install from. Naming one in a
+# public repo advertises something nobody can get and, worse, reads as a dependency: three surfaces
+# said "the author's own private plugins" beside a row headed **Dependencies**.
+#
+# **Each pattern below carries a bracketed hyphen on purpose.** This file lives inside the corpus it
+# scans, so a literal here would make a clean tree red — and `grep -rn "<name>" .` over the whole
+# repository, which is the check a human runs, must also come back empty. `[-]` matches a literal
+# hyphen and nothing else, so the regex finds the name without spelling it.
+UNPUBLISHED_PLUGIN_NAMES = (
+    r"nestjs-backend[-]standards",
+    r"front-react[-]development",
+    r"local[-]deploy",
+)
+
+
+@check("no-unpublished-plugin-name-ships-in-this-plugin",
+       "eight surfaces named three of the author's unpublished plugins — a README row under the "
+       "heading **Dependencies**, the `IMPLEMENT` owner row, the `standards_handshake` rationale in "
+       "two files, the QA node's bring-up step, and a walk fixture's `observation`. Every one was "
+       "either unreachable advertising or an outright claim that this graph depends on software the "
+       "reader cannot install. The mechanism is the point and stays: `IMPLEMENT` live-dispatches "
+       "**whatever standards skill the project has**, and its absence is ledgered. The names were "
+       "never load-bearing. SCOPE: this plugin only — a plugin may not read above its own root, so "
+       "the repo README and CLAUDE.md are covered by the same grep run by hand")
+def _(spec):
+    corpus = spec.get("plugin_files")
+    if not corpus:
+        return "the plugin-wide corpus is empty, so this check is scanning nothing"
+    hits = []
+    for path, text in sorted(corpus.items()):
+        for pattern in UNPUBLISHED_PLUGIN_NAMES:
+            for n, line in enumerate(text.splitlines(), 1):
+                found = re.search(pattern, line)
+                if found:
+                    hits.append(f"{path}:{n} names `{found.group(0)}`")
+    return hits and (
+        f"{len(hits)} mention(s) of an unpublished plugin, which nobody reading this repository can "
+        "install — dispatch the project's installed skill by role instead of by name: "
+        + "; ".join(hits[:10]))
+
+
+@check("onboarding-runs-at-every-run-start-and-still-cannot-gate",
+       "every optional tool this graph dispatches to used to be discovered at the node that needed "
+       "it — you learned Gate A had no simplifier from the ledger entry Gate A wrote. The "
+       "`onboarding` checklist answers the whole roster at `INTAKE` instead, on every run, and the "
+       "danger in that is the exact opposite of the one it solves: a thing the graph invokes every "
+       "time, at node one, is one sentence away from being read as a seventh human stop — in a "
+       "graph whose first rule is that there are six. So all three halves are checked: that it is "
+       "still invoked, that it is still INVOCABLE by the orchestrator at all, and that the contract "
+       "still says in words it can never stop, block or delay the run")
+def _(spec):
+    corpus = spec.get("plugin_files") or {}
+    bad = []
+
+    skill = corpus.get("skills/onboarding/SKILL.md")
+    if skill is None:
+        return ("skills/onboarding/SKILL.md is gone — `INTAKE` invokes a command that no longer "
+                "resolves, on every run")
+    head = skill.split("---")[1] if skill.startswith("---") else ""
+    if not re.search(r"^name:\s*onboarding\s*$", head, re.M):
+        bad.append("the skill's frontmatter does not declare `name: onboarding`, so "
+                   "`/sdlc-graph:onboarding` is not what it answers to")
+    if not re.search(r"^user-invocable:\s*true\s*$", head, re.M):
+        bad.append("the skill is not `user-invocable: true` — the way a human reaches it outside "
+                   "a run")
+    # The one that silently breaks the wiring. `sdlc-graph` itself sets this true, on purpose, and
+    # copying that line here would leave INTAKE invoking a skill no model is allowed to invoke —
+    # a checklist that reads as wired and runs never.
+    if re.search(r"^disable-model-invocation:\s*true\s*$", head, re.M):
+        bad.append("the skill sets `disable-model-invocation: true`, so the orchestrator cannot "
+                   "invoke it — `INTAKE` would name a checklist that never runs")
+    if not re.search(r"installs? nothing", skill, re.I):
+        bad.append("the skill no longer says it installs nothing — a skill cannot run "
+                   "`/plugin install`, and a reader who expects it to will read a report as a "
+                   "failure to act")
+    if not re.search(r"gates? nothing|never (?:a )?gates?\b|blocks? nothing", skill, re.I):
+        bad.append("the skill no longer says it gates nothing")
+
+    if "/sdlc-graph:onboarding" not in spec["skill"]:
+        bad.append("SKILL.md never names `/sdlc-graph:onboarding`, so the run start that is "
+                   "supposed to invoke it does not")
+
+    # The INTAKE contract, and only it — this belongs at the node where the run begins, and a
+    # mention that drifted into some other section is a mention `INTAKE` does not make.
+    nodes = spec["nodes"]
+    i = nodes.find("### `INTAKE`")
+    j = nodes.find("\n### ", i + 1) if i >= 0 else -1
+    intake = nodes[i:j if j > 0 else len(nodes)] if i >= 0 else ""
+    if "/sdlc-graph:onboarding" not in intake:
+        bad.append("nodes.md § INTAKE does not name `/sdlc-graph:onboarding` — run start is where "
+                   "the whole roster is answered at once, instead of one ledger entry at a time")
+    else:
+        # NAMED IN THE SECTION IS NOT INVOKED BY THE NODE. An orchestrator executes the `action`
+        # row; the note beside it explains the row. Delete the invocation from `action` and leave
+        # the note, and every mention-scoped check still passes while the checklist runs never —
+        # the "runs every time" wiring failing silently in the one direction this check exists to
+        # prevent. So the row that is executed has to carry it, not merely the section around it.
+        action = next((ln for ln in intake.splitlines()
+                       if ln.lstrip().startswith("| **action**")), "")
+        if not action:
+            bad.append("nodes.md § INTAKE has no `action` row to read — the contract's shape "
+                       "changed and this check can no longer see what the node executes")
+        elif "/sdlc-graph:onboarding" not in action:
+            bad.append("INTAKE names `/sdlc-graph:onboarding` somewhere in its section but NOT in "
+                       "its `action` row — the row is what an orchestrator executes, so the "
+                       "checklist documented as running every run would run never")
+        # SCOPED TO THE NOTE, never to the section. `INTAKE`'s own prose says "not a git repo →
+        # BLOCKED" and "Only a missing git repo blocks" — read at section scope, the "cannot block
+        # a run" assertion is satisfied by the sentence describing the one thing that DOES block,
+        # which is this suite's commonest way of writing a check that cannot fail.
+        note = ""
+        run = []
+        for line in intake.splitlines():
+            if line.startswith(">"):
+                run.append(line)
+            else:
+                if any("/sdlc-graph:onboarding" in l for l in run):
+                    note = "\n".join(run)
+                run = []
+        if any("/sdlc-graph:onboarding" in l for l in run):
+            note = "\n".join(run)
+        if not note:
+            bad.append("INTAKE names the checklist but carries no note of its own about it — the "
+                       "constraints that keep 'runs every time' from meaning 'may stop the run' "
+                       "have nowhere to live")
+        else:
+            if not re.search(r"\binvoke[sd]?\b", note, re.I):
+                bad.append("INTAKE's note never says the checklist is INVOKED — 'mention the "
+                           "command' is the version this replaced, and it ran on no run at all")
+            if not re.search(r"every run|on every", note, re.I):
+                bad.append("INTAKE's note does not say it runs on EVERY run, which is the whole "
+                           "difference between a checklist and a thing someone remembers")
+            # The three words that keep "runs every time" from being read as "may stop the run".
+            for word in ("stop", "block", "delay"):
+                if not re.search(rf"(?:not|never|cannot|no)\b[^.]{{0,90}}\b{word}", note, re.I):
+                    bad.append(f"INTAKE's note never says the checklist cannot {word} a run — the "
+                               "seventh human stop starts exactly in that gap")
+            if not re.search(r"advisory", note, re.I):
+                bad.append("INTAKE's note does not call the checklist advisory")
+            # THE CHECK IS AUTOMATIC; THE INSTALL NEVER IS. A thing the graph runs unasked, at node
+            # one, that reports missing software, is one helpful sentence away from installing it —
+            # and an unasked-for install is a change to somebody's machine they did not choose. The
+            # contract has to say so where the wiring is declared, not only in the skill it calls.
+            if not re.search(r"(?:not|never|nothing|no)\b[^.]{0,120}\b(?:install|download|enable)",
+                             note, re.I):
+                bad.append("INTAKE's note never says the checklist installs nothing — it runs on "
+                           "every run and reports missing tools, and nothing here forbids the next "
+                           "reader from treating that report as licence to install them")
+            # SPELLED OUT, not merely "the note says `human` somewhere". The first version of this
+            # assertion matched `human|you|decision` anywhere in the note — and the note already
+            # said "tells you a tool was missing" and "is not a human stop", so it passed with the
+            # hand-back deleted. A control caught it. The words have to carry the meaning.
+            if not re.search(r"hands? (?:the )?decision|decision (?:is|belongs)|"
+                             r"the human (?:decides|chooses|may)|your call|human's to make",
+                             note, re.I):
+                bad.append("INTAKE's note never says the decision is the human's — a checklist that "
+                           "reports a gap and does not hand it back is one step from closing it "
+                           "itself")
+        row = re.search(r"^\|\s*\*\*requires\*\*\s*\|(.+)$", intake, re.M)
+        if row and "onboarding" in row.group(1):
+            bad.append("INTAKE's `requires` row lists the onboarding skill — a `requires` entry is "
+                       "preflighted and ledgered, which is precisely what an advisory may not be")
+        emits = re.search(r"^\|\s*\*\*emits\*\*\s*\|(.+)$", intake, re.M)
+        if emits and "onboarding" in emits.group(1):
+            bad.append("INTAKE's `emits` row claims something from the checklist — it emits "
+                       "nothing, and a field sourced from it would be a field the run routes on")
+        if re.search(r"^\|\s*\*\*human\*\*\s*\|", intake, re.M):
+            bad.append("INTAKE has grown a `human` row — the graph promises six stops and this "
+                       "node is not one of them")
+    return bad and "; ".join(bad)
+
+
+# A roster row in `docs/DEPENDENCIES.md`: five cells, and the tool ids are the code spans in the
+# first one. `gh` and `glab` share a row, which is why every span counts rather than the first.
+_ID = re.compile(r"`([A-Za-z][\w.:-]*)`")
+# Dispatch targets a session addresses WITHOUT a plugin prefix. Not a convenience list: each of
+# these is invoked by a `requires` row exactly as written, so each owes the roster a row.
+_BARE_DISPATCH = frozenset({"code-simplifier", "security-review", "code-review"})
+
+_INSTALL = re.compile(r"/plugin install\s+[\w./@-]+@[\w./@-]+")
+
+
+def _roster(doc):
+    """[(cells, ids)] for the table under § The roster. Empty when the section is gone."""
+    i = doc.find("## The roster")
+    if i < 0:
+        return []
+    j = doc.find("\n## ", i + 1)
+    rows = []
+    for line in doc[i:j if j > 0 else len(doc)].splitlines():
+        line = line.strip()
+        if not line.startswith("|") or set(line) <= set("|- :"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if cells and cells[0] in ("Tool (exact id)", "Tool"):
+            continue                                   # the header
+        rows.append((cells, _ID.findall(cells[0])))
+    return rows
+
+
+@check("onboarding-checklist-derives-from-the-dependency-doc",
+       "the roster of third-party tools existed three times over — a table in the plugin README, a "
+       "table in the repo README, and a third inside the checklist skill that reports on it. Three "
+       "hand-maintained copies of one list is three chances to disagree, and the one a human opens "
+       "is `docs/DEPENDENCIES.md`. So that file owns the roster and the skill WALKS it; this check "
+       "is what notices a copy growing back inside the skill, a tool listed in the skill that the "
+       "doc has never heard of, a doc row with nothing in its without-it or install cell, and a "
+       "`plugin:skill` the graph's own `requires` rows dispatch that the doc never mentions")
+def _(spec):
+    corpus = spec.get("plugin_files") or {}
+    doc = corpus.get("docs/DEPENDENCIES.md")
+    if doc is None:
+        return "docs/DEPENDENCIES.md is gone — the roster the checklist reads no longer exists"
+    skill = corpus.get("skills/onboarding/SKILL.md")
+    if skill is None:
+        return "skills/onboarding/SKILL.md is gone — nothing walks the roster"
+
+    bad = []
+    rows = _roster(doc)
+    if len(rows) < 6:
+        bad.append(f"§ The roster has {len(rows)} tool row(s) — the graph dispatches more than that, "
+                   "and a table that short usually means the section heading moved and this check "
+                   "is reading nothing")
+    doc_ids = {i for _, ids in rows for i in ids}
+    for cells, ids in rows:
+        label = ids[0] if ids else (cells[0][:40] if cells else "?")
+        if len(cells) < 5:
+            bad.append(f"the `{label}` row has {len(cells)} cells, not 5 — the checklist prints "
+                       "columns that are not there")
+            continue
+        if not cells[3]:
+            bad.append(f"the `{label}` row says nothing about what a run does without it, which is "
+                       "the column the whole file exists for")
+        if not cells[4]:
+            bad.append(f"the `{label}` row has no install cell — say 'built in', say the source, or "
+                       "say plainly that it cannot be asserted; leaving it blank says none of those")
+    if len(_INSTALL.findall(doc)) < 3:
+        bad.append("the roster carries fewer than three real `/plugin install <x>@<y>` lines, so "
+                   "the checklist has nothing to print for a gap")
+
+    # The skill must POINT at the doc...
+    if "docs/DEPENDENCIES.md" not in skill:
+        bad.append("the onboarding skill never names docs/DEPENDENCIES.md, so whatever it reports "
+                   "is a list of its own")
+    # ...and must keep no copy of it. An install line is the unmistakable tell.
+    if _INSTALL.search(skill):
+        bad.append("the onboarding skill carries its own `/plugin install` line(s) — install "
+                   "sources live in the roster, in one file, or the two will disagree")
+    # Nor a roster table. A table row whose first cell is a bare id is a roster row, whatever it is
+    # called; `claude plugin list --json` and the like have spaces and are not ids.
+    shape = re.compile(r"^[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?$")
+    for line in skill.splitlines():
+        line = line.strip()
+        if not line.startswith("|") or set(line) <= set("|- :"):
+            continue
+        first = line.strip("|").split("|")[0].strip()
+        for ident in _ID.findall(first):
+            if not shape.match(ident):
+                continue
+            if ident in doc_ids:
+                bad.append(f"the skill has re-grown a roster row for `{ident}` — the doc owns that "
+                           "row, and two copies of it can disagree")
+            else:
+                bad.append(f"the skill lists `{ident}` and no row of docs/DEPENDENCIES.md does — "
+                           "the two disagree, and the doc is the one a human reads")
+
+    # The other direction, and the only one that is mechanically checkable: a `plugin:skill` the
+    # node contracts actually dispatch must at least be MENTIONED in the doc. A tool the graph
+    # gained and the roster never heard of is a gap no reader of that file can see.
+    # QUALIFIED *AND* BARE. Half this graph's dispatch targets are named without a plugin
+    # prefix — `code-simplifier` (Gate A step 2), `security-review` (step 3), `code-review`
+    # (Gate B) — because that is how a session addresses them. A `":" in i` filter reads as
+    # "only real tool ids" and behaves as "skip three of the six", so dropping `code-simplifier`
+    # from the roster left every check green: the doc silently stopped covering a tool the graph
+    # dispatches, which is the one thing this check exists to notice.
+    dispatched = set()
+    for line in spec["nodes"].splitlines():
+        if line.lstrip().startswith("| **requires**"):
+            dispatched |= {i for i in _ID.findall(line)
+                           if ":" in i or i in _BARE_DISPATCH}
+    for ident in sorted(dispatched):
+        if ident not in doc:
+            bad.append(f"`{ident}` is dispatched by a node's `requires` row and appears nowhere in "
+                       "docs/DEPENDENCIES.md — the roster is missing a tool the graph uses")
+    return bad and "; ".join(bad)
+
+
 def do_list():
     """Every check and the real defect it guards against, printed from the registry.
 
@@ -2520,6 +2812,22 @@ def main():
                 spec["published"][str(path.relative_to(plugin_root))] = path.read_text(encoding="utf-8")
             except (ValueError, OSError):
                 continue
+
+    # THE WHOLE PLUGIN, as text. `published` is a curated glob — SKILL.md, the graph, the nodes,
+    # the agent, the rendered HTML — and it is the right corpus for a count claim, because only a
+    # published surface can publish a stale one. It is the wrong corpus for a question about what
+    # the plugin may CONTAIN: the three unpublished plugin names lived in a walk fixture and in a
+    # node procedure's step list, neither of which `published` reaches. A question about the whole
+    # plugin gets the whole plugin.
+    spec["plugin_files"] = {}
+    for f in sorted(plugin_root.rglob("*")):
+        if not f.is_file() or "__pycache__" in f.parts or ".scratch" in f.parts:
+            continue
+        try:
+            spec["plugin_files"][str(f.relative_to(plugin_root)).replace("\\", "/")] = \
+                f.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue          # a compiled or binary file says nothing about the prose
 
     failures = []
     for ident, why, fn in CHECKS:

@@ -13,6 +13,10 @@ a repository requires a manifest — the manifest is a bundle, not a catalog.
 - **A plugin's own rules live with the plugin.** Before changing the graph, read
   [`plugins/sdlc-graph/docs/EDITING.md`](plugins/sdlc-graph/docs/EDITING.md) — it comes before this
   file, and testing is [`plugins/sdlc-graph/docs/TESTING.md`](plugins/sdlc-graph/docs/TESTING.md).
+- **The tools the graph dispatches to are listed once**, in
+  [`plugins/sdlc-graph/docs/DEPENDENCIES.md`](plugins/sdlc-graph/docs/DEPENDENCIES.md) — all of them
+  third-party and optional, `git` being the only hard requirement. `/sdlc-graph:onboarding` walks
+  that file; a second roster anywhere else is a check failure.
 - A skill directory groups files by kind (`graph/ nodes/ evals/ …`) — never a pile.
 
 ## Rules that bind every change here
@@ -35,9 +39,11 @@ a repository requires a manifest — the manifest is a bundle, not a catalog.
 - **Validate before opening a PR:** `claude plugin validate ./plugins/<plugin> --strict` and
   `claude plugin validate .`
 - **`main` is PR-only.** Push a side branch and open a PR.
-- The repo is public: no private paths, hostnames or internal repo names. The optional private
-  plugins `sdlc-graph` dispatches to are named in the README, as optional, and that is the only
-  place they belong.
+- The repo is public: no private paths, hostnames or internal repo names — **and no name of an
+  unpublished plugin.** `sdlc-graph` live-dispatches *the project's installed* coding-standards and
+  local-stack skills; it names none of them anywhere, in any file, and requires none.
+  `no-unpublished-plugin-name-ships-in-this-plugin` in `evals/spec/spec_consistency.py` fails on one
+  that comes back.
 - Keep this file under 100 lines; describe current state, not history.
 
 ## The evals — what runs when

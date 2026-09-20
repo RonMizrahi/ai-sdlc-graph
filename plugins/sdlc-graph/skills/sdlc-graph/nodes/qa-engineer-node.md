@@ -126,7 +126,7 @@ blank.
 ### 5. Execute — live only, and keep the plan file current as you go
 
 **Bring the full real stack up first** — you cannot probe what isn't running. Use `run_instructions`
-(or the `developer-experience:local-deploy` skill if installed): every service the feature needs
+(or whatever local-stack / deployment skill this project has installed): every service the feature needs
 (API, DB, dependencies, and the web UI) as a user would actually hit it, **not** a partial or
 in-process harness. If it cannot be brought up, emit `qa.verdict = BLOCK` with the exact failure
 (port in use, missing env, crash log).

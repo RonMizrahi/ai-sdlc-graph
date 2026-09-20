@@ -192,6 +192,7 @@ not retroactively pass the gate.
 |---|---|---|
 | **`sdlc-graph`** (skill) | `/sdlc-graph` — command only | Drives a feature end to end through 20 nodes and 40 guarded transitions. Never auto-triggers. |
 | **`graph-run-reviewer`** (skill) | `/sdlc-graph:graph-run-reviewer` | Reviews a finished run and writes the evals it should have had. |
+| **`onboarding`** (skill) | `/sdlc-graph:onboarding` | The tooling checklist, **invoked at the start of every run**: which of the optional third-party tools below this session can actually invoke, the install line for each it cannot, and what a run does without it. Advisory — it installs nothing, emits nothing, and can never stop or delay a run. |
 | **`sdlc-graph-milestone`** (agent) | never by hand | One per milestone — under strategy C, one per worktree. Returns a typed bundle the orchestrator verifies against git. |
 
 The model is three files — `graph/nodes.md` (node contracts), `graph/edges.md` (the transition table
@@ -236,12 +237,18 @@ bounded cycles, 19 declared human stops** →
 drifts and then reviews against a stale rulebook. **Every absence is recorded in `skipped_gates[]` and
 the run continues** — nothing is ever reported as passed because its tool was missing.
 
+**Every one of these is third-party, and the graph depends on none of them** — its only hard
+requirement is `git`. The full roster, with the node that dispatches each and how to install it, is
+[`plugins/sdlc-graph/docs/DEPENDENCIES.md`](plugins/sdlc-graph/docs/DEPENDENCIES.md).
+**`/sdlc-graph:onboarding` walks that roster and answers it for your session** — invoked at the
+start of every run, advisory, and unable to stop or delay one.
+
 | | Used at | Without it |
 |---|---|---|
 | `code-review`, `security-review` — built into Claude Code | Gate B, PR review, Gate A step 3 | Ledgered, run continues |
 | `pr-review-toolkit:code-reviewer`, `code-simplifier` | Gate A steps 1, 2 and 4 | Ledgered, run continues |
 | `claude-md-management:claude-md-improver` | Close-out | Ledgered; do the CLAUDE.md update by hand |
-| `nestjs-backend-standards`, `front-react-development` — the author's own private plugins, not installable from here | Implement | Code is written against the project's own conventions |
+| the project's own **coding-standards skill** for its stack — the graph names none and bundles none | Implement | Code is written against the project's own conventions |
 
 The eight process skills the nodes came from are **copied in, not depended on**: they ship inside the
 plugin as `nodes/<name>-node.md`, trimmed to their graph role. Nothing needs installing.
