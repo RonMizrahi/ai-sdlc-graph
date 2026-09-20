@@ -48,6 +48,24 @@ It finishes by **dry-tracing three scenarios** — happy path, a retry that reco
 exhausts its bound — because an untraced graph looks identical to a traced one and fails at runtime on
 a path nobody walked.
 
+## Worked example — the method pointed at somebody else's methodology
+
+[Superpowers](https://github.com/obra/superpowers) is a complete development methodology written as
+skills. Run through the nine steps, it comes out as a graph: **21 nodes, 96 guarded edges, 9 bounded
+cycles, 19 declared human stops** — published at
+[RonMizrahi/superpowers-graph](https://github.com/RonMizrahi/superpowers-graph), with the eval suite
+that keeps it honest.
+
+![The spine of the superpowers graph: every node a run passes through, and the two shapes execution can take](docs/assets/superpowers-graph-spine.svg)
+
+Read it as a state machine, not a flowchart. Guards are evaluated in table order and **exactly one
+must match** — zero matching guards is a defect that halts the run, never a stall the graph guesses
+its way out of. Cycles are annotated rather than drawn: 9 bounded, and 4 deliberately unbounded
+because each one is a human revising their own decision, which is a conversation and not a retry.
+
+*Your* graph will look nothing like that one — different nodes, different guards, your process. What
+carries over is the structure: total guards, bounded cycles, typed stops, a ledger.
+
 ## Skills
 
 | Skill | Invocation |

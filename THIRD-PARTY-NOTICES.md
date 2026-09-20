@@ -70,9 +70,9 @@ maintainers.
 
 ### One diagram, also derivative
 
-`docs/assets/superpowers-graph-spine.svg` renders Superpowers' own node names — it is the output of
-`sdlc-graph-engineering-install` pointed at that project, shown in the README as an example of what
-the method produces. It is a derivative analysis of an MIT-licensed project, covered by the same
+`plugins/sdlc-graph-engineering-install/docs/assets/superpowers-graph-spine.svg` renders Superpowers'
+own node names — it is the output of `sdlc-graph-engineering-install` pointed at that project, shown
+in that plugin's README as an example of what the method produces. It is a derivative analysis of an MIT-licensed project, covered by the same
 notice above, and it is credited beside the image. The other diagram in `docs/assets/` is original.
 
 ---

@@ -35,6 +35,7 @@ What you are watching is `sdlc-graph` driving a real feature end to end, rendere
 - [Philosophy](#philosophy)
 - [Contributing](#contributing)
 - [Updating](#updating)
+- [Credits](#credits)
 - [License](#license)
 
 ## How it works
@@ -158,12 +159,9 @@ QA gates the merge under every strategy, and a `BLOCK` verdict never reaches the
 
 ### Watching a run live
 
-With `sdlc-graph-viewer` installed, the graph starts it at run start: **one server per project**, on a
-port derived from the project path, the page polling the state file every second — forever, even after
-`DONE`. It renders parallel milestone lanes, and under strategy C highlights the least advanced,
-because a run is only as far along as its slowest milestone. It also writes a **self-contained
-snapshot** that opens from `file://`. Without the plugin the run proceeds identically; you watch the
-state file instead of a page.
+With `sdlc-graph-viewer` installed, the graph starts it at run start and the page follows the run —
+live, or as a snapshot that opens from `file://`. Without it the run proceeds identically; you watch
+the state file instead of a page. → [the viewer's README](plugins/sdlc-graph-viewer/README.md)
 
 ## When something goes wrong
 
@@ -202,34 +200,14 @@ plus eight node procedures loaded only when their node runs, and a hook that sna
 **[`plugins/sdlc-graph/README.md`](plugins/sdlc-graph/README.md)**, or the illustrated version,
 [`docs/artifacts/index.html`](plugins/sdlc-graph/docs/artifacts/index.html).
 
-### `sdlc-graph-viewer` — the run viewer
+### Also in the bundle
 
-One skill, `view-run`: a zero-dependency page rendering parallel milestone lanes, live or as a
-self-contained snapshot. Read-only with respect to the run, and it holds a **copy of the transition
-table** that is checked against the graph's spec on every edit — because a surface that lies about the
-graph is worse than no surface.
-→ [`plugins/sdlc-graph-viewer/README.md`](plugins/sdlc-graph-viewer/README.md)
+Two optional companions, each with its own README — neither is needed to run the graph:
 
-### `sdlc-graph-engineering-install` — the method
-
-The generalisation: take a process that has **no** graph — skills, a runbook, a CI config, or a
-description — and install one, with its own orchestrator, its own read-only auditor, and its own
-executable eval suite. Domain-agnostic; needs no other plugin.
-
-Nine numbered steps, and **step 4 carries the weight**: making the guards *total*. The trap it exists
-to catch is that guard sets get written exhaustive over the happy predicates but not over their
-product — three independent properties give eight combinations, and the three obvious guards cover
-four. It finishes by dry-tracing three scenarios, then emitting those traces as an executable suite,
-because a paper trace protects exactly one version of a graph.
-
-**Worked example — the method pointed at somebody else's methodology.** Superpowers (by
-[obra/superpowers](https://github.com/obra/superpowers)) as a graph: **21 nodes, 96 guarded edges, 9
-bounded cycles, 19 declared human stops** →
-[RonMizrahi/superpowers-graph](https://github.com/RonMizrahi/superpowers-graph).
-
-![The spine of the superpowers graph: every node a run passes through, and the two shapes execution can take](docs/assets/superpowers-graph-spine.svg)
-
-→ [`plugins/sdlc-graph-engineering-install/README.md`](plugins/sdlc-graph-engineering-install/README.md)
+| | | |
+|---|---|---|
+| **`sdlc-graph-viewer`** | The run viewer — the page in the video above. | → [README](plugins/sdlc-graph-viewer/README.md) |
+| **`sdlc-graph-engineering-install`** | The method that builds a guarded graph for a process that has none. Domain-agnostic. | → [README](plugins/sdlc-graph-engineering-install/README.md) |
 
 ## Optional tools, and what happens without them
 
@@ -243,12 +221,10 @@ requirement is `git`. The full roster, with the node that dispatches each and ho
 **`/sdlc-graph:onboarding` walks that roster and answers it for your session** — invoked at the
 start of every run, advisory, and unable to stop or delay one.
 
-| | Used at | Without it |
-|---|---|---|
-| `code-review`, `security-review` — built into Claude Code | Gate B, PR review, Gate A step 3 | Ledgered, run continues |
-| `pr-review-toolkit:code-reviewer`, `code-simplifier` | Gate A steps 1, 2 and 4 | Ledgered, run continues |
-| `claude-md-management:claude-md-improver` | Close-out | Ledgered; do the CLAUDE.md update by hand |
-| the project's own **coding-standards skill** for its stack — the graph names none and bundles none | Implement | Code is written against the project's own conventions |
+In short: the review tools at Gate A and Gate B, the CLAUDE.md improver at close-out, and whatever
+coding-standards skill your project has at implement — the graph names none of them as a dependency
+and bundles none of them. **The roster is the one list**, and this page deliberately does not copy it:
+two lists of the same tools disagree eventually, and the one you would read is the roster.
 
 The eight process skills the nodes came from are **copied in, not depended on**: they ship inside the
 plugin as `nodes/<name>-node.md`, trimmed to their graph role. Nothing needs installing.
