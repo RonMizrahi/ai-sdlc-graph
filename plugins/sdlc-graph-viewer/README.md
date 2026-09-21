@@ -5,8 +5,10 @@
 > Up to 0.1.4 it read the flat `docs/sdlc/<run-id>-state.json` at `schema_version 2`, and **it cannot
 > render one** — the schema check is a hard stop, matching the graph's.
 
-Live and snapshot HTML views of [`sdlc-graph`](../sdlc-graph) runs — **optional**. The graph
-triggers this plugin at run start when it is installed, and runs identically when it is not.
+Live and snapshot HTML views of [`sdlc-graph`](../sdlc-graph) runs. **`sdlc-graph` declares this
+plugin as a dependency**, so it installs and enables with the graph rather than being chosen — the
+graph triggers it at run start. It remains a companion at run time: it renders a run, it never
+gates one.
 
 ## What you get
 

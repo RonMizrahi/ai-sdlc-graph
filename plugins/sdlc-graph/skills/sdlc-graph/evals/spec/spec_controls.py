@@ -96,6 +96,9 @@ MA = "agents/sdlc-graph-milestone.md"
 OB = "skills/onboarding/SKILL.md"
 # ...and the roster it derives from. The doc is the single source of truth; the skill walks it.
 DEP = "docs/DEPENDENCIES.md"
+
+PJ = ".claude-plugin/plugin.json"
+OBSF = f"{SK}/observability/observability.md"
 # The QA node's bring-up step, and one walk fixture: two surfaces the `published` glob never
 # reached, which is exactly where two of the eight unpublished-plugin mentions were hiding.
 QN = f"{SK}/nodes/qa-engineer-node.md"
@@ -759,6 +762,28 @@ CONTROLS += [
      "which `published` does reach but which no check had ever read for this",
      sub(QN, "(or whatever local-stack / deployment skill this project has installed)",
              "(or the `" + NAME_C + "` skill if installed)")),
+
+    ("viewer-is-a-declared-dependency-and-still-never-gates",
+     "the dependency is dropped from plugin.json while every doc still promises the viewer arrives "
+     "with the graph — the promotion becomes prose nothing installs",
+     sub(PJ, '"dependencies": [\n    "sdlc-graph-viewer"\n  ],\n', "")),
+
+    ("viewer-is-a-declared-dependency-and-still-never-gates",
+     "required-to-install is allowed to drift into may-halt-a-run: the never-gates sentence and the "
+     "seventh-human-stop reason both go, which is exactly how a companion becomes a seventh stop",
+     subs(OBSF,
+          ("**It is not a node, it is not a gate, and it may not stop the\n"
+           "graph.** A companion that halted runs would be a seventh human stop, and there are six.",
+           "**It is required.**"),
+          ("The viewer is still not a node, still not\n"
+           "> a gate, and still may not stop the graph — a companion that halted runs would be a "
+           "seventh human\n> stop, and there are six.",
+           "The viewer is required."))),
+
+    ("viewer-is-a-declared-dependency-and-still-never-gates",
+     "the roster goes back to calling the viewer optional, so the one list a human opens disagrees "
+     "with the manifest that installs it",
+     sub(DEP, "**yes — and required.**", "**yes** — an optional plugin in this same bundle.")),
 
     ("onboarding-runs-at-every-run-start-and-still-cannot-gate",
      "the skill is renamed on one side only, so SKILL.md's run start invokes a command that "

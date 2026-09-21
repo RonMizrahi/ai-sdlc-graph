@@ -25,7 +25,8 @@ actually invoke, and what does a run lose for each one it cannot?**
 **Everything on the roster is third-party and optional.** The graph's only hard requirement is `git`.
 Every other tool is somebody else's plugin or a capability built into Claude Code, dispatched rather
 than copied — because a copied reviewer drifts and then reviews against a stale rulebook. Exactly one
-of them ships in this bundle (`sdlc-graph-viewer`), and even that is a separate, optional install.
+of them ships in this bundle (`sdlc-graph-viewer`), and that one is a declared dependency of the
+graph rather than a choice — it should already be present.
 
 **Every absence is recorded in `skipped_gates[]` and the run continues.** Nothing is ever reported as
 passed because its tool was missing, and the ledger is append-only: installing a tool later does not

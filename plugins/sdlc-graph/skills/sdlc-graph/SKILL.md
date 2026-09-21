@@ -488,7 +488,7 @@ Three things sit alongside the graph. **None is a node, and none may gate a run.
 
 | | What it is | When |
 |---|---|---|
-| **`sdlc-graph-viewer`** — a separate, optional plugin | Live and snapshot HTML views of the run; one server per project. | Offer at run start when installed; one line and carry on when not. Never a gate. |
+| **`sdlc-graph-viewer`** — a separate plugin, declared as a **dependency** of this one | Live and snapshot HTML views of the run; one server per project. | Installed and enabled with the graph. Invoke at run start; if it is somehow not invocable, one line and carry on. Never a gate. |
 | **`/sdlc-graph:onboarding`** — a skill in this plugin | The tooling checklist: which of the roster in `docs/DEPENDENCIES.md` this session can invoke, the install line for each gap, and what a run does without it. **All of it third-party and optional.** | **Invoked at `INTAKE`, on every run**, and by a human any time. **It installs nothing, emits nothing and gates nothing** — it cannot stop or delay a run. |
 | **`evals/`** — the graph checked against itself | The spec files agreeing, scripted runs covering every node and every transition, the offline auditor's own self-tests, and the Gate A script's runtime harness. | `python3 evals/run_all.py`, and before changing anything in this plugin. |
 
