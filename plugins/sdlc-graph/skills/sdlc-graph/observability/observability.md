@@ -47,9 +47,18 @@ supposed to provide, and it must not be mistaken for it:
 
 ---
 
-## The live viewer — an optional companion plugin
+## The live viewer — a required companion plugin
 
-The viewer lives in its own plugin, **`sdlc-graph-viewer`** — the graph runs fine without it.
+The viewer lives in its own plugin, **`sdlc-graph-viewer`**, and `sdlc-graph` **declares it as a
+dependency** in `plugin.json`. Claude Code installs it alongside the graph, enables it with the
+graph, and refuses to disable it while the graph is enabled. **A run with no live view is a broken
+install, not a choice** — reading a state file by hand is the fallback, never the intended way to
+watch a run.
+
+> **That is an install-time guarantee, and it stays one.** The viewer is still not a node, still not
+> a gate, and still may not stop the graph — a companion that halted runs would be a seventh human
+> stop, and there are six. The dependency is resolved by the plugin system **before any run starts**,
+> which is the right layer for it: the graph never has to halt mid-run over a page.
 
 At run start, check whether the `sdlc-graph-viewer:view-run` skill is available:
 
@@ -57,9 +66,10 @@ At run start, check whether the `sdlc-graph-viewer:view-run` skill is available:
   port** (never shared with another project), serving the run's live view — the page polls the state
   file every 1s, forever, even after `DONE`. **Relay its printed summary** (project, port, URLs)
   verbatim, so the user always knows what is running and where to look.
-- **Not installed** → one line — *"sdlc-graph-viewer not installed; no live view for this run"* — and
-  continue. This is the same optional-companion pattern as every live-dispatched tool: never a
-  failure, never a gate.
+- **Not invocable** → one line — *"sdlc-graph-viewer is a declared dependency but is not invocable
+  in this session; no live view for this run"* — and continue. The absence now means the install is
+  broken rather than that a choice was made, and saying so is worth one line. It is still never a
+  failure of the run and never a gate.
 
 The server outlives the run on purpose; note it in the `DONE` report so a forgotten server is a
 known server.

@@ -25,7 +25,7 @@ after this session started, is as absent as one never installed.
 
 | Tool (exact id) | In this bundle? | Dispatched at | Without it | Install |
 |---|---|---|---|---|
-| `sdlc-graph-viewer:view-run` | **yes** — a separate, optional plugin in this same bundle | run start, for the live and snapshot views | No live view of the run. One line at run start and the run carries on — it is a companion, never a gate. | `/plugin marketplace add RonMizrahi/sdlc-graph-engineering` then `/plugin install sdlc-graph-viewer@sdlc-graph-engineering` |
+| `sdlc-graph-viewer:view-run` | **yes — and required.** `sdlc-graph` declares it as a `dependency`, so it installs and enables with the graph | run start, for the live and snapshot views | No live view of the run, which means the install is broken rather than pared down. One line at run start and the run still carries on — it is a companion, never a gate. | Nothing to install: it arrives with `sdlc-graph`. If it is missing, `/plugin install sdlc-graph@sdlc-graph-engineering` re-resolves it. |
 | `code-review` — built into Claude Code | no | `GATE_B`, as `code-review <main>..<branch> high` (a branch range, no open PR, **no `--comment`**) | The whole-diff review is ledgered and `GATE_B` is not recorded as passed. The milestone still finishes. | Built in — nothing to install. |
 | `security-review` — built into Claude Code | no | `GATE_A` step 3 | The security pass is ledgered; the other three Gate A steps still run. | Built in — nothing to install. |
 | `pr-review-toolkit:code-reviewer` | no | `GATE_A` steps 1 and 4 | Review and final review are ledgered; simplify and security still run. | `/plugin install pr-review-toolkit@claude-plugins-official` |

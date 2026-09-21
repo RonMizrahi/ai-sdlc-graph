@@ -13,8 +13,9 @@ forking a framework. Entirely optional. → **[Make it yours](#make-it-yours)**
 
 ![The sdlc-graph run viewer following a live run: a sidebar listing runs and the milestones, graph, trace, ledger, QA and run-facts views; and the graph itself in three bands — SETUP (INTAKE, SPEC, PLAN, STRATEGY, HANDOFF), the milestone loop (BRANCH, IMPLEMENT, TEST, GATE_A, E2E, ms-final-review) with CONSOLIDATE and BLOCKED beside it, and the shared tail (CLOSE_OUT, PR, PR_FINAL_REVIEW, CI, QA, VERDICT, MERGE, DONE), with DEBUG re-entrant from six callers below. Nodes are coloured as now, next-step candidate, visited, or off-path for this run](docs/assets/run-viewer-graph.png)
 
-*A run in progress, seen through **`sdlc-graph-viewer`** — the bundle's observability half, and
-optional. It draws every node a run can reach and colours them for **this** run: where it is now,
+*A run in progress, seen through **`sdlc-graph-viewer`** — the bundle's observability half, and a
+declared dependency of the graph, so it arrives with it. It draws every node a run can reach and
+colours them for **this** run: where it is now,
 what it may do next, where it has been, and what is off-path entirely. Click a node for its guards.
 The graph runs identically without it; you read the state file instead.*
 
@@ -87,14 +88,16 @@ Claude Code:
 ```
 /plugin marketplace add RonMizrahi/sdlc-graph-engineering
 
-/plugin install sdlc-graph@sdlc-graph-engineering                       # the graph
-/plugin install sdlc-graph-viewer@sdlc-graph-engineering                # optional: watch a run
+/plugin install sdlc-graph@sdlc-graph-engineering                       # the graph + its viewer
 /plugin install sdlc-graph-engineering-install@sdlc-graph-engineering   # optional: the method
 ```
 
-Install any one of them on its own; none requires the others. **No npm install, no runtime, no
-service** — every eval suite is plain Python 3 with an empty import list, and the viewer's server
-imports nothing but `node:*`.
+**One line gets you the graph and the viewer.** `sdlc-graph` declares `sdlc-graph-viewer` as a
+dependency, so Claude Code installs and enables it with the graph — a run you cannot watch is a
+broken install, not a lighter one. The method plugin is genuinely separate and genuinely optional.
+
+**No npm install, no runtime, no service** — every eval suite is plain Python 3 with an empty import
+list, and the viewer's server imports nothing but `node:*`.
 
 > **Breaking change, 0.7.0.** The method plugin was `sdlc-graph-engineering` through 0.6.0 and is
 > **`sdlc-graph-engineering-install`** from 0.7.0. The *marketplace* name is unchanged, so
@@ -237,11 +240,11 @@ plus eight node procedures loaded only when their node runs, and a hook that sna
 
 ### Also in the bundle
 
-Two optional companions, each with its own README — neither is needed to run the graph:
+Two more plugins, each with its own README:
 
 | | | |
 |---|---|---|
-| **`sdlc-graph-viewer`** | The run viewer — the page in the video above. | → [README](plugins/sdlc-graph-viewer/README.md) |
+| **`sdlc-graph-viewer`** | The run viewer — the page at the top of this README. **A declared dependency of `sdlc-graph`**, installed and enabled with it. | → [README](plugins/sdlc-graph-viewer/README.md) |
 | **`sdlc-graph-engineering-install`** | The method that builds a guarded graph for a process that has none — the third row of [Make it yours](#make-it-yours). Domain-agnostic. | → [README](plugins/sdlc-graph-engineering-install/README.md) |
 
 ## Make it yours

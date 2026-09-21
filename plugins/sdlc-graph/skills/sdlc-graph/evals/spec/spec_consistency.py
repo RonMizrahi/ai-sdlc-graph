@@ -2409,6 +2409,65 @@ def _(spec):
         + "; ".join(hits[:10]))
 
 
+@check("viewer-is-a-declared-dependency-and-still-never-gates",
+       "the viewer was an optional companion until it was not: `sdlc-graph` now declares it in "
+       "`dependencies`, so the plugin system installs and enables it with the graph. That is the "
+       "right layer, and it is one sentence away from the wrong one. `requires at install` and "
+       "`may halt a run` are different claims, and the second is forbidden — a companion that "
+       "could stop a run is a seventh human stop in a graph whose first rule is that there are "
+       "six. So both halves are pinned: the dependency must actually be DECLARED (prose calling "
+       "it required while the manifest says otherwise is a promise nothing keeps), and the "
+       "never-gates contract must survive in words, so that promoting it further has to break "
+       "this check to happen")
+def _(spec):
+    corpus = spec.get("plugin_files") or {}
+    bad = []
+
+    manifest = corpus.get(".claude-plugin/plugin.json")
+    if manifest is None:
+        bad.append(".claude-plugin/plugin.json is gone — nothing declares what this plugin needs")
+    else:
+        try:
+            deps = json.loads(manifest).get("dependencies") or []
+        except ValueError:
+            deps = []
+            bad.append(".claude-plugin/plugin.json is not valid JSON, so its `dependencies` cannot "
+                       "be read — and an unreadable manifest installs nothing")
+        names = {d if isinstance(d, str) else (d or {}).get("name") for d in deps}
+        if "sdlc-graph-viewer" not in names:
+            bad.append("`sdlc-graph-viewer` is not in `dependencies` in plugin.json — every surface "
+                       "below tells the reader it arrives with the graph, and nothing makes it")
+
+    obs = corpus.get("skills/sdlc-graph/observability/observability.md")
+    if obs is None:
+        bad.append("observability/observability.md is gone — the viewer has no contract")
+    else:
+        if not re.search(r"declares it as a\s+\*{0,2}dependency", obs, re.I):
+            bad.append("observability.md no longer says the graph DECLARES the viewer as a "
+                       "dependency — the install-time guarantee is the whole basis for calling it "
+                       "required rather than offered")
+        # The invariant this promotion must never cross.
+        if not re.search(r"still not a gate|never a gate|may not stop the graph", obs, re.I):
+            bad.append("observability.md no longer says the viewer may not stop the graph — "
+                       "required-to-install has been allowed to drift into may-halt-a-run, which "
+                       "is the seventh human stop")
+        if not re.search(r"seventh human stop", obs):
+            bad.append("observability.md no longer names the seventh-human-stop failure, which is "
+                       "the reason the viewer may not gate — a rule with its reason removed is the "
+                       "one a later edit deletes as redundant")
+
+    dep = corpus.get("docs/DEPENDENCIES.md")
+    if dep is not None:
+        row = [ln for ln in dep.splitlines() if "`sdlc-graph-viewer:view-run`" in ln]
+        if not row:
+            bad.append("the roster has no `sdlc-graph-viewer:view-run` row — the checklist walks "
+                       "that file, so the viewer became invisible to the thing that reports it")
+        elif re.search(r"\boptional\b", row[0], re.I):
+            bad.append("the roster still calls the viewer optional, while plugin.json installs it "
+                       "as a dependency — the one list a human opens disagrees with the manifest")
+    return bad and "; ".join(bad)
+
+
 @check("onboarding-runs-at-every-run-start-and-still-cannot-gate",
        "every optional tool this graph dispatches to used to be discovered at the node that needed "
        "it — you learned Gate A had no simplifier from the ledger entry Gate A wrote. The "

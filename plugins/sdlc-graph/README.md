@@ -42,7 +42,7 @@ follow the link.)*
 | | | |
 |---|---|---|
 | 📗 **[The whole thing](docs/artifacts/index.html)** | Run · Graph · Nodes · Delegation · Files & state · Testing | [view](https://claude.ai/code/artifact/045a2e11-cade-45c0-9484-b2edf0db8903) |
-| 📡 **Run viewer** | Moved to the **`sdlc-graph-viewer`** plugin — optional companion, triggered at run start when installed | [demo](https://claude.ai/code/artifact/de145d90-62da-4778-a84f-7049ef11f3a6) |
+| 📡 **Run viewer** | Moved to the **`sdlc-graph-viewer`** plugin — a declared dependency of this one, triggered at run start | [demo](https://claude.ai/code/artifact/de145d90-62da-4778-a84f-7049ef11f3a6) |
 
 ### The one distinction that explains everything
 
@@ -272,11 +272,14 @@ the parallelism and collapses the tail: one integration branch, one PR, one QA p
 
 ## Watching a run live
 
-Install **`sdlc-graph-viewer`**, which ships in the same bundle as this plugin and is optional —
-`/plugin install sdlc-graph-viewer@sdlc-graph-engineering`. The graph triggers it at run start:
-one server per project on a stable derived port, the page polling the state file every
-1s — forever, even after `DONE`. Without the plugin, the run proceeds identically; you just watch
-the state file instead of a page.
+**`sdlc-graph-viewer`** arrives with this plugin — it is declared in `dependencies`, so Claude Code
+installs and enables it alongside the graph and will not let it be disabled while the graph is
+enabled. The graph triggers it at run start: one server per project on a stable derived port, the
+page polling the state file every 1s — forever, even after `DONE`.
+
+If it is somehow not invocable, the run proceeds identically and you watch the state file instead —
+the viewer is a dependency at **install** time and never a gate at **run** time, because a companion
+that could halt a run would be a seventh human stop, and there are six.
 
 ## Run state and resume
 
